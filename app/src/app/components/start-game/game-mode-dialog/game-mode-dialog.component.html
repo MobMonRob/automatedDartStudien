@@ -1,0 +1,4 @@
+<h1 mat-dialog-title>Wähle den Spielmodus</h1>
+<mat-dialog-content>
+    <button mat-raised-button (click)="selectMode(mode)" *ngFor="let mode of gameModes">{{mode}}</button>
+</mat-dialog-content>

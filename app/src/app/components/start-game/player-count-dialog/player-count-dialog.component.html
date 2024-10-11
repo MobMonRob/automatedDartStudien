@@ -1,0 +1,21 @@
+<h1 mat-dialog-title>Spieler eintragen</h1>
+
+<div mat-dialog-content>
+  <form>
+    <div *ngFor="let player of players; let i = index" class="player-entry">
+      <mat-form-field appearance="fill" class="player-input">
+        <mat-label>Spieler {{ i + 1 }}</mat-label>
+        <input matInput placeholder="Name" [(ngModel)]="player.name" name="player-{{i}}">
+      </mat-form-field>
+
+      <button mat-icon-button color="warn" *ngIf="players.length > 1" (click)="removePlayer(i)">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </form>
+</div>
+
+<div mat-dialog-actions>
+  <button mat-button (click)="addPlayer()">Spieler hinzufügen</button>
+  <button mat-button color="primary" (click)="save()">Speichern</button>
+</div>

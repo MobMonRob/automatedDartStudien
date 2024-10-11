@@ -1,0 +1,14 @@
+.player-entry {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .player-input {
+    flex-grow: 1;
+    margin-right: 8px;
+  }
+  
+  mat-icon-button {
+    margin-left: 8px;
+  }
