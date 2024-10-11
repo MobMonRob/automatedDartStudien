@@ -1,20 +1,28 @@
-<!-- app.component.html -->
 <div class="container">
-  <h1>Spieler</h1>
+  <div class="player-list">
+    <h1>Spieler</h1>
 
-  <div class="player-grid">
-    <dartapp-player-card name="Spieler 1" points="187" average="40,12" darts="30"></dartapp-player-card>
+    <div >
+      <dartapp-player-card
+        
+        [name]="players[currentPlayerIndex].name"
+        [points]="points[currentPlayerIndex]"
+        [average]="averages[currentPlayerIndex]"
+        [darts]="darts[currentPlayerIndex]"
+      ></dartapp-player-card>
+    </div>
   </div>
 
   <div class="current-player">
-    <h2>Spieler 1</h2>
-    <div class="current-score">
-      187
-    </div>
+    <h2 class="current-player-tag">{{players[currentPlayerIndex].name}}</h2>
+    <div class="current-score">{{points[currentPlayerIndex]}}</div>
     <div class="actions">
-      <button>D17</button>
-      <button>12</button>
-      <button>T1</button>
+      <button>{{currentDarts[0]}}</button>
+      <button>{{currentDarts[1]}}</button>
+      <button>{{currentDarts[2]}}</button>
     </div>
   </div>
 </div>
+<button (click)="watchGame()"></button>
+
+<h1>{{gameMessage}}</h1>
