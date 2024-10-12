@@ -9,14 +9,11 @@ darttracker = DartTracker()
 
 def generate_frames(camera_id):
     while True:
-        success, frame = darttracker.getCameraFrame(index = camera_id)
-        if not success:
-            break
-        else:
-            ret, buffer = cv.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        frame = darttracker.getCameraFrame(index = camera_id)
+        ret, buffer = cv.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 @app.route('/')
 def index():
