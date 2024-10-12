@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,12 +23,17 @@ import { MatRadioModule } from '@angular/material/radio';
     MatRadioModule
   ],
   templateUrl: './game-mode-details-dialog.component.html',
-  styleUrl: './game-mode-details-dialog.component.scss'
+  styleUrl: './game-mode-details-dialog.component.scss',
+  encapsulation : ViewEncapsulation.None,
 })
 export class GameModeDetailsDialogComponent {
   points: number[] = [301,501,701,901];
-  doubleOut: boolean = false;
+  inVariant: string = "StraightIn";
+  outVariant: string = "StraightOut";
+  applyPointLimit: boolean = false;
+  selectedPoints: number = 0;
   includeBullsEye: boolean = false;
+  showAdvanced: boolean = false; 
 
   constructor(
     public dialogRef: MatDialogRef<GameModeDetailsDialogComponent>,
@@ -37,10 +42,15 @@ export class GameModeDetailsDialogComponent {
   saveDetails() {
     const details = {
       mode: this.data.mode,
-      points: this.points,
-      doubleOut: this.doubleOut,
+      points: this.selectedPoints,
+      inVariant: this.inVariant,
+      outVariant: this.outVariant,
       includeBullsEye: this.includeBullsEye
     };
     this.dialogRef.close(details);
+  }
+
+  toggleAdvancedSettings() {
+    this.showAdvanced = !this.showAdvanced; // Wechseln des Sichtzustands
   }
 }

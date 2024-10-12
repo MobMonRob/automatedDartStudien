@@ -1,14 +1,103 @@
+.mat-dialog-container {
+  overflow: hidden;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 550px;
+  width: 500px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background-color: #ffffff;
+}
+
+.dialog-title {
+  font-size: 24px;
+  color: #ff5733; 
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.dialog-content {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: #ddf1de;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.player-list {
+  max-height: 300px; 
+  overflow-y: auto;
+}
+
 .player-entry {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  
-  .player-input {
-    flex-grow: 1;
-    margin-right: 8px;
-  }
-  
-  mat-icon-button {
-    margin-left: 8px;
-  }
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.player-list-title {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+}
+
+.player-list-title h2 {
+  margin: 0;
+  margin-left: 20px;
+}
+
+.dialog-actions {
+  display: flex;
+  align-items: center;
+}
+
+.add-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px; 
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-right: 20px;
+}
+
+.add-button:hover {
+  background-color: #388e3c; 
+}
+
+.dialog-actions-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.save-button {
+  background-color: #ff5733;
+  color: white;
+  color: white; 
+  padding: 12px 25px; 
+  border: none; 
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer; 
+  transition: background-color 0.3s ease, transform 0.3s ease; 
+}
+
+.save-button:hover {
+  background-color: #e74c3c; 
+  transform: scale(1.05); 
+}
+
+.save-button:disabled {
+  background-color: #d3d3d3;
+  color: #7a7a7a;
+  border: 2px solid #ccc;
+  cursor: default;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.save-button:disabled:hover {
+  background-color: #d3d3d3;
+}

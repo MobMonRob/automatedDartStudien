@@ -6,7 +6,10 @@ export interface GameState{
     points: number[],
     averages: number[],
     darts: number[],
-    details: string,
     bust: boolean,
     currentPlayerIndex: number
+    //X01 Specific Details
+    inVariant: string,
+    outVariant: string,
+    includeBulls: boolean
 }

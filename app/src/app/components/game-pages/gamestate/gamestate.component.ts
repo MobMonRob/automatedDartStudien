@@ -5,11 +5,12 @@ import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
 import { GameState } from '../../../model/game.model';
 import { DebugNumberConsoleComponent } from "../../debug-number-console/debug-number-console.component";
+import { TopbarComponent } from "../../topbar/topbar.component";
 
 @Component({
   selector: 'dartapp-gamestate',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, PlayerCardComponent, DebugNumberConsoleComponent],
+  imports: [CommonModule, RouterOutlet, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent],
   templateUrl: './gamestate.component.html',
   styleUrl: './gamestate.component.scss'
 })

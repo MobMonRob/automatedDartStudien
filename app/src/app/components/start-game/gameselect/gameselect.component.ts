@@ -5,8 +5,10 @@ import { GameModeDialogComponent } from '../game-mode-dialog/game-mode-dialog.co
 import { GameModeDetailsDialogComponent } from '../game-mode-details-dialog/game-mode-details-dialog.component';
 import { PlayerCountDialogComponent } from '../player-count-dialog/player-count-dialog.component';
 import { Router } from '@angular/router';
-
-
+import { ApiService } from '../../../services/api.service';
+import { GameState } from '../../../model/game.model';
+import { Player} from '../../../model/player.model';
+import { v4 as uuidv4 } from 'uuid';
 
 @Component({
   selector: 'dartapp-gameselect',
@@ -17,15 +19,17 @@ import { Router } from '@angular/router';
 })
 export class GameselectComponent {
 
-  constructor(public dialog: MatDialog, private router: Router) {}
+  constructor(public dialog: MatDialog, private router: Router, private apiservice: ApiService) {}
 
   startGameSetup() {
     this.openGameModeDialog();
   }
 
   openGameModeDialog() {
-    const dialogRef = this.dialog.open(GameModeDialogComponent);
-
+    const dialogRef = this.dialog.open(GameModeDialogComponent, {
+      width: '600px', 
+      height: '400px',
+    });
     
     dialogRef.afterClosed().subscribe(selectedMode => {
       if (selectedMode) {
@@ -36,7 +40,8 @@ export class GameselectComponent {
 
   openGameModeDetailsDialog(gameMode: string) {
     const dialogRef = this.dialog.open(GameModeDetailsDialogComponent, {
-      data: { mode: gameMode }
+      data: { mode: gameMode },
+      width: '500px', 
     });
 
     dialogRef.afterClosed().subscribe(details => {
@@ -53,11 +58,32 @@ export class GameselectComponent {
 
     dialogRef.afterClosed().subscribe(players => {
       if (players) {
-        console.log('Spielmodus:', gameDetails);
-        console.log('Spieleranzahl:', players.length);
+        console.log(players)
         //Send Game Details to Backend -> Backend Creates Game and Initializes Game and new Players in DB
-        //Returns ID to Game for this field in order to retreive back new information/stats/points etc
-        this.router.navigateByUrl('/game');
+
+        let activePlayers: Player[] = [];
+        players.forEach((player: any) => {
+          activePlayers.push({
+            currentDarts: [],
+            name: player.name,
+            id: uuidv4()
+          });
+        });
+
+        let game: GameState = {
+          gameType: gameDetails.mode,
+          currentPlayerIndex: 0,
+          players: activePlayers,
+          points: new Array(activePlayers.length).fill(gameDetails.points),
+          averages: new Array(activePlayers.length).fill(0),
+          bust: false,
+          darts: new Array(activePlayers.length).fill(0),
+          includeBulls: gameDetails.includeBullsEye,
+          inVariant: gameDetails.inVariant,
+          outVariant: gameDetails.outVariant
+        }
+        this.apiservice.initX01Game(game);
+        this.router.navigateByUrl('/game/x01');
       }
     });
   }

@@ -1,0 +1,189 @@
+.mat-dialog-container {
+  overflow: hidden;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 550px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  background-color: #ffffff;
+}
+
+.dialog-title {
+  text-align: center;
+  font-size: 24px;
+  color: #ff5733;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.dialog-content {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: #ddf1de;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.advanced-settings {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #ddf1de;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.settings-label {
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: block;
+  color: #333;
+}
+
+.top-settings-label {
+  margin-top: 30px;
+}
+
+.custom-radio-button {
+  color: #333;
+}
+
+.custom-radio-button.mat-checked {
+  background-color: #2196f3;
+  color: white;
+}
+
+.custom-radio-button.mat-radio-checked .mat-radio-label {
+  color: white;
+}
+
+.custom-radio-button:not(.mat-checked):hover {
+  background-color: #e3f2fd;
+}
+
+.toggle-button {
+  display: block;
+  margin-top: 40px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition:
+    background-color 0.3s,
+    transform 0.2s;
+}
+
+.toggle-button:hover {
+  background-color: #45a049;
+}
+
+.toggle-button:focus {
+  outline: none;
+}
+
+.toggle-button:active {
+  transform: scale(0.98);
+}
+
+.button-container {
+  display: flex; /* Flexbox aktivieren */
+  justify-content: center; /* Horizontale Zentrierung */
+  margin-top: 20px; /* Abstand zum oberen Element */
+}
+
+.continue-button {
+  background-color: #ff5733;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 12px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  transition:
+    background-color 0.3s,
+    transform 0.2s;
+  margin-top: 20px;
+}
+
+.continue-button:hover {
+  background-color: #ff5733;
+}
+
+.continue-button:focus {
+  outline: none;
+}
+
+.continue-button:active {
+  transform: scale(0.98);
+}
+
+.continue-button:disabled {
+  background-color: #d3d3d3;
+  color: #7a7a7a;
+  border: 2px solid #ccc;
+  cursor: default;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.continue-button:disabled:hover {
+  background-color: #d3d3d3;
+}
+
+.train-your-aim-section {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  font-size: 16px;
+  color: #555;
+}
+
+.custom-checkbox .mat-checkbox {
+  margin-right: 10px;
+}
+
+.custom-checkbox .mat-checkbox-checked {
+  background-color: #4caf50;
+}
+
+.custom-checkbox .mat-checkbox-checked .mat-checkbox-frame {
+  border-color: #4caf50;
+}
+
+.cricket-section {
+  margin: 20px 0; /* Abstand oben und unten */
+  padding: 15px; /* Innenabstand für den gesamten Abschnitt */
+  background-color: #f9f9f9; /* Heller Hintergrund */
+  border-radius: 8px; /* Abgerundete Ecken */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Sanfter Schatten */
+}
+
+.custom-checkbox {
+  display: flex;
+  align-items: center; /* Vertikale Zentrierung */
+  padding: 10px; /* Innenabstand um die Checkbox */
+  font-size: 16px; /* Schriftgröße für die Checkbox-Beschriftung */
+  color: #555; /* Mittelgraue Schriftfarbe */
+}
+
+.custom-checkbox .mat-checkbox {
+  margin-right: 10px; /* Abstand zwischen Checkbox und Text */
+}
+
+.custom-checkbox .mat-checkbox-checked {
+  background-color: #4caf50; /* Grüner Hintergrund für die Checkbox */
+}
+
+.custom-checkbox .mat-checkbox-checked .mat-checkbox-frame {
+  border-color: #4caf50; /* Grüner Rahmen, wenn ausgewählt */
+}

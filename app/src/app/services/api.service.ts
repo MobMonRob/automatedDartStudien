@@ -10,19 +10,14 @@ export class ApiService {
   mockPlayers: Player[] = [
     {
       id: '481d6713-dcca-473b-a68b-97d55f9378f9',
-      name: 'Janosch',
+      name: 'Test-User',
       currentDarts: [],
     },
     {
-      id: '96cc7aa1-d15f-4faf-b5db-3f231b875f11',
-      name: 'Nils',
+      id: '481d6713-dcca-473b-a68b-97d55f9378f9',
+      name: 'Test-User2',
       currentDarts: [],
-    },
-    {
-      id: '96cc7aa1-d15f-4faf-b5db-3f231b875f12',
-      name: 'Bilkesohn',
-      currentDarts: [],
-    },
+    }
   ];
 
   mockGame: GameState = {
@@ -31,9 +26,11 @@ export class ApiService {
     points: [101, 101, 101],
     averages: [0, 0, 0],
     darts: [0, 0, 0],
-    details: 'Double Out',
     bust: false,
     currentPlayerIndex: 0,
+    inVariant: "",
+    outVariant: "",
+    includeBulls: false
   };
 
   initialPointValue = 0;
@@ -41,6 +38,15 @@ export class ApiService {
   afterPlayerChange = true;
 
   constructor() {}
+
+  initX01Game(gameState: GameState){
+    this.mockGame = gameState;
+    this.mockPlayers = gameState.players;
+  }
+
+  addPlayer(player: Player) {
+    this.mockPlayers.push(player);
+  }
 
   getPlayers(): Observable<Player[]> {
     return of(this.mockPlayers);

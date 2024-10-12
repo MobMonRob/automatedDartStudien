@@ -3,6 +3,6 @@ import { GamestateComponent } from './components/game-pages/gamestate/gamestate.
 import { LandingPageComponent } from './components/landing-page/landing-page.component';
 
 export const routes: Routes = [
-    { path: 'game', component: GamestateComponent }, 
+    { path: 'game/x01', component: GamestateComponent }, 
     { path: '', component: LandingPageComponent }, 
   ];

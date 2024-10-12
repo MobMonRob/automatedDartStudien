@@ -1,21 +1,27 @@
-<h1 mat-dialog-title>Spieler eintragen</h1>
+<div class="mat-dialog-container">
+  <h1 mat-dialog-title class="dialog-title">Spieler hinzufügen</h1>
 
-<div mat-dialog-content>
-  <form>
-    <div *ngFor="let player of players; let i = index" class="player-entry">
-      <mat-form-field appearance="fill" class="player-input">
-        <mat-label>Spieler {{ i + 1 }}</mat-label>
-        <input matInput placeholder="Name" [(ngModel)]="player.name" name="player-{{i}}">
-      </mat-form-field>
-
-      <button mat-icon-button color="warn" *ngIf="players.length > 1" (click)="removePlayer(i)">
-        <mat-icon>delete</mat-icon>
-      </button>
+  <div class="dialog-content">
+    <div class="player-list">
+      <div class="player-list-title">
+        <h2 class="available-players">Verfügbare Spieler</h2>
+        <div>
+          <button class="add-button" (click)="addPlayer()">
+            <mat-icon>add</mat-icon> 
+          </button>
+        </div>
+      </div>
+      <form>
+        <div *ngFor="let player of existingPlayers; let i = index" class="player-entry">
+          <mat-checkbox (change)="changeSelection(i)">{{ player.name }}</mat-checkbox>
+        </div>
+      </form>
     </div>
-  </form>
-</div>
+  </div>
 
-<div mat-dialog-actions>
-  <button mat-button (click)="addPlayer()">Spieler hinzufügen</button>
-  <button mat-button color="primary" (click)="save()">Speichern</button>
+  <div class="dialog-actions-save">
+    <button class="save-button" (click)="save()" [disabled]="selectedPlayers.length === 0">
+      Speichern
+    </button>
+  </div>
 </div>

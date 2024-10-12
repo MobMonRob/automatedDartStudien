@@ -1,25 +1,41 @@
-<h1>Details für den Modus {{ data.mode }}</h1>
-<div *ngIf="data.mode === 'X01'">
-  <mat-dialog-content>
-    <mat-label>Wähle die Punktzahl</mat-label>
-    <mat-radio-group [(ngModel)]="points">
-      <mat-radio-button value="301">301</mat-radio-button>
-      <mat-radio-button value="501">501</mat-radio-button>
-      <mat-radio-button value="701">701</mat-radio-button>
-      <mat-radio-button value="901">901</mat-radio-button>
-    </mat-radio-group>
-  </mat-dialog-content>
-  <mat-dialog-content>
-    <mat-checkbox [(ngModel)]="doubleOut">Double Out</mat-checkbox>
-  </mat-dialog-content>
-</div>
+<div class="mat-dialog-container">
+  <h1 class="dialog-title">Details für den Modus {{ data.mode }}</h1>
+  <div class="dialog-content">
+    <div *ngIf="data.mode === 'X01'">
+      <mat-label class="settings-label top-settings-label">Wähle die Punktzahl</mat-label>
+      <mat-radio-group [(ngModel)]="selectedPoints">
+        <mat-radio-button class="custom-radio-button" [value]="mode" *ngFor="let mode of points">{{ mode }}</mat-radio-button>
+      </mat-radio-group>
 
-<div *ngIf="data.mode === 'Cricket'">
-  <mat-checkbox [(ngModel)]="includeBullsEye">Bullseye einbeziehen</mat-checkbox>
-</div>
+      <button class="toggle-button" (click)="toggleAdvancedSettings()">
+        {{ showAdvanced ? 'Weniger Einstellungen' : 'Erweiterte Einstellungen' }}
+      </button>
 
-<div *ngIf="data.mode === 'Train Your Aim'">
-  <mat-checkbox [(ngModel)]="includeBullsEye">Bullseye einbeziehen</mat-checkbox>
-</div>
+      <div *ngIf="showAdvanced" class="advanced-settings">
+        <mat-label class="settings-label">Wähle die In-Variante</mat-label>
+        <mat-radio-group [(ngModel)]="inVariant">
+          <mat-radio-button class="custom-radio-button" value="StraightIn">Straight In</mat-radio-button>
+          <mat-radio-button class="custom-radio-button" value="DoubleIn">Double In</mat-radio-button>
+        </mat-radio-group>
 
-<button mat-raised-button (click)="saveDetails()">Weiter</button>
+        <mat-label class="settings-label">Wähle die Out-Variante</mat-label>
+        <mat-radio-group [(ngModel)]="outVariant">
+          <mat-radio-button class="custom-radio-button" value="StraightOut">Straight Out</mat-radio-button>
+          <mat-radio-button class="custom-radio-button" value="DoubleOut">Double Out</mat-radio-button>
+          <mat-radio-button class="custom-radio-button" value="MasterOut">Master Out</mat-radio-button>
+        </mat-radio-group>
+      </div>
+    </div>
+
+    <div *ngIf="data.mode === 'Cricket'" class="cricket-section">
+      <mat-checkbox [(ngModel)]="includeBullsEye" class="custom-checkbox">Bullseye einbeziehen</mat-checkbox>
+    </div>
+
+    <div *ngIf="data.mode === 'Train Your Aim'" class="train-your-aim-section">
+      <mat-checkbox [(ngModel)]="includeBullsEye" class="custom-checkbox">Bullseye einbeziehen</mat-checkbox>
+    </div>
+  </div>
+  <div class="button-container">
+    <button class="continue-button" (click)="saveDetails()" [disabled]="selectedPoints === 0">Weiter</button>
+  </div>
+</div>
