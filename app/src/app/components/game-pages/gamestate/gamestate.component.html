@@ -1,28 +1,37 @@
 <div class="container">
-  <div class="player-list">
-    <h1>Spieler</h1>
-
-    <div >
-      <dartapp-player-card
-        
-        [name]="players[currentPlayerIndex].name"
-        [points]="points[currentPlayerIndex]"
-        [average]="averages[currentPlayerIndex]"
-        [darts]="darts[currentPlayerIndex]"
-      ></dartapp-player-card>
+  <div class="left-side">
+    <h1 class="players-header">{{gameMode + " - Spieler"}}</h1>
+    <div class="player-list">
+      <div class="players">
+        <dartapp-player-card
+          *ngFor="let player of players; let i = index"
+          [name]="player.name"
+          [points]="points[i]"
+          [average]="averages[i]"
+          [darts]="darts[i]"
+          [lastDarts]="player.currentDarts"
+        ></dartapp-player-card>
+      </div>
     </div>
   </div>
 
   <div class="current-player">
-    <h2 class="current-player-tag">{{players[currentPlayerIndex].name}}</h2>
-    <div class="current-score">{{points[currentPlayerIndex]}}</div>
-    <div class="actions">
-      <button>{{currentDarts[0]}}</button>
-      <button>{{currentDarts[1]}}</button>
-      <button>{{currentDarts[2]}}</button>
+    <h1 class="players-header">Aktueller Spieler</h1>
+    <div class="current-player-block">
+      <h2 class="current-player-tag">{{ players[currentPlayerIndex].name }}</h2>
+      <div class="current-score">{{ points[currentPlayerIndex] }}</div>
+
+      <div class="current-darts">
+        <div class="dart-field" id="dart1">{{ currentDarts[0] }}</div>
+        <div class="dart-field" id="dart2">{{ currentDarts[1] }}</div>
+        <div class="dart-field" id="dart3">{{ currentDarts[2] }}</div>
+      </div>
     </div>
   </div>
 </div>
-<button (click)="watchGame()"></button>
 
-<h1>{{gameMessage}}</h1>
+<button mat-raised-button color="primary" (click)="watchGame()">
+  Nächster Wurf
+</button>
+
+<h1 class="game-status">{{ gameMessage }}</h1>

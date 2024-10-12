@@ -1,10 +1,13 @@
-<!-- player-card.component.html -->
 <div class="player-card">
-    <h2>{{name}}</h2>
-    <div class="points">{{points}}</div>
-    <div class="details">
-      <span>{{darts}} <small>Darts</small></span>
-      <span>{{average}} <small>Ø</small></span>
-    </div>
+  <h2 class="player-name">{{name}}</h2>
+  <div class="points">{{points}}</div>
+  <div class="details">
+    <span class="darts">{{darts}} <small>Darts</small></span>
+    <span class="average">{{average}} <small>Ø</small></span>
   </div>
-  
+  <span class="last-darts">
+    <div class="dart-field" id="dart1">{{lastDarts[0]}}</div>
+    <div class="dart-field" id="dart2">{{lastDarts[1]}}</div>
+    <div class="dart-field" id="dart3">{{lastDarts[2]}}</div>
+  </span>
+</div>

@@ -1,19 +1,97 @@
 .player-card {
-border: 2px solid black;
-padding: 10px;
-text-align: center;
-width: 150px;
-}
+    background-color: #f7f7f7;
+    border: 3px solid #ccc;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+    margin: 10px 0;
 
-.points {
-font-size: 3em;
-}
+    width: 300px;
+    min-width: 250px;
+    height: 300px;
+  }
+  
+//   .player-card:hover {
+//     transform: scale(1.05);
+//     border-color: #ff5722;
+//   }
+  
+  .player-name {
+    font-size: 2.5rem;
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+  
+  .points {
+    font-size: 4.5rem;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 20px;
+  }
+  
+  .details {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 1.5rem;
+    color: #666;
+  }
+  
+  .details .darts {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #009688;
+  }
+  
+  .details .average {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ff5722;
+  }
 
-.details {
-margin-top: 10px;
-}
-
-.details span {
-display: block;
-font-size: 0.9em;
-}
+  .last-darts {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px; /* Abstand zu den vorherigen Inhalten */
+  }
+  
+  .dart-field {
+    width: 40px; 
+    height: 40px;
+    border: 2px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+  }
+  
+  
+  @media (max-width: 768px) {
+    .player-card {
+      padding: 15px;
+    }
+  
+    .player-name {
+      font-size: 2rem;
+    }
+  
+    .points {
+      font-size: 3.5rem;
+    }
+  
+    .details {
+      font-size: 1.3rem;
+    }
+  }
+  

@@ -14,6 +14,7 @@ import { GameState } from '../../../model/game.model';
 })
 export class GamestateComponent implements OnInit {
   players: any[] = [];
+  gameMode: string = "";
   currentPlayerIndex = 0;
   points: number[] = [];
   darts:  number[] = [];
@@ -26,7 +27,7 @@ export class GamestateComponent implements OnInit {
 
   ngOnInit(){
     this.apiService.getInitStateOfCurrentGame().subscribe(game => {
-      console.log(game)
+      this.gameMode = game.gameType;
       this.startGame(game);
     })
   }
@@ -51,16 +52,13 @@ export class GamestateComponent implements OnInit {
           this.gameIsRunning = false;
         } else if (gameState.bust) {
           this.gameMessage = "BUST!"
+          this.handleBust();
         }
         this.currentDarts = gameState.currentThrow;
         this.darts = gameState.darts;
         this.averages = gameState.averages;
         this.currentPlayerIndex = gameState.currentPlayerIndex;
         await this.delay(1000);
-        if(gameState.bust){
-          this.gameMessage = "Spiel läuft";
-          this.currentDarts = []
-        }
         //this.watchGame();
       })
     }
@@ -73,4 +71,18 @@ export class GamestateComponent implements OnInit {
   private delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
+  private handleBust() {
+    const dartFields = document.querySelectorAll('.dart-field');
+    dartFields.forEach(field => {
+      field.classList.add('blink');
+    });
+  
+    setTimeout(() => {
+      dartFields.forEach(field => {
+        field.classList.remove('blink');
+      });
+    }, 3000); 
+  }
+  
 }
