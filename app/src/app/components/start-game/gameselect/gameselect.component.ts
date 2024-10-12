@@ -6,7 +6,7 @@ import { GameModeDetailsDialogComponent } from '../game-mode-details-dialog/game
 import { PlayerCountDialogComponent } from '../player-count-dialog/player-count-dialog.component';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
-import { GameState } from '../../../model/game.model';
+import { GameStateX01 } from '../../../model/game.model';
 import { Player} from '../../../model/player.model';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -70,20 +70,27 @@ export class GameselectComponent {
           });
         });
 
-        let game: GameState = {
-          gameType: gameDetails.mode,
-          currentPlayerIndex: 0,
-          players: activePlayers,
-          points: new Array(activePlayers.length).fill(gameDetails.points),
-          averages: new Array(activePlayers.length).fill(0),
-          bust: false,
-          darts: new Array(activePlayers.length).fill(0),
-          includeBulls: gameDetails.includeBullsEye,
-          inVariant: gameDetails.inVariant,
-          outVariant: gameDetails.outVariant
+        if(gameDetails.mode === "X01"){
+          let game: GameStateX01 = {
+            gameType: gameDetails.mode,
+            currentPlayerIndex: 0,
+            players: activePlayers,
+            points: new Array(activePlayers.length).fill(gameDetails.points),
+            averages: new Array(activePlayers.length).fill(0),
+            bust: false,
+            darts: new Array(activePlayers.length).fill(0),
+            includeBulls: gameDetails.includeBullsEye,
+            inVariant: gameDetails.inVariant,
+            outVariant: gameDetails.outVariant
+          }
+          this.apiservice.initX01Game(game);
+          this.router.navigateByUrl('/game/x01');
+        } else if (gameDetails.mode === "Cricket"){
+          // Cricket
+          this.router.navigateByUrl('/game/cricket');
+        } else if (gameDetails.mode === "Train Your Aim"){
+          // Train Your Aim
         }
-        this.apiservice.initX01Game(game);
-        this.router.navigateByUrl('/game/x01');
       }
     });
   }

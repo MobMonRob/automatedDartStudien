@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Player } from '../model/player.model';
 import { Observable, of } from 'rxjs';
-import { GameState } from '../model/game.model';
+import { GameStateX01 } from '../model/game.model';
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +20,7 @@ export class ApiService {
     }
   ];
 
-  mockGame: GameState = {
+  mockGame: GameStateX01 = {
     gameType: 'X01',
     players: this.mockPlayers,
     points: [101, 101, 101],
@@ -39,7 +39,7 @@ export class ApiService {
 
   constructor() {}
 
-  initX01Game(gameState: GameState){
+  initX01Game(gameState: GameStateX01){
     this.mockGame = gameState;
     this.mockPlayers = gameState.players;
   }
@@ -52,16 +52,16 @@ export class ApiService {
     return of(this.mockPlayers);
   }
 
-  getInitStateOfCurrentGame(): Observable<GameState> {
+  getInitStateOfCurrentGameX01(): Observable<GameStateX01> {
     this.initialPointValue = this.mockGame.points[0];
     return of(this.mockGame);
   }
 
-  getCurrentGameState(): Observable<GameState> {
+  getCurrentGameStateX01(): Observable<GameStateX01> {
     return of(this.mockGame);
   }
 
-  evaluateThrow(value: number, valueString: string): Observable<GameState> {
+  evaluateThrow(value: number, valueString: string): Observable<GameStateX01> {
     let curPlayInd = this.mockGame.currentPlayerIndex;
     let currentThrow = this.mockGame.players[curPlayInd].currentDarts;
     if (currentThrow.length < 3) {
@@ -90,12 +90,12 @@ export class ApiService {
           this.mockGame.darts[curPlayInd]
       );
     } else {
-      this.evaluateNextPlayer();
+      this.evaluateNextPlayerX01();
     }
     return of(this.mockGame);
   }
 
-  evaluateNextPlayer(): Observable<GameState> {
+  evaluateNextPlayerX01(): Observable<GameStateX01> {
     this.mockGame.currentPlayerIndex = (this.mockGame.currentPlayerIndex + 1) % this.mockGame.players.length;
     this.mockGame.bust = false;
     this.mockGame.players[this.mockGame.currentPlayerIndex].currentDarts = [];

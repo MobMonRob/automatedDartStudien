@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { GamestateComponent } from '../game-pages/gamestate/gamestate.component';
+import { GamestateComponent } from '../game-pages/gamestate-x01/gamestate.component';
 
 @Component({
   selector: 'dartapp-debug-number-console',
@@ -37,20 +37,20 @@ export class DebugNumberConsoleComponent {
   constructor(private gamestateComponent: GamestateComponent) {}
 
   evaluateInput(field: string, multiplier: number) {
-    let score = this.fields.find(f => f.name === field)?.value || 0;
+    let score = this.fields.find((f) => f.name === field)?.value || 0;
     let totalScore = score * multiplier;
 
-    if(field === "Random"){
+    if (field === 'Random') {
       score = Math.floor(Math.random() * 20);
-      multiplier = Math.floor(Math.random() * 3)+1;
+      multiplier = Math.floor(Math.random() * 3) + 1;
       totalScore = score * multiplier;
-    } 
-  
+    }
+
     console.log(this.getDartValueString(score, multiplier));
     this.gamestateComponent.evaluateDebugThrow(totalScore, this.getDartValueString(score, multiplier));
   }
 
-  disableConsole():boolean{
+  disableConsole(): boolean {
     return this.gamestateComponent.disableConsoleButtons();
   }
 

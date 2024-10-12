@@ -36,6 +36,6 @@
     </div>
   </div>
   <div class="button-container">
-    <button class="continue-button" (click)="saveDetails()" [disabled]="selectedPoints === 0">Weiter</button>
+    <button class="continue-button" (click)="saveDetails()" [disabled]="(selectedPoints === 0 && data.mode === 'X01')">Weiter</button>
   </div>
 </div>

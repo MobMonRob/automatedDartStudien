@@ -1,6 +1,6 @@
 import { Player } from "./player.model";
 
-export interface GameState{
+export interface GameStateX01{
     gameType: string,
     players: Player[],
     points: number[],

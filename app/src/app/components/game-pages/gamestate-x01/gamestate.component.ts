@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
-import { GameState } from '../../../model/game.model';
+import { GameStateX01 } from '../../../model/game.model';
 import { DebugNumberConsoleComponent } from "../../debug-number-console/debug-number-console.component";
 import { TopbarComponent } from "../../topbar/topbar.component";
 
@@ -28,13 +28,13 @@ export class GamestateComponent implements OnInit {
   constructor (private apiService: ApiService) {}
 
   ngOnInit(){
-    this.apiService.getInitStateOfCurrentGame().subscribe(game => {
+    this.apiService.getInitStateOfCurrentGameX01().subscribe(game => {
       this.gameMode = game.gameType;
       this.startGame(game);
     })
   }
 
-  startGame(game: GameState) {
+  startGame(game: GameStateX01) {
     this.players = game.players;
     this.points = game.points;
     this.darts = game.darts;
@@ -46,7 +46,7 @@ export class GamestateComponent implements OnInit {
 
   watchGame() {
     if(this.gameIsRunning){
-      this.apiService.getCurrentGameState().subscribe(async gameState => {
+      this.apiService.getCurrentGameStateX01().subscribe(async gameState => {
         this.reactOnNewGameState(gameState);
         await this.delay(1000);
         //this.watchGame();
@@ -61,7 +61,7 @@ export class GamestateComponent implements OnInit {
   }
 
   nextPlayer() {
-    this.apiService.evaluateNextPlayer().subscribe(gameState => {
+    this.apiService.evaluateNextPlayerX01().subscribe(gameState => {
       this.reactOnNewGameState(gameState);
     });
   }
@@ -76,7 +76,7 @@ export class GamestateComponent implements OnInit {
     return this.players[this.currentPlayerIndex].currentDarts.length === 3 || this.bust.bust || !this.gameIsRunning;
   }
 
-  private reactOnNewGameState(gameState: GameState){
+  private reactOnNewGameState(gameState: GameStateX01){
     this.points = gameState.points;
     this.bust = {bust: gameState.bust, origin: gameState.players[this.currentPlayerIndex].name};
     if(this.points.indexOf(0) !== -1){
