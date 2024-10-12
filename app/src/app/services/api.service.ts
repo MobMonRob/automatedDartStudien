@@ -1,22 +1,52 @@
 import { Injectable } from '@angular/core';
 import { Player } from '../model/player.model';
 import { Observable, of } from 'rxjs';
-import { GameStateX01 } from '../model/game.model';
+import { ArchiveGameData, GameStateX01 } from '../model/game.model';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class ApiService {
   mockPlayers: Player[] = [
     {
       id: '481d6713-dcca-473b-a68b-97d55f9378f9',
       name: 'Test-User',
-      currentDarts: [],
+      currentDarts: []
     },
     {
       id: '481d6713-dcca-473b-a68b-97d55f9378f9',
       name: 'Test-User2',
-      currentDarts: [],
+      currentDarts: []
+    }
+  ];
+
+  mockGameArchive: ArchiveGameData[] = [
+    {
+      id: 1,
+      duration: '25 min',
+      winner: this.mockPlayers[0],
+      players: this.mockPlayers,
+      gameMode: 'X01 - 501',
+      darts: [45, 60],
+      averages: [50, 43]
+    },
+    {
+      id: 1,
+      duration: '30 min',
+      winner: this.mockPlayers[1],
+      players: this.mockPlayers,
+      gameMode: 'Cricket',
+      darts: [45, 60],
+      averages: [50, 43]
+    },
+    {
+      id: 1,
+      duration: '20 min',
+      winner: this.mockPlayers[0],
+      players: this.mockPlayers,
+      gameMode: 'Train Your Aim',
+      darts: [45, 60],
+      averages: [50, 43]
     }
   ];
 
@@ -28,8 +58,8 @@ export class ApiService {
     darts: [0, 0, 0],
     bust: false,
     currentPlayerIndex: 0,
-    inVariant: "",
-    outVariant: "",
+    inVariant: '',
+    outVariant: '',
     includeBulls: false
   };
 
@@ -39,7 +69,7 @@ export class ApiService {
 
   constructor() {}
 
-  initX01Game(gameState: GameStateX01){
+  initX01Game(gameState: GameStateX01) {
     this.mockGame = gameState;
     this.mockPlayers = gameState.players;
   }
@@ -50,6 +80,10 @@ export class ApiService {
 
   getPlayers(): Observable<Player[]> {
     return of(this.mockPlayers);
+  }
+
+  getGameHistory(): Observable<ArchiveGameData[]>{
+    return of(this.mockGameArchive);
   }
 
   getInitStateOfCurrentGameX01(): Observable<GameStateX01> {
@@ -78,7 +112,7 @@ export class ApiService {
 
       let nextValue = this.mockGame.points[curPlayInd] - value;
       if (nextValue < 0) {
-        //Bust 
+        //Bust
         this.mockGame.bust = true;
         this.mockGame.points[curPlayInd] = this.previousScoreValue;
       } else {
@@ -86,8 +120,7 @@ export class ApiService {
         this.mockGame.points[curPlayInd] = nextValue;
       }
       this.mockGame.averages[curPlayInd] = Math.round(
-        (this.initialPointValue - this.mockGame.points[curPlayInd]) /
-          this.mockGame.darts[curPlayInd]
+        (this.initialPointValue - this.mockGame.points[curPlayInd]) / this.mockGame.darts[curPlayInd]
       );
     } else {
       this.evaluateNextPlayerX01();

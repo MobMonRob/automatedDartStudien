@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TopbarComponent } from "../topbar/topbar.component";
 import { GameselectComponent } from "../start-game/gameselect/gameselect.component";
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'dartapp-landing-page',
@@ -10,25 +11,12 @@ import { GameselectComponent } from "../start-game/gameselect/gameselect.compone
   templateUrl: './landing-page.component.html',
   styleUrl: './landing-page.component.scss'
 })
-export class LandingPageComponent implements OnInit {
-  images = [
-    { src: 'assets/image1.jpg', title: 'Bild 1' },
-    { src: 'assets/image2.jpg', title: 'Bild 2' },
-    { src: 'assets/image3.jpg', title: 'Bild 3' }
-  ];
-  currentIndex = 0;
+export class LandingPageComponent {
 
-  ngOnInit() {
-    this.startSlideshow();
-  }
+  constructor(private router: Router){}
 
-  startSlideshow() {
-    setInterval(() => {
-      this.changeSlide(1);
-    }, 3000); 
-  }
-
-  changeSlide(step: number) {
-    this.currentIndex = (this.currentIndex + step + this.images.length) % this.images.length;
+  navToHistory(){
+    console.log("E")
+    this.router.navigateByUrl("/history")
   }
 }

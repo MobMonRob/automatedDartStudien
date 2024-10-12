@@ -1,1 +1,31 @@
-<p>gamehistory works!</p>
+<dartapp-topbar></dartapp-topbar>
+<div class="game-history-container">
+  <h1>Vergangene Spiele</h1>
+
+  <div *ngFor="let game of gameHistory; let i = index" class="game-card">
+    <h2>Spielmodus: {{ game.gameMode }}</h2>
+    <p>
+      <strong>Dauer:</strong>
+      {{ game.duration }}
+    </p>
+    <p>
+      <strong>Gewinner:</strong>
+      {{ game.winner.name }}
+    </p>
+    <p>
+      <strong>Spieler:</strong>
+      {{ playerStrings[i]}}
+    </p>
+    <p>
+      <strong>Darts geworfen:</strong>
+      {{ game.darts }}
+    </p>
+
+    <h3>Averages:</h3>
+    <ul>
+      <li *ngFor="let player of game.players; let j = index">
+        <strong>{{ player.name }}:</strong> {{ game.averages[j] }} Punkte
+      </li>
+    </ul>
+  </div>
+</div>
