@@ -1,4 +1,3 @@
-import time
 from flask import Flask, Response, render_template
 import cv2 as cv
 from DartTracker import DartTracker
@@ -9,8 +8,8 @@ darttracker = DartTracker()
 
 def generate_frames(camera_id):
     while True:
-        frame = darttracker.getCameraFrame(index = camera_id)
-        ret, buffer = cv.imencode('.jpg', frame)
+        _, frame = darttracker.getCameraFrame(index = camera_id)
+        _, buffer = cv.imencode('.jpg', frame)
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
@@ -23,6 +22,15 @@ def index():
 def video_feed(camera_id):
     return Response(generate_frames(camera_id),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/frametime')
+def frametime():
+    frametimes = darttracker.getFrameTimes()
+    response = ""
+    for i, frametime in frametimes:
+        response += f"Camera {i}: {1/frametime} FPS\n"
+
+    return {"frametime": response}
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

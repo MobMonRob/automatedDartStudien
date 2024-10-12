@@ -5,81 +5,114 @@ import cv2
 class DartTracker():
 
     CAMERA_COUNT = 3
-    MAX_FPS = 50
-
-    # The number over how many of the last frametimes the average is calculated. Set to 1 to disable.
-    ROLLING_FRAMETIME_AVERAGE = 50
-
     cameras = []
-    frame_buffer = []
-    frame_times = []
-
-    bufferThread: threading.Thread = threading.Thread()
     
     def __init__(self):
-        self.bufferThread = threading.Thread(target=self.asyncLoadFramesIntoBuffer, daemon=True)
         self.initializeCameras()
 
     def initializeCameras(self):
         # Test for camera indices
         # Todo: Find better way
         for i in range(10):
-            camera = cv2.VideoCapture(i)
+            camera = Camera(i)
 
-            if not camera.isOpened():
-                print(f"Cannot open camera {i}")
+            if camera.valid == False:
                 continue
 
-            camera.set(cv2.CAP_PROP_FOURCC,cv2.VideoWriter_fourcc('M','J','P','G'))
-            camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-            camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-
             self.cameras.append(camera)
-            self.frame_buffer.append(camera.read())
 
             if len(self.cameras) >= self.CAMERA_COUNT:
                 break
         
-        self.bufferThread.start()
-        
-    def asyncLoadFramesIntoBuffer(self):
-        def updateFrameTimeList(frametime):
-            self.frame_times.append(frametime)
-            if len(self.frame_times) > self.ROLLING_FRAMETIME_AVERAGE:
-                self.frame_times.pop(0)
+        if len(self.cameras) == self.CAMERA_COUNT:
+            for camera in self.cameras:
+                camera.start()
+                time.sleep(1/(camera.MAX_FPS*self.CAMERA_COUNT))
+            
 
+    def getCameraFrame(self, index: int = None):
+        if index is not None and len(self.cameras) > index:
+            return self.cameras[index].getFrame()
+        return False, None
+
+    def getDartPositions2D(self):
+        # get the location of the darts on the board
+        pass
+
+    def getFrameTimes(self):
+        frameTimes = []
+        for camera in self.cameras:
+            frameTimes.append((camera.index, camera.getFrametime()))
+        return frameTimes
+
+    
+class Camera():
+
+    MAX_FPS = 24
+
+    # The number over how many of the last frametimes the average is calculated.
+    ROLLING_FRAMETIME_AVERAGE = 50
+
+    camera = cv2.VideoCapture()
+    frame_buffer = None
+    frame_times = []
+    index = -1
+    valid = False
+
+    def __init__(self, index):
+        self.index = index
+        self.initialize_camera(index)
+
+    def initialize_camera(self, index):
+        camera = cv2.VideoCapture(index)
+
+        if not camera.isOpened():
+            print(f"Cannot open camera {index}")
+            self.valid = False
+            return
+
+        camera.set(cv2.CAP_PROP_FOURCC,cv2.VideoWriter_fourcc('M','J','P','G'))
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+        ret, self.frame_buffer = camera.read()
+        if ret == False:
+            self.valid = False
+            return
+        
+        self.camera = camera
+        self.valid = True
+    
+    def start(self):
+        threading.Thread(target=self.asyncLoadFramesIntoBuffer, daemon=True).start()
+    
+    def asyncLoadFramesIntoBuffer(self):
         startTime = time.time()
         iteration = 1
         while True:
             frameTime = time.time() - startTime
             if(frameTime < 1/self.MAX_FPS):
                 continue
-            updateFrameTimeList(frameTime)
-            if iteration > self.ROLLING_FRAMETIME_AVERAGE/2 and self.ROLLING_FRAMETIME_AVERAGE > 1:
+
+            self.frame_times.append(frameTime)
+            if len(self.frame_times) > self.ROLLING_FRAMETIME_AVERAGE:
+                self.frame_times.pop(0)
+
+            if iteration > self.ROLLING_FRAMETIME_AVERAGE/2:
                 iteration = 0
-                print(f"Rolling average frame time (last {self.ROLLING_FRAMETIME_AVERAGE} frames): {sum(self.frame_times) / len(self.frame_times)}")
-                print(f"Rolling average frames per second (last {self.ROLLING_FRAMETIME_AVERAGE} frames): {len(self.frame_times) / sum(self.frame_times)}")
 
             iteration += 1
             startTime = time.time()
-            for i, camera in enumerate(self.cameras):
-                _, frame = camera.read()
-                self.frame_buffer[i] = frame
 
-        
-                    
+            _, frame = self.camera.read()
+            self.frame_buffer = frame
 
-    def getCameraFrame(self, index: int = None):
-        if index is not None and len(self.cameras) > index:
-            return self.frame_buffer[index]
-        return False, None
-
-    def getDartPositions1D(self, frame):
-        # get the location of the darts from one cameras perspective
-        pass
-
-    def getDartPositions2D(self):
-        # get the location of the darts on the board
-        pass
-
+    def getFrame(self):
+        return True, self.frame_buffer
     
+    def getDartPositions1D(self):
+        # get the location of the darts from the camera's perspective
+        pass
+
+    def getFrametime(self):
+        return sum(self.frame_times) / len(self.frame_times)

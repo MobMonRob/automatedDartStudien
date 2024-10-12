@@ -10,7 +10,21 @@
         .camera-item {
             text-align: center;
         }
+        .stats{
+            font-size: large;
+        }
     </style>
+    <script>
+        function fetchFrametime() {
+            fetch('/frametime')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('frametime').innerText = `${data.frametime}`;
+                });
+        }
+
+        setInterval(fetchFrametime, 1000); // Fetch frametime every second
+    </script>
 </head>
 <body>
     <div class="camera-grid">
@@ -23,6 +37,7 @@
         <div class="camera-item">
             <img src="{{ url_for('video_feed', camera_id=2) }}" width="1280" height="720">
         </div>
+        <div class="stats" id="frametime">Calculating...</div>
     </div>
 </body>
 </html>
