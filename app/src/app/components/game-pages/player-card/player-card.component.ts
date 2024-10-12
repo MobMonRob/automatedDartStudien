@@ -14,4 +14,5 @@ export class PlayerCardComponent {
   @Input() darts!: number;
   @Input() average!: number;
   @Input() lastDarts!: string[];
+  @Input() bust!: {bust: boolean, origin: string};
 }

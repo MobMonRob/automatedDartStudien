@@ -7,7 +7,6 @@ export interface GameState{
     averages: number[],
     darts: number[],
     details: string,
-    currentThrow: string[],
     bust: boolean,
     currentPlayerIndex: number
 }

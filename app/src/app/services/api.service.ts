@@ -32,7 +32,6 @@ export class ApiService {
     averages: [0, 0, 0],
     darts: [0, 0, 0],
     details: 'Double Out',
-    currentThrow: [],
     bust: false,
     currentPlayerIndex: 0,
   };
@@ -53,33 +52,29 @@ export class ApiService {
   }
 
   getCurrentGameState(): Observable<GameState> {
+    return of(this.mockGame);
+  }
+
+  evaluateThrow(value: number, valueString: string): Observable<GameState> {
     let curPlayInd = this.mockGame.currentPlayerIndex;
-    if (this.mockGame.currentThrow.length < 3) {
+    let currentThrow = this.mockGame.players[curPlayInd].currentDarts;
+    if (currentThrow.length < 3) {
       if (this.afterPlayerChange) {
         this.previousScoreValue = this.mockGame.points[curPlayInd];
       }
       this.afterPlayerChange = false;
       if (this.mockGame.bust) {
-        this.mockGame.currentThrow = [];
+        currentThrow = [];
         this.mockGame.bust = false;
       }
-      let nextThrow = Math.floor(Math.random() * 20);
-      let multiplier = Math.floor(Math.random() * 3);
-      this.mockGame.currentThrow.push(
-        this.getDartValueString(nextThrow, multiplier)
-      );
-      this.mockGame.players[curPlayInd].currentDarts =
-        this.mockGame.currentThrow;
+      this.mockGame.players[curPlayInd].currentDarts.push(valueString);
       this.mockGame.darts[curPlayInd] += 1;
 
-      let nextValue = this.mockGame.points[curPlayInd] -
-        nextThrow * (multiplier === 0 ? 1 : multiplier);
+      let nextValue = this.mockGame.points[curPlayInd] - value;
       if (nextValue < 0) {
+        //Bust 
         this.mockGame.bust = true;
         this.mockGame.points[curPlayInd] = this.previousScoreValue;
-        this.mockGame.currentPlayerIndex =
-          (curPlayInd + 1) % this.mockGame.players.length;
-        this.afterPlayerChange = true;
       } else {
         //Win and No Bust (View handles Win)
         this.mockGame.points[curPlayInd] = nextValue;
@@ -89,26 +84,16 @@ export class ApiService {
           this.mockGame.darts[curPlayInd]
       );
     } else {
-      if(!this.mockGame.bust){
-        this.mockGame.currentPlayerIndex = (curPlayInd + 1) % this.mockGame.players.length;
-      }
-      this.mockGame.currentThrow = [];
-      this.afterPlayerChange = true;
+      this.evaluateNextPlayer();
     }
     return of(this.mockGame);
   }
 
-  private getDartValueString(value: number, multiplier: number) {
-    switch (multiplier) {
-      case 2: {
-        return `D${value}`;
-      }
-      case 3: {
-        return `T${value}`;
-      }
-      default: {
-        return `${value}`;
-      }
-    }
+  evaluateNextPlayer(): Observable<GameState> {
+    this.mockGame.currentPlayerIndex = (this.mockGame.currentPlayerIndex + 1) % this.mockGame.players.length;
+    this.mockGame.bust = false;
+    this.mockGame.players[this.mockGame.currentPlayerIndex].currentDarts = [];
+    this.afterPlayerChange = true;
+    return of(this.mockGame);
   }
 }

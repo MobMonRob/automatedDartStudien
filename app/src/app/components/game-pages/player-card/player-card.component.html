@@ -6,8 +6,8 @@
     <span class="average">{{average}} <small>Ø</small></span>
   </div>
   <span class="last-darts">
-    <div class="dart-field" id="dart1">{{lastDarts[0]}}</div>
-    <div class="dart-field" id="dart2">{{lastDarts[1]}}</div>
-    <div class="dart-field" id="dart3">{{lastDarts[2]}}</div>
+    <div class="dart-field" id="dart1" [ngClass]="{'blink': bust.bust && bust.origin === name}">{{lastDarts[0]}}</div>
+    <div class="dart-field" id="dart2" [ngClass]="{'blink': bust.bust && bust.origin === name}">{{lastDarts[1]}}</div>
+    <div class="dart-field" id="dart3" [ngClass]="{'blink': bust.bust && bust.origin === name}">{{lastDarts[2]}}</div>
   </span>
 </div>

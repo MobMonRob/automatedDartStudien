@@ -10,6 +10,7 @@
           [average]="averages[i]"
           [darts]="darts[i]"
           [lastDarts]="player.currentDarts"
+          [bust]="bust"
           class="player-card"
         ></dartapp-player-card>
       </div>
@@ -23,16 +24,17 @@
       <div class="current-score">{{ points[currentPlayerIndex] }}</div>
 
       <div class="current-darts">
-        <div class="dart-field" id="dart1">{{ currentDarts[0] }}</div>
-        <div class="dart-field" id="dart2">{{ currentDarts[1] }}</div>
-        <div class="dart-field" id="dart3">{{ currentDarts[2] }}</div>
+        <div class="dart-field" id="dart1" [ngClass]="{'blink': bust.bust}">{{ players[currentPlayerIndex].currentDarts[0] }}</div>
+        <div class="dart-field" id="dart2" [ngClass]="{'blink': bust.bust}">{{ players[currentPlayerIndex].currentDarts[1] }}</div>
+        <div class="dart-field" id="dart3" [ngClass]="{'blink': bust.bust}">{{ players[currentPlayerIndex].currentDarts[2] }}</div>
       </div>
+
+      <button class="buttom-custom miss-button-custom" (click)="addMissThrow()" [disabled]="disableConsoleButtons()">Verfehlt</button>
+      <button class="buttom-custom next-button-custom" (click)="nextPlayer()" [disabled]="!gameIsRunning">Nächster Spieler</button>
     </div>
+  </div>
+  <div class="debug-div">
+    <dartapp-debug-number-console></dartapp-debug-number-console>
   </div>
 </div>
 
-<button mat-raised-button color="primary" (click)="watchGame()">
-  Nächster Wurf
-</button>
-
-<h1 class="game-status">{{ gameMessage }}</h1>

@@ -1,0 +1,13 @@
+<div class="dartboard-container">
+  <div class="fields">
+    <div *ngFor="let field of fields" class="field">
+      <button (click)="evaluateInput(field.name, 1)" [disabled]="disableConsole()">{{ field.name }}</button>
+      <button (click)="evaluateInput(field.name, 2)" [disabled]="disableConsole()">D {{ field.name }}</button>
+      <button (click)="evaluateInput(field.name, 3)" *ngIf="field.name !== 'Bull'" [disabled]="disableConsole()">T {{ field.name }}</button>
+    </div>
+    <div class="field">
+     <button (click)="evaluateInput('Random', 21)" [disabled]="disableConsole()">Random</button>
+     <button (click)="evaluateInput('Miss', 0)" [disabled]="disableConsole()">0</button>
+    </div>
+  </div>
+</div>

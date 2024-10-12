@@ -4,11 +4,12 @@ import { RouterOutlet } from '@angular/router';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
 import { GameState } from '../../../model/game.model';
+import { DebugNumberConsoleComponent } from "../../debug-number-console/debug-number-console.component";
 
 @Component({
   selector: 'dartapp-gamestate',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, PlayerCardComponent],
+  imports: [CommonModule, RouterOutlet, PlayerCardComponent, DebugNumberConsoleComponent],
   templateUrl: './gamestate.component.html',
   styleUrl: './gamestate.component.scss'
 })
@@ -21,7 +22,7 @@ export class GamestateComponent implements OnInit {
   averages:  number[] = [];
   currentDarts: string[] = [];
   gameIsRunning = false;
-  gameMessage = "Spiel beginnt in Kürze";
+  bust = {bust: false, origin: ""};
 
   constructor (private apiService: ApiService) {}
 
@@ -38,52 +39,57 @@ export class GamestateComponent implements OnInit {
     this.darts = game.darts;
     this.averages = game.averages;
     this.gameIsRunning = true;
-    this.gameMessage = "Spiel läuft";
     this.currentPlayerIndex = game.currentPlayerIndex;
-    this.watchGame();
+    //this.watchGame();
   }
 
   watchGame() {
     if(this.gameIsRunning){
       this.apiService.getCurrentGameState().subscribe(async gameState => {
-        this.points = gameState.points;
-        if(this.points.indexOf(0) !== -1){
-          this.gameMessage = `Spieler ${gameState.players[this.points.indexOf(0)].name} hat das Spiel gewonnen`
-          this.gameIsRunning = false;
-          this.endGame(this.points.indexOf(0));
-        } else if (gameState.bust) {
-          this.gameMessage = "BUST!"
-          this.handleBust();
-        }
-        this.currentDarts = gameState.currentThrow;
-        this.darts = gameState.darts;
-        this.averages = gameState.averages;
-        this.currentPlayerIndex = gameState.currentPlayerIndex;
+        this.reactOnNewGameState(gameState);
         await this.delay(1000);
-        this.watchGame();
+        //this.watchGame();
       })
     }
   }
 
-  changeGameState(){
-    this.gameIsRunning = !this.gameIsRunning;
+  addMissThrow() {
+    this.apiService.evaluateThrow(0,"0").subscribe(gameState => {
+      this.reactOnNewGameState(gameState);
+    });
+  }
+
+  nextPlayer() {
+    this.apiService.evaluateNextPlayer().subscribe(gameState => {
+      this.reactOnNewGameState(gameState);
+    });
+  }
+
+  evaluateDebugThrow(value: number, valueString: string){
+    this.apiService.evaluateThrow(value,valueString).subscribe(gameState => {
+      this.reactOnNewGameState(gameState);
+    });
+  }
+
+  disableConsoleButtons():boolean {
+    return this.players[this.currentPlayerIndex].currentDarts.length === 3 || this.bust.bust || !this.gameIsRunning;
+  }
+
+  private reactOnNewGameState(gameState: GameState){
+    this.points = gameState.points;
+    this.bust = {bust: gameState.bust, origin: gameState.players[this.currentPlayerIndex].name};
+    if(this.points.indexOf(0) !== -1){
+      this.gameIsRunning = false;
+      this.endGame(this.points.indexOf(0));
+    } 
+    this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
+    this.darts = gameState.darts;
+    this.averages = gameState.averages;
+    this.currentPlayerIndex = gameState.currentPlayerIndex;
   }
 
   private delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  private handleBust() {
-    const dartFields = document.querySelectorAll('.dart-field');
-    dartFields.forEach(field => {
-      field.classList.add('blink');
-    });
-  
-    setTimeout(() => {
-      dartFields.forEach(field => {
-        field.classList.remove('blink');
-      });
-    }, 3000); 
   }
 
   private endGame(winnerIndex: number) {
