@@ -1,5 +1,5 @@
 export interface Player{
     id: string;
     name: string;
-    currentDarts: number[]
+    currentDarts: string[]
 }

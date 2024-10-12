@@ -19,7 +19,7 @@ export class GamestateComponent implements OnInit {
   points: number[] = [];
   darts:  number[] = [];
   averages:  number[] = [];
-  currentDarts: Number[] = [];
+  currentDarts: string[] = [];
   gameIsRunning = false;
   gameMessage = "Spiel beginnt in Kürze";
 
@@ -40,7 +40,7 @@ export class GamestateComponent implements OnInit {
     this.gameIsRunning = true;
     this.gameMessage = "Spiel läuft";
     this.currentPlayerIndex = game.currentPlayerIndex;
-    //this.watchGame();
+    this.watchGame();
   }
 
   watchGame() {
@@ -50,6 +50,7 @@ export class GamestateComponent implements OnInit {
         if(this.points.indexOf(0) !== -1){
           this.gameMessage = `Spieler ${gameState.players[this.points.indexOf(0)].name} hat das Spiel gewonnen`
           this.gameIsRunning = false;
+          this.endGame(this.points.indexOf(0));
         } else if (gameState.bust) {
           this.gameMessage = "BUST!"
           this.handleBust();
@@ -59,7 +60,7 @@ export class GamestateComponent implements OnInit {
         this.averages = gameState.averages;
         this.currentPlayerIndex = gameState.currentPlayerIndex;
         await this.delay(1000);
-        //this.watchGame();
+        this.watchGame();
       })
     }
   }
@@ -83,6 +84,16 @@ export class GamestateComponent implements OnInit {
         field.classList.remove('blink');
       });
     }, 3000); 
+  }
+
+  private endGame(winnerIndex: number) {
+    const playerCards = document.querySelectorAll('.player-card');
+
+    playerCards.forEach(card => {
+      card.classList.remove('winner-card');
+    });
+  
+    playerCards[winnerIndex*2].classList.add('winner-card');
   }
   
 }

@@ -13,5 +13,5 @@ export class PlayerCardComponent {
   @Input() points!: number;
   @Input() darts!: number;
   @Input() average!: number;
-  @Input() lastDarts!: number[];
+  @Input() lastDarts!: string[];
 }
