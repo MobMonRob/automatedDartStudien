@@ -1,0 +1,22 @@
+.start-card {
+    background-color: #4CAF50; 
+    color: white;
+    border-radius: 10px;
+    padding: 30px;
+    margin-bottom: 20px; 
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.start-card:hover {
+    transform: scale(1.05);
+}
+
+.start-card h2 {
+    font-size: 28px; 
+    margin-bottom: 10px;
+}
+
+.start-card p {
+    font-size: 18px; 
+}

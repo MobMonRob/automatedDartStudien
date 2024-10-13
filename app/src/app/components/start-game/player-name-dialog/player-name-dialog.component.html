@@ -1,0 +1,14 @@
+<div class="mat-dialog-container">
+  <h1 class="dialog-title">Spielernamen Eingeben</h1>
+
+  <div class="dialog-content">
+    <div class="player-input">
+      <label class="name-label">Spielername</label>
+      <input [(ngModel)]="playerName" placeholder="Name eingeben" />
+    </div>
+  </div>
+
+  <div class="dialog-actions">
+    <button class="save-button" (click)="save()" [disabled]="playerName.length === 0">Speichern</button>
+  </div>
+</div>

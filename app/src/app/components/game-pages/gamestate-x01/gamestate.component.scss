@@ -1,0 +1,208 @@
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto; 
+  grid-template-areas: 
+    "left-side current-player"
+    "full-width full-width";
+  gap: 20px;
+  padding: 20px;
+  height: 75vh; 
+}
+
+.players-header {
+  font-size: 2.5rem; 
+  font-weight: bold; 
+  color: rgb(44, 44, 44); 
+  text-transform: uppercase; 
+  text-align: left; 
+  margin-bottom: 20px;
+  border-bottom: 3px solid rgb(44, 44, 44); 
+  padding-bottom: 10px; 
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); 
+  letter-spacing: 2px;
+  padding-bottom: 5%;
+}
+
+.left-side {
+  border-right: 2px solid #ddd;
+  padding-right: 20px;
+}
+
+.player-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Dynamisch Kacheln nebeneinander oder untereinander anordnen */
+  gap: 20px; 
+  justify-items: center; 
+  align-items: start; 
+  padding: 20px; 
+  margin-left: 20px;
+}
+
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.current-player {
+  text-align: center;
+}
+
+.current-player-tag {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center; 
+  padding-top: 5%;
+  margin-top: 10px;
+}
+
+.current-player-tag {
+  font-size: 5rem;
+  color: #f44336;
+  margin-bottom: 10px;
+}
+
+.current-score {
+  font-size: 12rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.current-darts {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.dart-field {
+  width: 80px; 
+  height: 80px;
+  border: 2px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: bold;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+@media (min-width: 1200px) {
+  .players {
+    flex-direction: row; 
+    flex-wrap: wrap;
+  }
+
+  .dartapp-player-card {
+    flex: 1 1 30%;
+    max-width: 30%;
+  }
+}
+
+.buttom-custom {
+  color: white; 
+  border: none; 
+  border-radius: 8px; 
+  padding: 10px 30px; 
+  font-size: 25px; 
+  font-weight: bold; 
+  cursor: pointer; 
+  transition: background 0.3s, transform 0.2s; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-top: 5%; 
+  width: 100%; 
+  min-width: 200px;
+  max-width: 500px;
+}
+
+.miss-button-custom {
+  background: linear-gradient(90deg, #f44336, #ff5733); 
+}
+
+.miss-button-custom:hover {
+  background: linear-gradient(90deg, #e53935, #ff4d3f);
+  transform: translateY(-2px); 
+}
+
+.miss-button-custom:active {
+  transform: translateY(1px); 
+}
+
+.miss-button-custom:disabled {
+  background-color: #d3d3d3;  
+  color: #7a7a7a; 
+  border: 2px solid #ccc; 
+  cursor: default; 
+  box-shadow: none; 
+  opacity: 0.6; 
+}
+
+.miss-button-custom:disabled:hover {
+  background-color: #d3d3d3;
+}
+
+.next-button-custom {
+  margin-top: 3%; 
+  background: linear-gradient(90deg, #4CAF50, #388E3C);
+}
+
+.next-button-custom:hover {
+  background: linear-gradient(90deg, #45A049, #388E3C);
+  transform: translateY(-2px); 
+}
+
+.next-button-custom:active {
+  transform: translateY(1px); 
+}
+
+.next-button-custom:disabled {
+  background-color: #d3d3d3;  
+  color: #7a7a7a; 
+  border: 2px solid #ccc; 
+  cursor: default; 
+  box-shadow: none; 
+  opacity: 0.6; 
+}
+
+.next-button-custom:disabled:hover {
+  background-color: #d3d3d3;
+}
+
+@keyframes blink {
+  0% { background-color: transparent; }
+  50% { background-color: red; }
+  100% { background-color: transparent; }
+}
+
+.blink {
+  animation: blink 0.5s infinite; 
+}
+
+.winner-card {
+  animation: glow 1s infinite alternate;
+  background-color: rgba(200, 255, 200, 0.5); 
+  border-radius: 12px; 
+  box-shadow: 0 0 4px 1px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes glow {
+  0% {
+    background-color: rgba(200, 255, 200, 0.5);
+    box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; 
+  }
+  100% {
+    background-color: rgba(200, 255, 200, 0.7); 
+    box-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00; 
+  }
+}
+
+.debug-div {
+  grid-area: full-width;
+  background-color: #ffffff;
+  padding: 20px;
+  width: 100%;
+  border-top: 2px solid #ddd;
+}

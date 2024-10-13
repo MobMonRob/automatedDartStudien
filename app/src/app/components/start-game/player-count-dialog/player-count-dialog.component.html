@@ -1,0 +1,27 @@
+<div class="mat-dialog-container">
+  <h1 mat-dialog-title class="dialog-title">Spieler hinzufügen</h1>
+
+  <div class="dialog-content">
+    <div class="player-list">
+      <div class="player-list-title">
+        <h2 class="available-players">Verfügbare Spieler</h2>
+        <div>
+          <button class="add-button" (click)="addPlayer()">
+            <mat-icon>add</mat-icon> 
+          </button>
+        </div>
+      </div>
+      <form>
+        <div *ngFor="let player of existingPlayers; let i = index" class="player-entry">
+          <mat-checkbox (change)="changeSelection(i)">{{ player.name }}</mat-checkbox>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="dialog-actions-save">
+    <button class="save-button" (click)="save()" [disabled]="selectedPlayers.length === 0">
+      Speichern
+    </button>
+  </div>
+</div>

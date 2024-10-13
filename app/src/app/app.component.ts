@@ -1,13 +1,18 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ScoreboardComponent } from './components/game-pages/scoreboard/scoreboard.component';
+import { StatisticsComponent } from './components/statistics/statistics.component';
+import { GamestateComponent } from './components/game-pages/gamestate-x01/gamestate.component';
+import { GameselectComponent } from './components/start-game/gameselect/gameselect.component';
+import { GamestateCricketComponent } from "./components/game-pages/gamestate-cricket/gamestate-cricket.component";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ScoreboardComponent, StatisticsComponent, GamestateComponent, GameselectComponent, GamestateCricketComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'app';
+  title = 'Dart Score Tracker';
 }

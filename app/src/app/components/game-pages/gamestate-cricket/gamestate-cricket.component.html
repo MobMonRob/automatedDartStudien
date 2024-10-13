@@ -1,0 +1,43 @@
+<dartapp-topbar></dartapp-topbar>
+<div class="container">
+  <div class="left-side">
+    <h1 class="players-header">{{ gameMode + ' - Spieler' }}</h1>
+    <div class="player-list">
+      <div class="players">
+        <dartapp-player-card
+          *ngFor="let player of players; let i = index"
+          [name]="player.name"
+          [points]="points[i]"
+          [average]="averages[i]"
+          [darts]="darts[i]"
+          [lastDarts]="player.currentDarts"
+          [bust]="bust"
+          class="player-card"></dartapp-player-card>
+      </div>
+    </div>
+  </div>
+
+  <div class="cricket-side">
+    <div class="player-column">
+      <h2>Spieler 1</h2>
+      <ul>
+        <li class="player-list-item" *ngFor="let number of cricketNumbers">
+          <div
+            [ngClass]="{ 'number-field': player.id==='', 'player-score-field': player.id!=='' }"
+            *ngFor="let player of playersCricketSide; let i = index">
+            {{ player.id === '' ? number : 'h' }}
+          </div>
+        </li>
+      </ul>
+    </div>
+    <button class="buttom-custom miss-button-custom" (click)="addMissThrow()" [disabled]="disableConsoleButtons()">
+      Verfehlt
+    </button>
+    <button class="buttom-custom next-button-custom" (click)="nextPlayer()" [disabled]="!gameIsRunning">Nächster Spieler</button>
+  </div>
+  <div class="debug-div">
+    <dartapp-debug-number-console [component]="this"></dartapp-debug-number-console>
+  </div>
+</div>
+
+<!-- Comment this out to get rid of Verticalscrollbar-->

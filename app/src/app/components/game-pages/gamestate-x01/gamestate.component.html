@@ -1,0 +1,41 @@
+<dartapp-topbar></dartapp-topbar>
+<div class="container">
+  <div class="left-side">
+    <h1 class="players-header">{{gameMode + " - Spieler"}}</h1>
+    <div class="player-list">
+      <div class="players">
+        <dartapp-player-card
+          *ngFor="let player of players; let i = index"
+          [name]="player.name"
+          [points]="points[i]"
+          [average]="averages[i]"
+          [darts]="darts[i]"
+          [lastDarts]="player.currentDarts"
+          [bust]="bust"
+          class="player-card"
+        ></dartapp-player-card>
+      </div>
+    </div>
+  </div>
+
+  <div class="current-player">
+    <h1 class="players-header">Aktueller Spieler</h1>
+    <div class="current-player-block">
+      <h2 class="current-player-tag">{{ players[currentPlayerIndex].name }}</h2>
+      <div class="current-score">{{ points[currentPlayerIndex] }}</div>
+
+      <div class="current-darts">
+        <div class="dart-field" id="dart1" [ngClass]="{'blink': bust.bust}">{{ players[currentPlayerIndex].currentDarts[0] }}</div>
+        <div class="dart-field" id="dart2" [ngClass]="{'blink': bust.bust}">{{ players[currentPlayerIndex].currentDarts[1] }}</div>
+        <div class="dart-field" id="dart3" [ngClass]="{'blink': bust.bust}">{{ players[currentPlayerIndex].currentDarts[2] }}</div>
+      </div>
+
+      <button class="buttom-custom miss-button-custom" (click)="addMissThrow()" [disabled]="disableConsoleButtons()">Verfehlt</button>
+      <button class="buttom-custom next-button-custom" (click)="nextPlayer()" [disabled]="!gameIsRunning">Nächster Spieler</button>
+    </div>
+  </div>
+  <div class="debug-div"> <!-- Comment this out to get rid of Verticalscrollbar-->
+    <dartapp-debug-number-console [component]="this"></dartapp-debug-number-console>
+  </div>
+</div>
+
