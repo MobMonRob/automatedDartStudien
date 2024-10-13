@@ -6,8 +6,8 @@ import { GamestateTyaComponent } from './components/game-pages/gamestate-tya/gam
 import { GamehistoryComponent } from './components/gamehistory/gamehistory.component';
 
 export const routes: Routes = [
-  { path: 'game/x01', component: GamestateComponent },
   { path: 'game/cricket', component: GamestateCricketComponent },
+  { path: 'game/x01', component: GamestateComponent },
   { path: 'game/tya', component: GamestateTyaComponent },
   { path: 'history', component: GamehistoryComponent },
   { path: '', component: LandingPageComponent }

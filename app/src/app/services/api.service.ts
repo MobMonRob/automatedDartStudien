@@ -17,6 +17,11 @@ export class ApiService {
       id: '481d6713-dcca-473b-a68b-97d55f9378f9',
       name: 'Test-User2',
       currentDarts: []
+    },
+    {
+      id: '481d6713-dcca-473b-a68b-97d55f9378f9',
+      name: 'Test-User3',
+      currentDarts: []
     }
   ];
 
@@ -59,8 +64,7 @@ export class ApiService {
     bust: false,
     currentPlayerIndex: 0,
     inVariant: '',
-    outVariant: '',
-    includeBulls: false
+    outVariant: ''
   };
 
   initialPointValue = 0;

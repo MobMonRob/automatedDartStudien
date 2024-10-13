@@ -6,6 +6,7 @@ import { ApiService } from '../../../services/api.service';
 import { GameStateX01 } from '../../../model/game.model';
 import { DebugNumberConsoleComponent } from "../../debug-number-console/debug-number-console.component";
 import { TopbarComponent } from "../../topbar/topbar.component";
+import { DebugComponent } from '../../../model/debug.model';
 
 @Component({
   selector: 'dartapp-gamestate',
@@ -14,7 +15,7 @@ import { TopbarComponent } from "../../topbar/topbar.component";
   templateUrl: './gamestate.component.html',
   styleUrl: './gamestate.component.scss'
 })
-export class GamestateComponent implements OnInit {
+export class GamestateComponent implements OnInit, DebugComponent {
   players: any[] = [];
   gameMode: string = "";
   currentPlayerIndex = 0;
@@ -66,7 +67,7 @@ export class GamestateComponent implements OnInit {
     });
   }
 
-  evaluateDebugThrow(value: number, valueString: string){
+  evaluateDebugThrow(value: number, valueString: string):void{
     this.apiService.evaluateThrow(value,valueString).subscribe(gameState => {
       this.reactOnNewGameState(gameState);
     });

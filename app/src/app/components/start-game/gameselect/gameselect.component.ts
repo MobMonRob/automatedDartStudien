@@ -6,7 +6,7 @@ import { GameModeDetailsDialogComponent } from '../game-mode-details-dialog/game
 import { PlayerCountDialogComponent } from '../player-count-dialog/player-count-dialog.component';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
-import { GameStateX01 } from '../../../model/game.model';
+import { GameStateCricket, GameStateX01 } from '../../../model/game.model';
 import { Player} from '../../../model/player.model';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -79,7 +79,6 @@ export class GameselectComponent {
             averages: new Array(activePlayers.length).fill(0),
             bust: false,
             darts: new Array(activePlayers.length).fill(0),
-            includeBulls: gameDetails.includeBullsEye,
             inVariant: gameDetails.inVariant,
             outVariant: gameDetails.outVariant
           }
@@ -87,6 +86,18 @@ export class GameselectComponent {
           this.router.navigateByUrl('/game/x01');
         } else if (gameDetails.mode === "Cricket"){
           // Cricket
+          let game: GameStateCricket = {
+            gameType: gameDetails.mode,
+            currentPlayerIndex: 0,
+            players: activePlayers,
+            points: new Array(activePlayers.length).fill(gameDetails.points),
+            averages: new Array(activePlayers.length).fill(0),
+            bust: false,
+            darts: new Array(activePlayers.length).fill(0),
+            indcludeBullsEye: gameDetails.includeBullsEye,
+            hitMatrix: new Array(activePlayers.length).fill(gameDetails.points), //Update
+            closedFields: new Array(activePlayers.length).fill(gameDetails.points) //Update
+          }
           this.router.navigateByUrl('/game/cricket');
         } else if (gameDetails.mode === "Train Your Aim"){
           // Train Your Aim

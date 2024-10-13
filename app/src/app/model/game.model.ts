@@ -11,7 +11,6 @@ export interface GameStateX01 {
   //X01 Specific Details
   inVariant: string;
   outVariant: string;
-  includeBulls: boolean;
 }
 
 export interface ArchiveGameData {
@@ -22,4 +21,18 @@ export interface ArchiveGameData {
   gameMode: string;
   darts: number[];
   averages: number[];
+}
+
+export interface GameStateCricket {
+  gameType: string;
+  players: Player[];
+  points: number[];
+  averages: number[];
+  darts: number[];
+  bust: boolean;
+  currentPlayerIndex: number;
+  //Cricket specific fields
+  indcludeBullsEye: boolean,
+  hitMatrix: number[][];
+  closedFields: boolean[][];
 }
