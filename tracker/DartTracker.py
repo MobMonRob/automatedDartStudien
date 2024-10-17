@@ -48,13 +48,20 @@ class DartTracker():
     
 class Camera():
 
+    WIDTH = 1920
+    HEIGHT = 1080
     MAX_FPS = 24
 
     # The number over how many of the last frametimes the average is calculated.
     ROLLING_FRAMETIME_AVERAGE = 50
 
     camera = cv2.VideoCapture()
+
     frame_buffer = None
+    processed_frame_buffer = None
+    empty_board = None
+    processed_empty_board = None
+
     frame_times = []
     index = -1
     valid = False
@@ -72,10 +79,14 @@ class Camera():
             return
 
         camera.set(cv2.CAP_PROP_FOURCC,cv2.VideoWriter_fourcc('M','J','P','G'))
-        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.WIDTH)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.HEIGHT)
 
         ret, self.frame_buffer = camera.read()
+        self.processed_frame_buffer = self.frame_buffer, []
+        self.empty_board = self.frame_buffer
+        self.processed_empty_board = self.frame_buffer
+
         if ret == False:
             self.valid = False
             return
@@ -107,12 +118,18 @@ class Camera():
             _, frame = self.camera.read()
             self.frame_buffer = frame
 
+            self.processed_frame_buffer = self.getDartPositions1D()
+
     def getFrame(self):
         return True, self.frame_buffer
     
+    def getEditedFrame(self):
+        return True, self.processed_frame_buffer[1]
+    
     def getDartPositions1D(self):
-        # get the location of the darts from the camera's perspective
-        pass
+        frame = self.frame_buffer
 
+        return frame, []
+       
     def getFrametime(self):
         return sum(self.frame_times) / len(self.frame_times)
