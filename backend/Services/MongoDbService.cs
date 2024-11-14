@@ -1,11 +1,17 @@
 using backend.Models;
+using MongoDB.Driver;
 
 namespace backend.Services;
 
 public class MongoDbService
 {
-    public async Task<List<Player>> GetPlayers()
+    public MongoDbService(IConfiguration configuration)
     {
-        return new List<Player>();
+        var connectionString = configuration.GetConnectionString("MongoConnection");
+        var mongoUrl = MongoUrl.Create(connectionString);
+        var client = new MongoClient(mongoUrl);
+        Database = client.GetDatabase(configuration["MongoDatabase"]);
     }
+    
+    public IMongoDatabase Database { get; }
 }
