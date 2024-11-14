@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<MongoDbService>();
+builder.Services.AddSingleton<DartPositionService>();
 
 var app = builder.Build();
 
