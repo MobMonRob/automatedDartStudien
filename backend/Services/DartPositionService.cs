@@ -6,7 +6,7 @@ public class DartPositionService
 {
     private List<TrackingCamera> cameras = [];
     
-    private Dictionary<string, List<(double x, double y)>> dartPositions = new();
+    private Dictionary<string, List<Vector2>> dartPositions = new();
     
     private bool isCalibrated = false;
     
@@ -21,10 +21,10 @@ public class DartPositionService
         foreach(var entry in dartPositions)
         {
             // Todo: Calculate the 3D position of the camera 
-            var position3d = (0.0, 0.0, 0.0);
+            var position3d = new Vector3(0.0, 0.0, 0.0);
             
             // Todo: Calculate the 3D rotation of the camera 
-            var rotation3d = (0.0, 0.0, 0.0);
+            var rotation3d = new Vector3(0.0, 0.0, 0.0);
             
             var camera = new TrackingCamera
             {
