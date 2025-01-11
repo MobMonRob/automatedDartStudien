@@ -40,7 +40,7 @@ export class GamestateCricketComponent implements OnInit, DebugComponent {
 
   startGame(game: GameStateX01) {
     this.players = game.players;
-    this.playersCricketSide = this.insertIntoMiddle(game.players, {currentDarts: [], id: "", name: ""})
+    this.playersCricketSide = this.insertIntoMiddle(game.players, {currentDarts: [], id: "", name: "", currentDartPositions: [[], [], []]});
     this.points = game.points;
     this.darts = game.darts;
     this.averages = game.averages;
@@ -49,7 +49,7 @@ export class GamestateCricketComponent implements OnInit, DebugComponent {
   }
 
   addMissThrow() {
-    this.apiService.evaluateThrow(0,"0").subscribe(gameState => {
+    this.apiService.evaluateThrow(0,"0", [0,0]).subscribe(gameState => {
       this.reactOnNewGameState(gameState);
     });
   }
@@ -60,8 +60,8 @@ export class GamestateCricketComponent implements OnInit, DebugComponent {
     });
   }
 
-  evaluateDebugThrow(value: number, valueString: string){
-    this.apiService.evaluateThrow(value,valueString).subscribe(gameState => {
+  evaluateDebugThrow(value: number, valueString: string, position: number[]) {
+    this.apiService.evaluateThrow(value,valueString, position).subscribe(gameState => {
       this.reactOnNewGameState(gameState);
     });
   }

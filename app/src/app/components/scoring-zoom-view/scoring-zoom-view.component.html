@@ -1,0 +1,10 @@
+<div class="container">
+    <div class="dart-field" *ngFor="let field of dartFields; let i = index" [id]="'field' + i">
+        <img 
+            [src]="dartboardImage" 
+            alt="Dartscheibe"
+            [ngClass]="{ 'grayscale' : !isCurrentFieldThrown(i)}"
+            >
+        <canvas [id]="'canvas' + i" class="dart-overlay"></canvas>
+    </div>
+</div>
