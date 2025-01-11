@@ -16,7 +16,7 @@ class AbstractTracker(ABC):
 
     def setDartFrame(self, dart_frame):
         self.dart_frame = dart_frame
-        self.dart_positions = self.getDartPostions()
+        self.calculateDartPostions()
 
     def getCleanFrame(self):
         return self.clean_frame
@@ -27,14 +27,18 @@ class AbstractTracker(ABC):
     def getTrackedFrame(self):
         return self.tracked_frame
 
+    # This method returns the dart positions for dispatching to the backend
     def getDartPositions(self):
-        self.dart_positions = self.calculateDartPostions()
+        if self.dart_frame is None:
+            print(f"Warning: Access to dart positions before setting the dart frame")
+            return []
         
         if len(self.dart_positions) == 0:
             self.clean_frame = self.dart_frame
         
         return self.dart_positions
 
+    # This method must be implemented by the subclasses and should return a list of tuples
     @abstractmethod
     def calculateDartPostions(self):
         pass

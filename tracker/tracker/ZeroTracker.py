@@ -1,9 +1,9 @@
-## This tracker is useless. It does not find any darts.
+## This tracker only returns (0,0)
 
-from AbstractTracker import AbstractTracker
+from tracker.AbstractTracker import AbstractTracker
 
 class ZeroTracker(AbstractTracker):
         
         def calculateDartPostions(self):
-            return []
+            self.dart_positions = [(0,0), (0,0), (0,0)]
 
