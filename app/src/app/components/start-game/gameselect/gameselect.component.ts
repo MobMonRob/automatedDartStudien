@@ -65,6 +65,7 @@ export class GameselectComponent {
         players.forEach((player: any) => {
           activePlayers.push({
             currentDarts: [],
+            currentDartPositions: [[], [], []],
             name: player.name,
             id: uuidv4()
           });

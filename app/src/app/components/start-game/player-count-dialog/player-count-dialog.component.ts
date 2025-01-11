@@ -68,6 +68,7 @@ export class PlayerCountDialogComponent implements OnInit {
         if (this.existingPlayers.map((player) => player.name).indexOf(result) === -1) {
           let p: Player = {
             currentDarts: [],
+            currentDartPositions: [[], [], []],
             name: result,
             id: uuidv4()
           };

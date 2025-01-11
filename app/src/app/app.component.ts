@@ -5,11 +5,12 @@ import { StatisticsComponent } from './components/statistics/statistics.componen
 import { GamestateComponent } from './components/game-pages/gamestate-x01/gamestate.component';
 import { GameselectComponent } from './components/start-game/gameselect/gameselect.component';
 import { GamestateCricketComponent } from "./components/game-pages/gamestate-cricket/gamestate-cricket.component";
+import { ScoringZoomViewComponent } from './components/scoring-zoom-view/scoring-zoom-view.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ScoreboardComponent, StatisticsComponent, GamestateComponent, GameselectComponent, GamestateCricketComponent],
+  imports: [RouterOutlet, ScoreboardComponent, StatisticsComponent, GamestateComponent, GameselectComponent, GamestateCricketComponent, ScoringZoomViewComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })

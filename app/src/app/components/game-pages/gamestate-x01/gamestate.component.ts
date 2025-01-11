@@ -3,15 +3,18 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
+import { DartEventService } from '../../../services/dart-event.service';
 import { GameStateX01 } from '../../../model/game.model';
 import { DebugNumberConsoleComponent } from "../../debug-number-console/debug-number-console.component";
 import { TopbarComponent } from "../../topbar/topbar.component";
 import { DebugComponent } from '../../../model/debug.model';
+import { ScoringZoomViewComponent } from "../../scoring-zoom-view/scoring-zoom-view.component";
+
 
 @Component({
   selector: 'dartapp-gamestate',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent],
+  imports: [CommonModule, RouterOutlet, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent, ScoringZoomViewComponent],
   templateUrl: './gamestate.component.html',
   styleUrl: './gamestate.component.scss'
 })
@@ -21,12 +24,13 @@ export class GamestateComponent implements OnInit, DebugComponent {
   currentPlayerIndex = 0;
   points: number[] = [];
   darts:  number[] = [];
+  currentDartPositions: number[][] = [];
   averages:  number[] = [];
   currentDarts: string[] = [];
   gameIsRunning = false;
   bust = {bust: false, origin: ""};
 
-  constructor (private apiService: ApiService) {}
+  constructor (private apiService: ApiService, private dartEventService: DartEventService) {}
 
   ngOnInit(){
     this.apiService.getInitStateOfCurrentGameX01().subscribe(game => {
@@ -42,6 +46,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
     this.averages = game.averages;
     this.gameIsRunning = true;
     this.currentPlayerIndex = game.currentPlayerIndex;
+    this.currentDartPositions = game.players[this.currentPlayerIndex].currentDartPositions;
     //this.watchGame();
   }
 
@@ -56,19 +61,19 @@ export class GamestateComponent implements OnInit, DebugComponent {
   }
 
   addMissThrow() {
-    this.apiService.evaluateThrow(0,"0").subscribe(gameState => {
+    this.apiService.evaluateThrow(0,"0", [10,10]).subscribe(gameState => {
       this.reactOnNewGameState(gameState);
     });
   }
 
   nextPlayer() {
     this.apiService.evaluateNextPlayerX01().subscribe(gameState => {
-      this.reactOnNewGameState(gameState);
+      this.reactOnNewGameState(gameState, true);
     });
   }
 
-  evaluateDebugThrow(value: number, valueString: string):void{
-    this.apiService.evaluateThrow(value,valueString).subscribe(gameState => {
+  evaluateDebugThrow(value: number, valueString: string, position: []):void{
+    this.apiService.evaluateThrow(value,valueString, position).subscribe(gameState => {
       this.reactOnNewGameState(gameState);
     });
   }
@@ -77,7 +82,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
     return this.players[this.currentPlayerIndex].currentDarts.length === 3 || this.bust.bust || !this.gameIsRunning;
   }
 
-  private reactOnNewGameState(gameState: GameStateX01){
+  private reactOnNewGameState(gameState: GameStateX01, calledByNextPlayer: boolean = false){
     this.points = gameState.points;
     this.bust = {bust: gameState.bust, origin: gameState.players[this.currentPlayerIndex].name};
     if(this.points.indexOf(0) !== -1){
@@ -85,6 +90,8 @@ export class GamestateComponent implements OnInit, DebugComponent {
       this.endGame(this.points.indexOf(0));
     } 
     this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
+    this.currentDartPositions = gameState.players[this.currentPlayerIndex].currentDartPositions;
+    this.dartEventService.emitThrowEvent( (!calledByNextPlayer) ? this.currentDartPositions : [[],[],[]]);
     this.darts = gameState.darts;
     this.averages = gameState.averages;
     this.currentPlayerIndex = gameState.currentPlayerIndex;
