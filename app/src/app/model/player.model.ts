@@ -1,5 +1,6 @@
 export interface Player{
     id: string;
     name: string;
-    currentDarts: string[]
+    currentDarts: string[];
+    currentDartPositions: number[][];
 }

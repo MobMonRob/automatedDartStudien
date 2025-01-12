@@ -1,3 +1,5 @@
 flask
 opencv-python
 matplotlib
+requests
+python-dotenv

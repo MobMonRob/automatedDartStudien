@@ -2,8 +2,8 @@ namespace backend.Models;
 
 public class GameStateX01 : GameState
 {
-    private string? inVariant { get; set; }
-    private string? outVariant { get; set; }
+    public string? inVariant { get; set; }
+    public string? outVariant { get; set; }
     
     public GameStateX01()
     {

@@ -11,17 +11,20 @@ export class ApiService {
     {
       id: '481d6713-dcca-473b-a68b-97d55f9378f9',
       name: 'Test-User',
-      currentDarts: []
+      currentDarts: [],
+      currentDartPositions: [[], [], []]
     },
     {
       id: '481d6713-dcca-473b-a68b-97d55f9378f9',
       name: 'Test-User2',
-      currentDarts: []
+      currentDarts: [],
+      currentDartPositions: [[], [], []]
     },
     {
       id: '481d6713-dcca-473b-a68b-97d55f9378f9',
       name: 'Test-User3',
-      currentDarts: []
+      currentDarts: [],
+      currentDartPositions: [[], [], []]
     }
   ];
 
@@ -99,7 +102,7 @@ export class ApiService {
     return of(this.mockGame);
   }
 
-  evaluateThrow(value: number, valueString: string): Observable<GameStateX01> {
+  evaluateThrow(value: number, valueString: string, position: number[]): Observable<GameStateX01> {
     let curPlayInd = this.mockGame.currentPlayerIndex;
     let currentThrow = this.mockGame.players[curPlayInd].currentDarts;
     if (currentThrow.length < 3) {
@@ -112,6 +115,7 @@ export class ApiService {
         this.mockGame.bust = false;
       }
       this.mockGame.players[curPlayInd].currentDarts.push(valueString);
+      this.mockGame.players[curPlayInd].currentDartPositions[currentThrow.length-1] = position;
       this.mockGame.darts[curPlayInd] += 1;
 
       let nextValue = this.mockGame.points[curPlayInd] - value;
@@ -136,6 +140,7 @@ export class ApiService {
     this.mockGame.currentPlayerIndex = (this.mockGame.currentPlayerIndex + 1) % this.mockGame.players.length;
     this.mockGame.bust = false;
     this.mockGame.players[this.mockGame.currentPlayerIndex].currentDarts = [];
+    this.mockGame.players[this.mockGame.currentPlayerIndex].currentDartPositions = [[], [], []];
     this.afterPlayerChange = true;
     return of(this.mockGame);
   }

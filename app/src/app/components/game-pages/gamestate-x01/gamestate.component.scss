@@ -4,7 +4,8 @@
   grid-template-rows: auto; 
   grid-template-areas: 
     "left-side current-player"
-    "full-width full-width";
+    "full-width full-width"
+    "debug-console debug-console";
   gap: 20px;
   padding: 20px;
   height: 75vh; 
@@ -199,8 +200,16 @@
   }
 }
 
-.debug-div {
+.scoring-zoom-div {
   grid-area: full-width;
+  background-color: #ffffff;
+  padding: 20px;
+  width: 100%;
+  border-top: 2px solid #ddd;
+}
+
+.debug-div {
+  grid-area: debug-console;
   background-color: #ffffff;
   padding: 20px;
   width: 100%;

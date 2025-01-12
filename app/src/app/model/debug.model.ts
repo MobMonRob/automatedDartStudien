@@ -1,5 +1,5 @@
 export interface DebugComponent {
-    evaluateDebugThrow(value: number, valueString: string): void;
+    evaluateDebugThrow(value: number, valueString: string, position: number[]): void;
 
     disableConsoleButtons(): boolean;
 }
