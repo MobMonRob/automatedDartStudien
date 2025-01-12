@@ -10,6 +10,7 @@ def generate_frames(camera_id):
     while True:
         _, frame = darttracker.getCameraFrame(index = camera_id)
         _, buffer = cv.imencode('.jpg', frame)
+        #_, buffer = cv.imwrite(f'{random.random()}.jpg', frame)
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')

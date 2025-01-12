@@ -29,13 +29,13 @@
 <body>
     <div class="camera-grid">
         <div class="camera-item">
-            <img src="{{ url_for('video_feed', camera_id=0) }}" width="1280" height="720">
+            <img src="{{ url_for('video_feed', camera_id=0) }}" >
         </div>
         <div class="camera-item">
-            <img src="{{ url_for('video_feed', camera_id=1) }}" width="1280" height="720">
+            <img src="{{ url_for('video_feed', camera_id=1) }}" >
         </div>
         <div class="camera-item">
-            <img src="{{ url_for('video_feed', camera_id=2) }}" width="1280" height="720">
+            <img src="{{ url_for('video_feed', camera_id=2) }}">
         </div>
         <div class="stats" id="frametime">Calculating...</div>
     </div>
