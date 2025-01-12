@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DartEventService } from '../../services/dart-event.service';
 import { Subscription } from 'rxjs';
@@ -18,15 +18,17 @@ export class ScoringZoomViewComponent implements OnInit, OnDestroy {
   dartboardImage = 'assets/dartboardPicture.png';
   dartFields: number[][] = [];
   currentPlayerIndex = 0;
+  calledAfterPlayerChange = false;
 
-  constructor(private dartEventService: DartEventService) {}
+  constructor(private dartEventService: DartEventService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.dartFields = new Array(this.availableDarts).fill([]);
     this.throwDartEventSub = this.dartEventService.throwEvent$.subscribe((event) => {
       this.dartFields = event.currentDartPositions
-      if(JSON.stringify(this.dartFields) === JSON.stringify([[], [], []])) { this.currentPlayerIndex = 0; } else { this.currentPlayerIndex++; }
+      if(JSON.stringify(this.dartFields) === JSON.stringify([[], [], []])) { this.currentPlayerIndex = 0; this.calledAfterPlayerChange = true} else { this.currentPlayerIndex++; }
       this.onDartHit();
+      this.calledAfterPlayerChange = false
     })
   }
 
@@ -35,24 +37,51 @@ export class ScoringZoomViewComponent implements OnInit, OnDestroy {
   }
 
   onDartHit(): void {
-    console.log(this.dartFields)
-    console.log(this.currentPlayerIndex)
-    const canvas = document.getElementById('canvas' + (this.currentPlayerIndex-1)) as HTMLCanvasElement;
-    console.log(canvas)
-    const ctx = canvas?.getContext('2d');
-    if (ctx) {
-      console.log('drawing')
-      console.log(ctx)
-      this.drawPoint(ctx, 140, 140);
+    const zoomLevel = 2;
+
+    if(!this.calledAfterPlayerChange) {
+      this.cdr.detectChanges();
+      this.zoomOnField(this.currentPlayerIndex-1, this.dartFields[this.currentPlayerIndex-1][0], this.dartFields[this.currentPlayerIndex-1][1], zoomLevel);
     }
   }
 
-  private drawPoint(ctx: CanvasRenderingContext2D, x: number, y: number) {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.beginPath();
-    ctx.arc(x, y, 50, 0, 2 * Math.PI);
-    ctx.fillStyle = 'red';
-    ctx.fill();
+  private zoomOnField(index: number, x: number, y: number, zoomlevel: number): void {
+    const zoomField = document.getElementById('zoomfield' + index);
+    if (zoomField) {
+      const container = zoomField.parentElement; 
+      if (container) {
+        const containerWidth = container.offsetWidth;
+        const containerHeight = container.offsetHeight;
+
+        let xAdapter = 0;
+        let yAdapter = 0;
+
+        //Move the zoomed a bit more to the edge of the board to see the numbers clearly
+        if(x < containerWidth / 2) {
+          if(y < containerHeight / 2) {
+            xAdapter = -15;
+            yAdapter = -15;
+          } else {
+            xAdapter = -15;
+            yAdapter = 15;
+          }
+        } else {
+          if(y < containerHeight / 2) {
+            xAdapter = 15;
+            yAdapter = -15;
+          } else {
+            xAdapter = 15;
+            yAdapter = 15;
+          }
+        }
+  
+        zoomField.style.transition = 'transform 0.5s ease-in-out';
+        requestAnimationFrame(() => {
+          zoomField.style.transform = `scale(${zoomlevel})`;
+          zoomField.style.transformOrigin = `${x + xAdapter}px ${y + yAdapter}px`;
+        });
+      }
+     }
   }
 
   isCurrentFieldThrown(index: number): boolean {

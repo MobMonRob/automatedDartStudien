@@ -1,7 +1,12 @@
 .container {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    align-items: center;
     gap: 10px;
+
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 .dart-field {
@@ -19,6 +24,7 @@
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
 }
 
 .dart-field img {
@@ -32,11 +38,33 @@
     filter: grayscale(100%)
 }
 
-.dart-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
+.dartboard-wrapper {
+    position: relative;
     width: 100%;
     height: 100%;
+    transition: transform 0.7s ease-in-out;
+}
+  
+.dartboard-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+  
+.dart-point {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: turquoise;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
     pointer-events: none; 
+}
+
+.visible {
+    opacity: 1;
+    transition: opacity 0.5s ease; 
+}
+.hidden {
+    opacity: 0;
 }
