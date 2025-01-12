@@ -14,43 +14,43 @@ export class DebugNumberConsoleComponent {
   @Input() component!: DebugComponent;
 
   fields = [
-    { name: '20', value: 20, positions: { single: [100, 200], double: [120, 220], triple: [110, 210] } },
-    { name: '19', value: 19, positions: { single: [150, 250], double: [170, 270], triple: [160, 260] } },
-    { name: '18', value: 18, positions: { single: [200, 300], double: [220, 320], triple: [210, 310] } },
-    { name: '17', value: 17, positions: { single: [250, 350], double: [270, 370], triple: [260, 360] } },
-    { name: '16', value: 16, positions: { single: [300, 400], double: [320, 420], triple: [310, 410] } },
-    { name: '15', value: 15, positions: { single: [350, 450], double: [370, 470], triple: [360, 460] } },
-    { name: '14', value: 14, positions: { single: [400, 100], double: [420, 120], triple: [410, 110] } },
-    { name: '13', value: 13, positions: { single: [450, 150], double: [470, 170], triple: [460, 160] } },
-    { name: '12', value: 12, positions: { single: [50, 250], double: [70, 270], triple: [60, 260] } },
-    { name: '11', value: 11, positions: { single: [100, 300], double: [120, 320], triple: [110, 310] } },
-    { name: '10', value: 10, positions: { single: [150, 350], double: [170, 370], triple: [160, 360] } },
-    { name: '9', value: 9, positions: { single: [200, 400], double: [220, 420], triple: [210, 410] } },
-    { name: '8', value: 8, positions: { single: [250, 450], double: [270, 470], triple: [260, 460] } },
-    { name: '7', value: 7, positions: { single: [300, 50], double: [320, 70], triple: [310, 60] } },
-    { name: '6', value: 6, positions: { single: [350, 100], double: [370, 120], triple: [360, 110] } },
-    { name: '5', value: 5, positions: { single: [400, 150], double: [420, 170], triple: [410, 160] } },
-    { name: '4', value: 4, positions: { single: [450, 200], double: [470, 220], triple: [460, 210] } },
-    { name: '3', value: 3, positions: { single: [50, 300], double: [70, 320], triple: [60, 310] } },
-    { name: '2', value: 2, positions: { single: [100, 400], double: [120, 420], triple: [110, 410] } },
-    { name: '1', value: 1, positions: { single: [150, 450], double: [170, 470], triple: [160, 460] } },
-    { name: 'Bull', value: 25, positions: { single: [250, 250], double: [260, 260] } }
+    { name: '20', value: 20, positions: { single: [125, 50], double: [125, 35], triple: [125, 70] } }, // Accurate
+    { name: '19', value: 19, positions: { single: [100, 200], double: [95, 216], triple: [106, 182] } }, // Accurate
+    { name: '18', value: 18, positions: { single: [173, 63], double: [179, 52], triple: [157, 81] } }, // Accurate
+    { name: '17', value: 17, positions: { single: [148, 197], double: [154, 217], triple: [144, 182] } }, // Accurate
+    { name: '16', value: 16, positions: { single: [65, 171], double: [50, 181], triple: [78, 161] } }, // Accurate
+    { name: '15', value: 15, positions: { single: [185, 171], double: [200, 181], triple: [173, 161] } }, // Accurate
+    { name: '14', value: 14, positions: { single: [55, 105], double: [38, 100], triple: [69, 109] } }, // Accurate
+    { name: '13', value: 13, positions: { single: [200, 100], double: [213, 100], triple: [181, 109] } }, // Accurate
+    { name: '12', value: 12, positions: { single: [79, 63], double: [71, 52], triple: [90, 81] } }, // Accurate
+    { name: '11', value: 11, positions: { single: [52, 127], double: [32, 127], triple: [67, 127] } }, // Accurate
+    { name: '10', value: 10, positions: { single: [197, 150], double: [215, 156], triple: [180, 143] } }, // Accurate
+    { name: '9', value: 9, positions: { single: [65, 83], double: [50, 73], triple: [78, 93] } }, // Accurate
+    { name: '8', value: 8, positions: { single: [50, 150], double: [38, 156], triple: [70, 143] } }, // Accurate
+    { name: '7', value: 7, positions: { single: [79, 190], double: [71, 205], triple: [90, 173] } }, // Accurate
+    { name: '6', value: 6, positions: { single: [200, 127], double: [218, 127], triple: [182, 127] } }, // Accurate
+    { name: '5', value: 5, positions: { single: [100, 50], double: [96, 39], triple: [105, 72] } }, // Accurate
+    { name: '4', value: 4, positions: { single: [185, 83], double: [200, 73], triple: [173, 93] } }, // Accurate
+    { name: '3', value: 3, positions: { single: [125, 205], double: [125, 221], triple: [125, 185] } }, // Accurate
+    { name: '2', value: 2, positions: { single: [170, 190], double: [178, 205], triple: [157, 173] } }, // Accurate
+    { name: '1', value: 1, positions: { single: [150, 50], double: [153, 39], triple: [144, 72] } }, // Accurate
+    { name: 'Bull', value: 25, positions: { single: [125, 122], double: [125, 127] } } // Accurate
   ];
-  
 
   constructor() {}
 
   evaluateInput(field: string, multiplier: number) {
-    const fieldData = this.fields.find((f) => f.name === field);
+    let fieldData = this.fields.find((f) => f.name === field);
     let score = fieldData?.value || 0;
-    let totalScore = score * multiplier;
 
     if (field === 'Random') {
-      score = Math.floor(Math.random() * 20);
-      multiplier = Math.floor(Math.random() * 3) + 1;
-      totalScore = score * multiplier;
+      const randomIndex = Math.floor(Math.random() * this.fields.length);
+      fieldData = this.fields[randomIndex];
+      score = fieldData.value;
+      multiplier = Math.floor(Math.random() * 3) + 1; 
     }
 
+    const totalScore = score * multiplier;
     const positionType = multiplier === 1 ? 'single' : multiplier === 2 ? 'double' : 'triple';
     const position = fieldData?.positions?.[positionType] || [0, 0];
 

@@ -1,10 +1,20 @@
 <div class="container">
     <div class="dart-field" *ngFor="let field of dartFields; let i = index" [id]="'field' + i">
-        <img 
+        <div 
+            class="dart-wrapper" 
+            [id]="'zoomfield' + i">
+            <img 
             [src]="dartboardImage" 
             alt="Dartscheibe"
             [ngClass]="{ 'grayscale' : !isCurrentFieldThrown(i)}"
-            >
-        <canvas [id]="'canvas' + i" class="dart-overlay"></canvas>
+            class = "dartboard-image">
+            <div 
+                [id]="'point' + i" 
+                class="dart-point hidden" 
+                [style.left.px]="field[0]" 
+                [style.top.px]="field[1]"
+                [ngClass]="{ 'visible': isCurrentFieldThrown(i), 'hidden': !isCurrentFieldThrown(i) }"
+                ></div>
+        </div>
     </div>
 </div>
