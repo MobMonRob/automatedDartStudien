@@ -1,5 +1,6 @@
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, request, json
 import cv2 as cv
+import numpy as np
 from DartTracker import DartTracker
 
 app = Flask(__name__)
@@ -32,6 +33,15 @@ def frametime():
         response += f"Camera {i}: {1/frametime} FPS\n"
 
     return {"frametime": response}
+
+@app.route('/calibrate', methods=['POST'])
+def calibrate():
+    if request.is_json:
+        data = json.loads(request.data)
+        actualPositions = data['actualPositions']
+        darttracker.calibrateCameras(np.array(actualPositions))
+        return Response(status=200)
+    return Response(status=400)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
