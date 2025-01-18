@@ -187,9 +187,11 @@ class TrackerV1(AbstractTracker):
         difference = cv2.absdiff(gray_dart, gray_empty) 
         difference = cv2.cvtColor(difference, cv2.COLOR_GRAY2BGR)
 
+        #Build difference so only darts are left
         mask1 = self.prepareMask(self.dart_frame, self.clean_frame)
 
         mask2 = np.zeros_like(mask1)
+        #Find centroid points in mask, draw them into an empty mask, min area threshold removes ausreißer
         centroids = self.findPointsInMask(mask1, 5)
         for (cx, cy) in centroids:
             cv2.circle(mask2, (cx, cy), 5, (255, 0, 0), -1)
@@ -199,9 +201,11 @@ class TrackerV1(AbstractTracker):
 
         groups, point_mask, line_mask = self.groupDots(centroids, point_mask, line_mask)
 
+        #Mark ausreißer in the mask, not group points (left in centroids) get added to the groups so they can be added as ausreißer in the result image
         if len(centroids) > 0:
             groups.append(centroids)
 
+        #Neglect ausreißer and find positions for the dart groups 
         darts = self.findDartPositions(groups[0:3])
 
         colors = [
