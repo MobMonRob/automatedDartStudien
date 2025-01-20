@@ -1,12 +1,11 @@
-using backend.Hubs;
 using backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddSignalR();
 builder.Services.AddSingleton<MongoDbService>();
 builder.Services.AddSingleton<DartPositionService>();
+builder.Services.AddSingleton<GameStateConnectionService>();
 
 var app = builder.Build();
 
@@ -17,9 +16,22 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseRouting();
 app.MapControllers();
-app.MapHub<GameStateHub>("/gamestate");
+app.UseWebSockets();
+
+app.MapGet("/gamestate", async (HttpContext context, GameStateConnectionService gsService) =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        await gsService.HandleWebSocketConnection(webSocket);
+    }
+    else
+    {
+        context.Response.StatusCode = 400;
+        await context.Response.WriteAsync("Expected a WebSocket request");
+    }
+});
 
 app.Run();
