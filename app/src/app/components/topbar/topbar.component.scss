@@ -22,20 +22,6 @@
     cursor: pointer;
   }
 
-  .players-header {
-    font-size: 2.5rem; 
-    font-weight: bold; 
-    color: #ff5733; 
-    text-transform: uppercase; 
-    text-align: left; 
-    margin-bottom: 20px;
-    border-bottom: 3px solid #ff5733; 
-    padding-bottom: 10px; 
-    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); 
-    letter-spacing: 2px;
-    padding-bottom: 5%;
-  }
-
   .topbar nav {
     display: flex;
     gap: 15px;
@@ -54,7 +40,13 @@
     background-color: #e0e0e0;
   }
 
-  .topbar .login-btn {
+  .topbar .button {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 12px;
+    gap: 8px; 
+
     background-color: #ff5733; 
     color: white;
     border: none;
@@ -65,6 +57,55 @@
     margin-right: 20px;
   }
 
-  .topbar .login-btn:hover {
+  .topbar .settings-button {
+    background-color: #ff5733; 
+  }
+
+  .topbar .calibrate-button {
+    background-color: #df4624; 
+  }
+
+  .topbar .button:hover {
     background-color: #f44336;
   }
+
+  .topbar .button-text {
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+  }
+
+  .topbar .button-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  cursor: pointer;
+}

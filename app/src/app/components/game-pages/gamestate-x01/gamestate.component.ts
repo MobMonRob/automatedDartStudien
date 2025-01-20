@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { PlayerCardComponent } from '../player-card/player-card.component';
@@ -19,6 +19,10 @@ import { ScoringZoomViewComponent } from "../../scoring-zoom-view/scoring-zoom-v
   styleUrl: './gamestate.component.scss'
 })
 export class GamestateComponent implements OnInit, DebugComponent {
+  @ViewChild('zoomView1') zoomView1: ScoringZoomViewComponent | undefined;
+  @ViewChild('zoomView2') zoomView2: ScoringZoomViewComponent | undefined;
+  @ViewChild('zoomView3') zoomView3: ScoringZoomViewComponent | undefined;
+
   players: any[] = [];
   gameMode: string = "";
   currentPlayerIndex = 0;
@@ -109,6 +113,10 @@ export class GamestateComponent implements OnInit, DebugComponent {
     });
   
     playerCards[winnerIndex*2].classList.add('winner-card');
+  }
+
+  private zoomInOnTarget(index: number, x: number, y: number, zoomLevel: number): void {
+
   }
   
 }

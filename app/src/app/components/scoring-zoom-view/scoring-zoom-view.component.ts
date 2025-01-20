@@ -1,7 +1,5 @@
-import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef, SimpleChanges, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DartEventService } from '../../services/dart-event.service';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'dartapp-scoring-zoom-view',
@@ -10,39 +8,43 @@ import { Subscription } from 'rxjs';
   templateUrl: './scoring-zoom-view.component.html',
   styleUrl: './scoring-zoom-view.component.scss'
 })
-export class ScoringZoomViewComponent implements OnInit, OnDestroy {
-  @Input() availableDarts!: number;
-
-  private throwDartEventSub: Subscription | undefined;
+export class ScoringZoomViewComponent implements OnInit, OnDestroy, OnChanges {
+  @Input() targetPosition!: { x: number, y: number };
 
   dartboardImage = 'assets/dartboardPicture.png';
-  dartFields: number[][] = [];
-  currentPlayerIndex = 0;
-  calledAfterPlayerChange = false;
 
-  constructor(private dartEventService: DartEventService, private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    this.dartFields = new Array(this.availableDarts).fill([]);
-    this.throwDartEventSub = this.dartEventService.throwEvent$.subscribe((event) => {
-      this.dartFields = event.currentDartPositions
-      if(JSON.stringify(this.dartFields) === JSON.stringify([[], [], []])) { this.currentPlayerIndex = 0; this.calledAfterPlayerChange = true} else { this.currentPlayerIndex++; }
-      this.onDartHit();
-      this.calledAfterPlayerChange = false
-    })
+    // this.dartFields = new Array(this.availableDarts).fill([]);
+    // this.throwDartEventSub = this.dartEventService.throwEvent$.subscribe((event) => {
+    //   this.dartFields = event.currentDartPositions
+    //   if(JSON.stringify(this.dartFields) === JSON.stringify([[], [], []])) { this.currentPlayerIndex = 0; this.calledAfterPlayerChange = true} else { this.currentPlayerIndex++; }
+    //   this.onDartHit();
+    //   this.calledAfterPlayerChange = false
+    // })
   }
 
   ngOnDestroy(): void {
-    this.throwDartEventSub?.unsubscribe();
+    this.targetPosition = { x: 0, y: 0 };
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['targetPosition']) {
+      const currentPosition = changes['targetPosition'].currentValue;
+      if (currentPosition) {
+        //this.zoomOnField(currentPosition);
+      }
+    }
   }
 
   onDartHit(): void {
     const zoomLevel = 2;
 
-    if(!this.calledAfterPlayerChange) {
-      this.cdr.detectChanges();
-      this.zoomOnField(this.currentPlayerIndex-1, this.dartFields[this.currentPlayerIndex-1][0], this.dartFields[this.currentPlayerIndex-1][1], zoomLevel);
-    }
+    // if(!this.calledAfterPlayerChange) {
+    //   this.cdr.detectChanges();
+    //   this.zoomOnField(this.currentPlayerIndex-1, this.dartFields[this.currentPlayerIndex-1][0], this.dartFields[this.currentPlayerIndex-1][1], zoomLevel);
+    // }
   }
 
   private zoomOnField(index: number, x: number, y: number, zoomlevel: number): void {
@@ -84,7 +86,7 @@ export class ScoringZoomViewComponent implements OnInit, OnDestroy {
      }
   }
 
-  isCurrentFieldThrown(index: number): boolean {
-    return this.dartFields[index].length > 0;
+  isCurrentFieldThrown(): boolean {
+    return this.targetPosition.x !== 0 || this.targetPosition.y !== 0;
   }
 }

@@ -203,9 +203,13 @@
 .scoring-zoom-div {
   grid-area: full-width;
   background-color: #ffffff;
-  padding: 20px;
+  padding: 10px;
   width: 100%;
   border-top: 2px solid #ddd;
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  gap: 5px; 
 }
 
 .debug-div {

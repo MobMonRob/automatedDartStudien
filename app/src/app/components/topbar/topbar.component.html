@@ -3,11 +3,27 @@
 
 <div class="topbar">
   <h1 (click)="navHome()">DartApp</h1>
-  <!-- <nav>
-    <a href="gameSelect">Start Game</a>
-    <a href="#stats">Statistics</a>
-    <a href="#history">Game History</a>
-    <a href="#players">Players</a>
-  </nav> -->
-  <button class="login-btn"><i class="material-icons" style="font-size: 24px;">settings</i></button>
+  
+  <div class="button-container">
+    <button class="button calibrate-button" (click)="toggleCalibrationPopup()">
+      <div class="button-text">Kalibrierung</div>
+      <i class="material-icons" style="font-size: 24px;">adjust</i>
+    </button>
+
+    <button class="button settings-button" (click)="null">
+      <i class="material-icons" style="font-size: 24px;">settings</i>
+    </button>
+  </div>
+</div>
+
+<!-- Calibration Pop Up -->
+<div *ngIf="isPopupVisible" class="popup" (click)="closeCalibrationPopup($event)">
+  <div class="popup-content">
+    <span class="close-btn" (click)="closeCalibrationPopup($event)">&times;</span>
+    <h1>{{ currentHeading }}</h1>
+    <div class="animation-container">
+      <dartapp-scoring-zoom-view [targetPosition]="{x:0, y:0}"></dartapp-scoring-zoom-view>
+    </div>
+    <p>Kalibrierungsfortschritt: {{ currentStep }}/4</p>
+  </div>
 </div>
