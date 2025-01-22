@@ -22,7 +22,7 @@
     <span class="close-btn" (click)="closeCalibrationPopup($event)">&times;</span>
     <h1>{{ currentHeading }}</h1>
     <div class="animation-container">
-      <dartapp-scoring-zoom-view [targetPosition]="{x:0, y:0}"></dartapp-scoring-zoom-view>
+      <dartapp-scoring-zoom-view #calibrationZoom [targetPosition]="{x:calibrationPositions[currentStep-1][0], y:calibrationPositions[currentStep-1][1]}" [isThrown]="true" [customId]="customId"></dartapp-scoring-zoom-view>
     </div>
     <p>Kalibrierungsfortschritt: {{ currentStep }}/4</p>
   </div>

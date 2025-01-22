@@ -1,9 +1,7 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
-import { DartEventService } from '../../../services/dart-event.service';
 import { GameStateX01 } from '../../../model/game.model';
 import { DebugNumberConsoleComponent } from "../../debug-number-console/debug-number-console.component";
 import { TopbarComponent } from "../../topbar/topbar.component";
@@ -14,14 +12,12 @@ import { ScoringZoomViewComponent } from "../../scoring-zoom-view/scoring-zoom-v
 @Component({
   selector: 'dartapp-gamestate',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent, ScoringZoomViewComponent],
+  imports: [CommonModule, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent, ScoringZoomViewComponent],
   templateUrl: './gamestate.component.html',
   styleUrl: './gamestate.component.scss'
 })
 export class GamestateComponent implements OnInit, DebugComponent {
-  @ViewChild('zoomView1') zoomView1: ScoringZoomViewComponent | undefined;
-  @ViewChild('zoomView2') zoomView2: ScoringZoomViewComponent | undefined;
-  @ViewChild('zoomView3') zoomView3: ScoringZoomViewComponent | undefined;
+  @ViewChildren('zoomField') zoomFields!: QueryList<ScoringZoomViewComponent>;
 
   players: any[] = [];
   gameMode: string = "";
@@ -34,7 +30,9 @@ export class GamestateComponent implements OnInit, DebugComponent {
   gameIsRunning = false;
   bust = {bust: false, origin: ""};
 
-  constructor (private apiService: ApiService, private dartEventService: DartEventService) {}
+  customId = "mainZoomField"
+
+  constructor (private apiService: ApiService, private cdr: ChangeDetectorRef ) {}
 
   ngOnInit(){
     this.apiService.getInitStateOfCurrentGameX01().subscribe(game => {
@@ -95,7 +93,8 @@ export class GamestateComponent implements OnInit, DebugComponent {
     } 
     this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
     this.currentDartPositions = gameState.players[this.currentPlayerIndex].currentDartPositions;
-    this.dartEventService.emitThrowEvent( (!calledByNextPlayer) ? this.currentDartPositions : [[],[],[]]);
+    var currentThrow = this.currentDartPositions[this.currentDarts.length-1]
+    this.triggerZoom(this.currentDarts.length-1, currentThrow[0], currentThrow[1], 2)
     this.darts = gameState.darts;
     this.averages = gameState.averages;
     this.currentPlayerIndex = gameState.currentPlayerIndex;
@@ -115,8 +114,11 @@ export class GamestateComponent implements OnInit, DebugComponent {
     playerCards[winnerIndex*2].classList.add('winner-card');
   }
 
-  private zoomInOnTarget(index: number, x: number, y: number, zoomLevel: number): void {
-
+  private triggerZoom(index: number, x: number, y: number, zoomLevel: number): void {
+    const zoomField = this.zoomFields.toArray()[index];
+    if (zoomField) {
+      this.cdr.detectChanges()
+      zoomField.zoomOnField(this.customId+index, x, y, zoomLevel);
+    }
   }
-  
 }

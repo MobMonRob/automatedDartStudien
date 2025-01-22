@@ -2,18 +2,18 @@
     <div class="dart-field" id="field">
         <div 
             class="dart-wrapper" 
-            [id]="'zoomfield'">
+            [id]="customId">
             <img 
             [src]="dartboardImage" 
             alt="Dartscheibe"
-            [ngClass]="{ 'grayscale' : !isCurrentFieldThrown()}"
+            [ngClass]="{ 'grayscale' : !isThrown}"
             class = "dartboard-image">
             <div 
                 [id]="'point'" 
                 class="dart-point hidden" 
                 [style.left.px]="targetPosition.x" 
                 [style.top.px]="targetPosition.y"
-                [ngClass]="{ 'visible': isCurrentFieldThrown(), 'hidden': !isCurrentFieldThrown() }"
+                [ngClass]="{ 'visible': isThrown, 'hidden': !isThrown }"
                 ></div>
         </div>
     </div>

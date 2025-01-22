@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { ScoringZoomViewComponent } from '../scoring-zoom-view/scoring-zoom-view.component';
-import { DartEventService } from '../../services/dart-event.service';
 
 @Component({
   selector: 'dartapp-topbar',
@@ -12,12 +11,19 @@ import { DartEventService } from '../../services/dart-event.service';
   styleUrl: './topbar.component.scss'
 })
 export class TopbarComponent {
+  @ViewChild("calibrationZoom") zoomField : ScoringZoomViewComponent | undefined
+  
   isPopupVisible: boolean = false;
   currentStep = 0; 
   currentHeading = '';
   headingTmpl = 'Kalibrierung Dart ';
+  customId = "calibrateField"
 
-  constructor(private router: Router, private dartEventService: DartEventService) {}
+  calibrationPositions: number[][] = [
+    [100,200], [150,150], [120,100], [200,100]
+  ]
+
+  constructor(private router: Router, private cdr: ChangeDetectorRef) {}
 
   navHome(){
     this.router.navigateByUrl('/');
@@ -47,7 +53,7 @@ export class TopbarComponent {
     if (this.currentStep < 4) {
       this.currentStep++;
       this.currentHeading = this.headingTmpl + (this.currentStep);
-      this.dartEventService.emitThrowEvent([[127,125]])
+      this.triggerZoom()
       setTimeout(() => {
         this.showNextStep();
       }, 10000); 
@@ -57,5 +63,12 @@ export class TopbarComponent {
   resetCalibration() {
     this.currentStep = 0;
     this.currentHeading = '';
+  }
+
+  triggerZoom() {
+    if(this.zoomField){
+      this.cdr.detectChanges()
+      this.zoomField.zoomOnField(this.customId, this.calibrationPositions[this.currentStep-1][0],  this.calibrationPositions[this.currentStep-1][1], 2)
+    }
   }
 }

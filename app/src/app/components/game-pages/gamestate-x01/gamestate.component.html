@@ -36,9 +36,9 @@
   </div>
 
   <div class="scoring-zoom-div">
-    <dartapp-scoring-zoom-view #zoomView1 [targetPosition]="{ x: 150, y: 125 }"></dartapp-scoring-zoom-view>
-    <dartapp-scoring-zoom-view #zoomView2 [targetPosition]="{ x: 150, y: 200 }"></dartapp-scoring-zoom-view>
-    <dartapp-scoring-zoom-view #zoomView3 [targetPosition]="{ x: 150, y: 125 }"></dartapp-scoring-zoom-view>
+    <div *ngFor="let dartPosition of currentDartPositions; let j = index"> 
+      <dartapp-scoring-zoom-view #zoomField [targetPosition]="{ x: dartPosition[0], y: dartPosition[1]}" [customId]="customId+j" [isThrown]="dartPosition.length>0"></dartapp-scoring-zoom-view>
+    </div>
   </div>
 
   <!-- Comment this out to get rid of Verticalscrollbar-->
