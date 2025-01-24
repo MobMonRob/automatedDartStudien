@@ -20,10 +20,8 @@ export class ScoringZoomViewComponent {
   zoomOnField(customId: string, x: number, y: number, zoomlevel: number): void {
     const zoomField = document.getElementById(customId);
     if (zoomField) {
-      console.log(zoomField)
       const container = zoomField.parentElement; 
       if (container) {
-        console.log(container)
         const containerWidth = container.offsetWidth;
         const containerHeight = container.offsetHeight;
 
@@ -56,5 +54,15 @@ export class ScoringZoomViewComponent {
         });
       }
      }
+  }
+
+  resetZoom(customId: string): void {
+    const zoomField = document.getElementById(customId);
+    if (zoomField) {
+      zoomField.style.transition = 'transform 0.5s ease-in-out';
+      requestAnimationFrame(() => {
+        zoomField.style.transform = 'scale(1)';
+      });
+    }
   }
 }

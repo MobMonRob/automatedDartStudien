@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Player } from '../model/player.model';
 import { Observable, of } from 'rxjs';
 import { ArchiveGameData, GameStateX01 } from '../model/game.model';
+import { Calibration } from '../model/calibration.models';
 
 @Injectable({
   providedIn: 'root'
@@ -68,6 +69,12 @@ export class ApiService {
     currentPlayerIndex: 0,
     inVariant: '',
     outVariant: ''
+  };
+
+  mockCalibration: Calibration = {
+    currentZoomPosition: [120, 70],
+    errorMsg: '',
+    isFinished: false
   };
 
   initialPointValue = 0;
@@ -143,5 +150,9 @@ export class ApiService {
     this.mockGame.players[this.mockGame.currentPlayerIndex].currentDartPositions = [[], [], []];
     this.afterPlayerChange = true;
     return of(this.mockGame);
+  }
+
+  initCalibration(): Observable<Calibration> {
+    return of(this.mockCalibration);
   }
 }

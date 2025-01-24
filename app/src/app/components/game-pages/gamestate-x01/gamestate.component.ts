@@ -70,12 +70,13 @@ export class GamestateComponent implements OnInit, DebugComponent {
 
   nextPlayer() {
     this.apiService.evaluateNextPlayerX01().subscribe(gameState => {
-      this.reactOnNewGameState(gameState, true);
+      this.reactOnNewGameState(gameState);
+      this.resetZoom();
     });
   }
 
   evaluateDebugThrow(value: number, valueString: string, position: []):void{
-    this.apiService.evaluateThrow(value,valueString, position).subscribe(gameState => {
+    this.apiService.evaluateThrow(value, valueString, position).subscribe(gameState => {
       this.reactOnNewGameState(gameState);
     });
   }
@@ -84,7 +85,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
     return this.players[this.currentPlayerIndex].currentDarts.length === 3 || this.bust.bust || !this.gameIsRunning;
   }
 
-  private reactOnNewGameState(gameState: GameStateX01, calledByNextPlayer: boolean = false){
+  private reactOnNewGameState(gameState: GameStateX01){
     this.points = gameState.points;
     this.bust = {bust: gameState.bust, origin: gameState.players[this.currentPlayerIndex].name};
     if(this.points.indexOf(0) !== -1){
@@ -93,8 +94,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
     } 
     this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
     this.currentDartPositions = gameState.players[this.currentPlayerIndex].currentDartPositions;
-    var currentThrow = this.currentDartPositions[this.currentDarts.length-1]
-    this.triggerZoom(this.currentDarts.length-1, currentThrow[0], currentThrow[1], 2)
+    this.triggerZoom(this.currentDarts.length-1, 2)
     this.darts = gameState.darts;
     this.averages = gameState.averages;
     this.currentPlayerIndex = gameState.currentPlayerIndex;
@@ -114,11 +114,19 @@ export class GamestateComponent implements OnInit, DebugComponent {
     playerCards[winnerIndex*2].classList.add('winner-card');
   }
 
-  private triggerZoom(index: number, x: number, y: number, zoomLevel: number): void {
+  private triggerZoom(index: number, zoomLevel: number): void {
     const zoomField = this.zoomFields.toArray()[index];
-    if (zoomField) {
+    if (this.currentDarts.length > 0 && zoomField) {
+      const x = this.currentDartPositions[this.currentDarts.length-1][0]
+      const y = this.currentDartPositions[this.currentDarts.length-1][1]
       this.cdr.detectChanges()
       zoomField.zoomOnField(this.customId+index, x, y, zoomLevel);
     }
+  }
+
+  private resetZoom(): void {
+    this.zoomFields.toArray().forEach((zoomField, index) => {
+      zoomField.resetZoom(this.customId + index);
+    });
   }
 }

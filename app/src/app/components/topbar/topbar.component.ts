@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { ScoringZoomViewComponent } from '../scoring-zoom-view/scoring-zoom-view.component';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'dartapp-topbar',
@@ -15,15 +16,15 @@ export class TopbarComponent {
   
   isPopupVisible: boolean = false;
   currentStep = 0; 
-  currentHeading = '';
+  currentHeading = 'Kalibriere Die Kameras';
+  isCalibrationStarted = false;
   headingTmpl = 'Kalibrierung Dart ';
   customId = "calibrateField"
+  errorMsg = "";
 
-  calibrationPositions: number[][] = [
-    [100,200], [150,150], [120,100], [200,100]
-  ]
+  zoomPosition: number[] = [0,0]
 
-  constructor(private router: Router, private cdr: ChangeDetectorRef) {}
+  constructor(private router: Router, private cdr: ChangeDetectorRef, private apiService: ApiService) {}
 
   navHome(){
     this.router.navigateByUrl('/');
@@ -31,7 +32,6 @@ export class TopbarComponent {
 
   toggleCalibrationPopup(): void {
     this.isPopupVisible = !this.isPopupVisible;
-    this.startCalibrationProcess();
   }
 
   closeCalibrationPopup(event: MouseEvent): void {
@@ -42,11 +42,6 @@ export class TopbarComponent {
       this.isPopupVisible = false;
       this.resetCalibration();
     }
-  }
-
-  startCalibrationProcess() {
-    this.currentStep = 0;
-    this.showNextStep();
   }
 
   showNextStep() {
@@ -62,13 +57,22 @@ export class TopbarComponent {
 
   resetCalibration() {
     this.currentStep = 0;
-    this.currentHeading = '';
+    this.isCalibrationStarted = false;
   }
 
   triggerZoom() {
     if(this.zoomField){
       this.cdr.detectChanges()
-      this.zoomField.zoomOnField(this.customId, this.calibrationPositions[this.currentStep-1][0],  this.calibrationPositions[this.currentStep-1][1], 2)
+      this.zoomField.zoomOnField(this.customId, this.zoomPosition[0],  this.zoomPosition[1], 2)
     }
+  }
+
+  startCalibration() {
+    this.apiService.initCalibration().subscribe(calibration => {
+      this.currentStep = 0;
+      this.isCalibrationStarted = true;
+      this.zoomPosition = calibration.currentZoomPosition;
+      this.showNextStep();
+    });
   }
 }

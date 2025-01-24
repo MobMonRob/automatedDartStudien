@@ -1,6 +1,5 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-
 <div class="topbar">
   <h1 (click)="navHome()">DartApp</h1>
   
@@ -19,11 +18,25 @@
 <!-- Calibration Pop Up -->
 <div *ngIf="isPopupVisible" class="popup" (click)="closeCalibrationPopup($event)">
   <div class="popup-content">
-    <span class="close-btn" (click)="closeCalibrationPopup($event)">&times;</span>
-    <h1>{{ currentHeading }}</h1>
-    <div class="animation-container">
-      <dartapp-scoring-zoom-view #calibrationZoom [targetPosition]="{x:calibrationPositions[currentStep-1][0], y:calibrationPositions[currentStep-1][1]}" [isThrown]="true" [customId]="customId"></dartapp-scoring-zoom-view>
+    <div class="popup-header">
+      <h1 class="calibration-header">{{ currentHeading }}</h1>
+      <button class="close-btn" (click)="closeCalibrationPopup($event)">&times;</button>
     </div>
-    <p>Kalibrierungsfortschritt: {{ currentStep }}/4</p>
+    
+    <div class="animation-container">
+      <dartapp-scoring-zoom-view 
+        #calibrationZoom 
+        [targetPosition]="{x:zoomPosition[0], y:zoomPosition[1]}" 
+        [isThrown]="isCalibrationStarted" 
+        [customId]="customId"></dartapp-scoring-zoom-view>
+    </div>
+    
+    <p class="message">Kalibrierungsfortschritt: {{ currentStep }}/4</p>
+
+    <button 
+    class="buttom-custom calibrate-button-custom" 
+    (click)="startCalibration()" 
+    *ngIf="!isCalibrationStarted">Kalibrierung Starten</button>
+
   </div>
 </div>
