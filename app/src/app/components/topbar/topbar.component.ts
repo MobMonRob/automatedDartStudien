@@ -16,11 +16,13 @@ export class TopbarComponent {
   
   isPopupVisible: boolean = false;
   currentStep = 0; 
+  maximumSteps = 0;
   currentHeading = 'Kalibriere Die Kameras';
   isCalibrationStarted = false;
   headingTmpl = 'Kalibrierung Dart ';
-  customId = "calibrateField"
+  customId = "calibrateField";
   errorMsg = "";
+  isCanceld = false;
 
   zoomPosition: number[] = [0,0]
 
@@ -39,25 +41,8 @@ export class TopbarComponent {
 
     if (target.classList.contains('popup') || target.classList.contains('close-btn')) {
       event.stopPropagation();
-      this.isPopupVisible = false;
-      this.resetCalibration();
+      this.cancelCalibration();
     }
-  }
-
-  showNextStep() {
-    if (this.currentStep < 4) {
-      this.currentStep++;
-      this.currentHeading = this.headingTmpl + (this.currentStep);
-      this.triggerZoom()
-      setTimeout(() => {
-        this.showNextStep();
-      }, 10000); 
-    }
-  }
-
-  resetCalibration() {
-    this.currentStep = 0;
-    this.isCalibrationStarted = false;
   }
 
   triggerZoom() {
@@ -67,12 +52,38 @@ export class TopbarComponent {
     }
   }
 
-  startCalibration() {
-    this.apiService.initCalibration().subscribe(calibration => {
-      this.currentStep = 0;
+  startCalibrationStep() {
+    this.apiService.initCalibrationStep().subscribe(calibration => {
+      this.currentStep = calibration.currentStep;
+      this.currentHeading = this.headingTmpl + (this.currentStep);
+      this.maximumSteps = calibration.maximumSteps;
       this.isCalibrationStarted = true;
       this.zoomPosition = calibration.currentZoomPosition;
-      this.showNextStep();
+      this.triggerZoom()
+      this.awaitCalibrationStepResult();
+    });
+  }
+
+  awaitCalibrationStepResult() {
+    this.apiService.evaluateCalibrationStepResult().subscribe(calibration => {
+      if (calibration.isFinished) {
+        this.isCalibrationStarted = false;
+        this.isPopupVisible = false;
+      } else if (calibration.isCanceled) {
+        this.errorMsg = calibration.errorMsg;
+        this.isCanceld = calibration.isCanceled;
+      } else {
+        if (this.currentStep < this.maximumSteps) {
+          this.startCalibrationStep();
+        }
+      }
+    });
+  }
+
+  cancelCalibration() {
+    this.apiService.cancelCalibration().subscribe(calibration => {
+      this.isCanceld = calibration.isCanceled;
+      this.isPopupVisible = false;
     });
   }
 }

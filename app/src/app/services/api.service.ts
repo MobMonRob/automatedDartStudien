@@ -74,7 +74,10 @@ export class ApiService {
   mockCalibration: Calibration = {
     currentZoomPosition: [120, 70],
     errorMsg: '',
-    isFinished: false
+    isFinished: false,
+    isCanceled: false,
+    currentStep: 1,
+    maximumSteps: 4
   };
 
   initialPointValue = 0;
@@ -152,7 +155,28 @@ export class ApiService {
     return of(this.mockGame);
   }
 
-  initCalibration(): Observable<Calibration> {
+  initCalibrationStep(): Observable<Calibration> {
+    return of(this.mockCalibration);
+  }
+
+  evaluateCalibrationStepResult(): Observable<Calibration> {
+    return new Observable<Calibration>(observer => {
+      setTimeout(() => {
+        this.mockCalibration.currentStep++;
+        if (this.mockCalibration.currentStep >= this.mockCalibration.maximumSteps) {
+          this.mockCalibration.isFinished = true;
+        }
+        observer.next(this.mockCalibration);
+        observer.complete();
+      }, 3000);
+    });
+  }
+
+  cancelCalibration(): Observable<Calibration> {
+    this.mockCalibration.isFinished = false;
+    this.mockCalibration.isCanceled = true;
+    this.mockCalibration.errorMsg = 'Calibration was canceled by user';
+    this.mockCalibration.currentStep = 0;
     return of(this.mockCalibration);
   }
 }

@@ -20,7 +20,7 @@
   <div class="popup-content">
     <div class="popup-header">
       <h1 class="calibration-header">{{ currentHeading }}</h1>
-      <button class="close-btn" (click)="closeCalibrationPopup($event)">&times;</button>
+      <!-- <button class="close-btn" (click)="closeCalibrationPopup($event)">&times;</button> -->
     </div>
     
     <div class="animation-container">
@@ -31,12 +31,16 @@
         [customId]="customId"></dartapp-scoring-zoom-view>
     </div>
     
-    <p class="message">Kalibrierungsfortschritt: {{ currentStep }}/4</p>
+    <p class="message">Kalibrierungsfortschritt: {{ currentStep }}/{{ maximumSteps }}</p>
 
     <button 
     class="buttom-custom calibrate-button-custom" 
-    (click)="startCalibration()" 
+    (click)="startCalibrationStep()" 
     *ngIf="!isCalibrationStarted">Kalibrierung Starten</button>
 
+    <button 
+    class="buttom-custom calibrate-button-custom" 
+    (click)="cancelCalibration()" 
+    *ngIf="isCalibrationStarted">Abbrechen</button>
   </div>
 </div>
