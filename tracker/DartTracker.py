@@ -8,6 +8,7 @@ import datetime
 from dotenv import load_dotenv
 from itertools import islice
 
+from tracker.TrackerV1 import TrackerV1
 from tracker.AbstractTracker import AbstractTracker
 from tracker.TemplateTracker import TemplateTracker
 from tracker.ZeroTracker import ZeroTracker
@@ -51,7 +52,7 @@ class DartTracker():
     def getCameraFrame(self, index: int = None):
         if index is not None and len(self.cameras.keys()) > index:
             _, camera = next(islice(self.cameras.items(), index, index+1))
-            return camera.getFrame()
+            return camera.getEditedFrame()
         return False, None
 
     def getFrameTimes(self):
@@ -73,6 +74,7 @@ class DartTracker():
     
     def receiveDartPositions(self, index, dartPositions):
         self.dartPositions[index] = dartPositions
+        print(f"Received dart positions from camera {index}: {dartPositions}")
 
         # dispatch dart positions to backend async
         if not self.dispatcherThread.is_alive():
@@ -87,6 +89,7 @@ class DartTracker():
         return calibrated
 
     def __dispatchDartPositions(self, dart_positions):
+        return
         url = f"{API_URL}/tracking-data"
 
         positions = []
@@ -179,7 +182,7 @@ class Camera():
         self.camera = camera
         self.valid = True
 
-        self.tracker = ZeroTracker(self.frame_buffer)
+        self.tracker = TrackerV1(self.frame_buffer)
 
     def start(self):
         self.loadFrameThread.start()
@@ -241,6 +244,7 @@ class Camera():
                 else:
                     self.log(f"Detected Position: {detected_dart_position[0]}")
                     break
+            # no append
             imagePositions.append(detected_dart_position[0])
             self.calibrationStatus += 1
             while True:

@@ -27,7 +27,7 @@ def video_feed(camera_id):
 
 @app.route('/frametime')
 def frametime():
-    frametimes = darttracker.getFrameTimes()
+    frametimes = enumerate([1, 1, 1])
     response = ""
     for i, frametime in frametimes:
         response += f"Camera {i}: {1/frametime} FPS\n"

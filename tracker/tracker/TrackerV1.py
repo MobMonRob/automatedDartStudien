@@ -10,16 +10,16 @@ from tracker.AbstractTracker import AbstractTracker
 
 class TrackerV1(AbstractTracker):
     # These are the functions needed for the main part
-    def euclidean_distance(point1, point2):
+    def euclidean_distance(self, point1, point2):
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
-    def brighten_image(image, factor):
+    def brighten_image(self, image, factor):
         if factor < 0 or factor > 255:
             raise ValueError("Factor must be between 0 and 255.")
         brightened_image = image.astype(np.int16) + factor
         return np.clip(brightened_image, 0, 255).astype(np.uint8)
 
-    def enhance_contrast(image, factor):
+    def enhance_contrast(self, image, factor):
         if factor < 0:
             raise ValueError("Factor must be positive.")
         contrast_image = image.astype(np.int16)
@@ -47,7 +47,7 @@ class TrackerV1(AbstractTracker):
         mask_eroded = cv2.erode(mask, kernel, iterations=1)
         return mask_eroded
 
-    def findPointsInMask(mask, min_area_threshold):
+    def findPointsInMask(self, mask, min_area_threshold):
         #Find Centerpoints in Contours of Mask
         contours_in_mask, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         centroids = []
@@ -79,7 +79,7 @@ class TrackerV1(AbstractTracker):
                 nearest_point = centroid
         return nearest_point
 
-    def findClosestPointBasedOnLine(slope, intercept, points, init_y):
+    def findClosestPointBasedOnLine(self, slope, intercept, points, init_y):
         nearest_point = None
         min_distance_to_line = float('inf')
         
@@ -105,7 +105,7 @@ class TrackerV1(AbstractTracker):
 
         return nearest_point
 
-    def calculateLine(points):
+    def calculateLine(self, points):
         x = np.array([point[0] for point in points])
         y = np.array([point[1] for point in points])
 
@@ -113,12 +113,19 @@ class TrackerV1(AbstractTracker):
         pca = PCA(n_components=1)
         pca.fit(points)
 
-        slope = pca.components_[0][1] / pca.components_[0][0]
+        slope = 0
+        if pca.components_[0][0] == 0:
+            slope = float('inf')
+        else:
+            slope = pca.components_[0][1] / pca.components_[0][0]
+
         intercept = np.mean(y) - slope * np.mean(x)
 
         return slope, intercept
 
-    def drawLine(slope, line_mask, start_point):
+    def drawLine(self, slope, line_mask, start_point):
+        if(slope == float("NaN")):
+            return
         line_length = 600
 
         x_offset = line_length / np.sqrt(1 + slope**2)
@@ -147,6 +154,8 @@ class TrackerV1(AbstractTracker):
                 centroids.remove(nearest_point)
 
             slope, intercept = self.calculateLine(nearest_points)
+            if slope == float("NaN"):
+                continue
             self.drawLine(slope, line_mask, nearest_points[0])
 
             points_grouped = 0
@@ -174,7 +183,7 @@ class TrackerV1(AbstractTracker):
             groups.append(nearest_points)
         return groups, point_mask, line_mask
 
-    def findDartPositions(groups):
+    def findDartPositions(self, groups):
         darts = []
         for group in groups:
             sorted_group = sorted(group, key=lambda y: y[1])
@@ -182,6 +191,8 @@ class TrackerV1(AbstractTracker):
         return darts
         
     def calculateDartPostions(self):
+        if(self.dart_frame is None or self.clean_frame is None):
+            return
         gray_dart = cv2.cvtColor(self.dart_frame, cv2.COLOR_BGR2GRAY)
         gray_empty = cv2.cvtColor(self.clean_frame, cv2.COLOR_BGR2GRAY)
         difference = cv2.absdiff(gray_dart, gray_empty) 
