@@ -30,17 +30,28 @@
         [isThrown]="isCalibrationStarted" 
         [customId]="customId"></dartapp-scoring-zoom-view>
     </div>
+
+    <p [ngClass]="{ 'message-field': errorMsg.length === 0, 'error-message-field': errorMsg.length > 0 }">
+      {{ (errorMsg.length === 0)? instruction : errorMsg }}
+    </p>
     
     <p class="message">Kalibrierungsfortschritt: {{ currentStep }}/{{ maximumSteps }}</p>
 
     <button 
     class="buttom-custom calibrate-button-custom" 
-    (click)="startCalibrationStep()" 
+    (click)="startCalibrationStep()"
+    [disabled]="awaitingResult"
     *ngIf="!isCalibrationStarted">Kalibrierung Starten</button>
 
     <button 
     class="buttom-custom calibrate-button-custom" 
+    (click)="awaitCalibrationStepResult()"
+    [disabled]="awaitingResult"
+    *ngIf="isCalibrationStarted"> Nächster Schritt</button>
+
+    <button 
+    class="buttom-custom cancel-button-custom" 
     (click)="cancelCalibration()" 
-    *ngIf="isCalibrationStarted">Abbrechen</button>
+    [disabled]="!isCalibrationStarted">Abbrechen</button>
   </div>
 </div>

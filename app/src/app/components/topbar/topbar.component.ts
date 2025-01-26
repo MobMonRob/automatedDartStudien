@@ -3,6 +3,7 @@ import { Component, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { ScoringZoomViewComponent } from '../scoring-zoom-view/scoring-zoom-view.component';
 import { ApiService } from '../../services/api.service';
+import { Calibration } from '../../model/calibration.models';
 
 @Component({
   selector: 'dartapp-topbar',
@@ -22,7 +23,10 @@ export class TopbarComponent {
   headingTmpl = 'Kalibrierung Dart ';
   customId = "calibrateField";
   errorMsg = "";
-  isCanceld = false;
+  instruction = "Starte die Kalibrierung";
+  isCanceled = false;
+  isFinished = false;
+  awaitingResult = false;
 
   zoomPosition: number[] = [0,0]
 
@@ -54,13 +58,11 @@ export class TopbarComponent {
 
   startCalibrationStep() {
     this.apiService.initCalibrationStep().subscribe(calibration => {
-      this.currentStep = calibration.currentStep;
       this.currentHeading = this.headingTmpl + (this.currentStep);
-      this.maximumSteps = calibration.maximumSteps;
       this.isCalibrationStarted = true;
-      this.zoomPosition = calibration.currentZoomPosition;
+      this.evaluateCalibration(calibration);
       this.triggerZoom()
-      this.awaitCalibrationStepResult();
+      //this.awaitCalibrationStepResult();
     });
   }
 
@@ -71,7 +73,7 @@ export class TopbarComponent {
         this.isPopupVisible = false;
       } else if (calibration.isCanceled) {
         this.errorMsg = calibration.errorMsg;
-        this.isCanceld = calibration.isCanceled;
+        this.isCanceled = calibration.isCanceled;
       } else {
         if (this.currentStep < this.maximumSteps) {
           this.startCalibrationStep();
@@ -82,8 +84,19 @@ export class TopbarComponent {
 
   cancelCalibration() {
     this.apiService.cancelCalibration().subscribe(calibration => {
-      this.isCanceld = calibration.isCanceled;
+      this.evaluateCalibration(calibration);
       this.isPopupVisible = false;
+      this.isCalibrationStarted = false;
     });
+  }
+
+  private evaluateCalibration(calibration: Calibration) {
+    this.currentStep = calibration.currentStep;
+    this.maximumSteps = calibration.maximumSteps;
+    this.zoomPosition = calibration.currentZoomPosition;
+    this.errorMsg = calibration.errorMsg;
+    this.isCanceled = calibration.isCanceled;
+    this.isFinished = calibration.isFinished;
+    this.instruction = calibration.instructionMsg;
   }
 }

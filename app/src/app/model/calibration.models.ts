@@ -1,5 +1,6 @@
 export interface Calibration {
     currentZoomPosition: number[];
+    instructionMsg: string;
     errorMsg: string;
     isFinished: boolean;
     isCanceled: boolean;

@@ -74,6 +74,7 @@ export class ApiService {
   mockCalibration: Calibration = {
     currentZoomPosition: [120, 70],
     errorMsg: '',
+    instructionMsg: 'Platziere den Pfeil in der Mitte des Ziels und drücke die Bestätigungstaste',
     isFinished: false,
     isCanceled: false,
     currentStep: 1,
@@ -176,6 +177,7 @@ export class ApiService {
     this.mockCalibration.isFinished = false;
     this.mockCalibration.isCanceled = true;
     this.mockCalibration.errorMsg = 'Calibration was canceled by user';
+    this.mockCalibration.instructionMsg = '';
     this.mockCalibration.currentStep = 0;
     return of(this.mockCalibration);
   }

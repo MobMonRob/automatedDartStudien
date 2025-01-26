@@ -137,31 +137,29 @@
   font-size: 1.2rem;
   font-weight: bold;
   color: #009688;
-  padding-top: 10px;
 }
 
 .buttom-custom {
   color: white; 
   border: none; 
   border-radius: 8px; 
-  padding: 10px 40px; 
   font-size: 25px; 
   font-weight: bold; 
   cursor: pointer; 
   transition: background 0.3s, transform 0.2s; 
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-
-  width: 100%; 
   min-width: 200px;
   max-width: 500px;
 }
 
 .calibrate-button-custom {
-  background: linear-gradient(90deg, #f44336, #ff5733); 
+  padding: 10px 75px; 
+  width: 65%;
+  background: linear-gradient(90deg, #4CAF50, #388E3C);
 }
 
 .calibrate-button-custom:hover {
-  background: linear-gradient(90deg, #e53935, #ff4d3f);
+  background: linear-gradient(90deg, #45A049, #388E3C);
   transform: translateY(-2px); 
 }
 
@@ -182,3 +180,40 @@
   background-color: #d3d3d3;
 }
 
+.cancel-button-custom {
+  padding: 10px 75px; 
+  width: 55%;
+  margin-top: 2%;
+  background: linear-gradient(90deg, #f44336, #ff5733); 
+}
+
+.cancel-button-custom:hover {
+  background: linear-gradient(90deg, #e53935, #ff4d3f);
+  transform: translateY(-2px); 
+}
+
+.cancel-button-custom:active {
+  transform: translateY(1px); 
+}
+
+.cancel-button-custom:disabled {
+  background-color: #d3d3d3;  
+  color: #7a7a7a; 
+  border: 2px solid #ccc; 
+  cursor: default; 
+  box-shadow: none; 
+  opacity: 0.6; 
+}
+
+.cancel-button-custom:disabled:hover {
+  background-color: #d3d3d3;
+}
+
+.message-field {
+  padding: 10px;
+  background-color: #ffffff;
+  width: 100%;
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+}
