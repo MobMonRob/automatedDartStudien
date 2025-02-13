@@ -145,7 +145,7 @@ class Camera():
         [0, 0, 1]
     ], dtype=np.float32)
 
-    dist_coeffs = np.zeros((4, 1), dtype=np.float32) # Assuming no lens distortion to start with
+    dist_coeffs = np.array([ 2.51531286e+02, -8.19915732e+04, 1.62496176e+00,  1.42073915e+00, -2.71497746e+02], dtype=np.float32)
 
     tracker : AbstractTracker = None
 
