@@ -16,6 +16,8 @@ from tracker.ZeroTracker import ZeroTracker
 load_dotenv()
 API_URL = os.getenv("API_URL")
 
+POSITION_MODE = False
+
 class DartTracker():
 
     CAMERA_COUNT = 3
@@ -52,6 +54,8 @@ class DartTracker():
     def getCameraFrame(self, index: int = None):
         if index is not None and len(self.cameras.keys()) > index:
             _, camera = next(islice(self.cameras.items(), index, index+1))
+            if POSITION_MODE: 
+                return camera.getFrame()
             return camera.getEditedFrame()
         return False, None
 
@@ -62,8 +66,23 @@ class DartTracker():
         return frameTimes
     
     def calibrateCameras(self, actualPositions):
+        print(f"Starting world coordinate collection with points: {actualPositions}")
+        # first, feed the points one by one to the cameras
+        for i, position in enumerate(actualPositions):
+            # Add 3rd coordinate to the position
+            new_position = np.array([position[0], position[1], 0], dtype=np.float32)
+            print(f"Calibrating with position: {new_position}")
+            threads = []
+            for _, camera in self.cameras.items():
+                threads.append(threading.Thread(target=camera.addCalibrationPoint, args=(new_position,i,), daemon=True))
+                threads[-1].start()
+            # ensure all threads are finished (all cameras have found the point) before continuing
+            while any([thread.is_alive() for thread in threads]):
+                time.sleep(1)
+        # then, let the cameras calibrate with the image points
+        print("All points have been found. Starting calibration.")
         for _, camera in self.cameras.items():
-            success = camera.calibrateAsync(actualPositions)
+            camera.calibrate()
 
     def calculateDartPositions(self):
         calculatedDartPositions = np.zeros((3, 2), dtype=np.float32)
@@ -87,6 +106,10 @@ class DartTracker():
         for _, camera in self.cameras.items():
             calibrated = calibrated and camera.isCameraCalibrated
         return calibrated
+    
+    def resetEmptyFrame(self):
+        for _, camera in self.cameras.items():
+            camera.resetEmptyFrame()
 
     def __dispatchDartPositions(self, dart_positions):
         return
@@ -107,8 +130,6 @@ class DartTracker():
         if response.status_code != 200:
             print(f"Error dispatching dart positions: {response.text}")
             return
-
-
     
 class Camera():
 
@@ -116,7 +137,7 @@ class Camera():
 
     WIDTH = 1920
     HEIGHT = 1080
-    MAX_FPS = 24
+    MAX_FPS = 1
 
     # The number over how many of the last frametimes the average is calculated.
     ROLLING_FRAMETIME_AVERAGE = 50
@@ -136,8 +157,8 @@ class Camera():
     sensor_width = 6.16
     sensor_height = 4.62
 
-    translation = np.zeros((3, 1), dtype=np.float32)
-    rotation_matrix = np.zeros((3, 3), dtype=np.float32)
+    translation: np.array
+    rotation_matrix: np.array
 
     camera_matrix = np.array([
         [focal_length, 0, principal_point[0]],
@@ -149,8 +170,9 @@ class Camera():
 
     tracker : AbstractTracker = None
 
-    calibrationStatus = -1
     isCameraCalibrated = False
+    imagePoints: np.array
+    worldPoints: np.array
 
     loadFrameThread : threading.Thread = None
 
@@ -158,6 +180,10 @@ class Camera():
         self.index = index
         self.parent = parent
         self.loadFrameThread = threading.Thread(target=self.asyncLoadFramesIntoBuffer, daemon=True)
+        self.imagePoints = np.zeros((4,2), dtype=np.float32)
+        self.worldPoints = np.zeros((4,3), dtype=np.float32)
+        self.translation = np.zeros((3, 1), dtype=np.float32)
+        self.rotation_matrix = np.zeros((3, 3), dtype=np.float32)
         self.initialize_camera(index)
 
     def initialize_camera(self, index):
@@ -182,7 +208,11 @@ class Camera():
         self.camera = camera
         self.valid = True
 
-        self.tracker = TrackerV1(self.frame_buffer)
+        if POSITION_MODE:
+            self.tracker = ZeroTracker(self.frame_buffer)
+        else:
+            self.tracker = TrackerV1(self.frame_buffer)
+
 
     def start(self):
         self.loadFrameThread.start()
@@ -224,51 +254,28 @@ class Camera():
     def getFrametime(self):
         return sum(self.frame_times) / len(self.frame_times)
     
-    def calibrate(self, worldPositions):
+    def resetEmptyFrame(self):
+        self.tracker.setCleanFrame(self.frame_buffer)
+    
+    def calibrate(self):
         self.isCameraCalibrated = False
-        imagePositions = np.array([], dtype=np.float32)
 
-        self.log(f"Starting calibration")
-        self.calibrationStatus = 0
-        # find dart positions for each world position
-        for p in worldPositions:
-            detected_dart_position = []
-            self.log(f"Finding dart for world position: {p}")
-            while True:
-                time.sleep(1)
-                _, detected_dart_position = self.getDartPositionsFromImage()
-                if len(detected_dart_position) == 0:
-                    self.log(f"No dart detected. Please place a dart at the position shown in the GUI.")
-                elif len(detected_dart_position) > 1:
-                    self.log(f"Warning: More than one dart detected")
-                else:
-                    self.log(f"Detected Position: {detected_dart_position[0]}")
-                    break
-            # no append
-            imagePositions.append(detected_dart_position[0])
-            self.calibrationStatus += 1
-            while True:
-                time.sleep(1)
-                _, detected_dart_position = self.getDartPositionsFromImage()
-                if len(detected_dart_position) != 0:
-                    self.log(f"Warning: Please remove all darts from the board")
-                    continue
-                break
-            self.log(f"Calibration point for {p} set")
-
-        if len(imagePositions) != len(worldPositions):
+        if len(self.imagePoints) != len(self.worldPoints):
             self.log("Error: Calibration failed. Not enough points detected")
             return False
 
-        success, rotation_vector, translation_vector = cv2.solvePnP(worldPositions, imagePositions, self.camera_matrix, self.dist_coeffs)
+        if len(self.imagePoints) < 4:
+            self.log("Error: Calibration failed. At least 4 points are required")
+            return False
+
+        success, rotation_vector, translation_vector = cv2.solvePnP(self.worldPoints, self.imagePoints, self.camera_matrix, self.dist_coeffs)
         
         if success:
-            self.log("Calibration successful for camera " + str(self.index))
-            self.log("Rotation Vector: \n" + rotation_vector)
-            self.log("Translation Vector: \n" + translation_vector)
+            self.log(f"Rotation Vector: \n {rotation_vector}")
+            self.log(f"Translation Vector: \n {translation_vector}")
         
             self.rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
-            self.log("Rotation Matrix: \n" + self.rotation_matrix)
+            self.log(f"Rotation Matrix: \n {self.rotation_matrix}")
 
             self.translation = translation_vector
 
@@ -279,9 +286,30 @@ class Camera():
 
         self.isCameraCalibrated = success
 
-    def calibrateAsync(self, worldPositions):
-        calibrationThread = threading.Thread(target=self.calibrate, args=(worldPositions,), daemon=True)
-        calibrationThread.start()
+    def addCalibrationPoint(self, worldPosition, index):
+        self.log(f"Starting calibration of point {worldPosition}")
+        self.worldPoints[index] = worldPosition
+        # First, ensure that no dart is on the board
+        while True:
+            time.sleep(1)
+            detected_dart_position = self.processed_frame_buffer[1]
+            if len(detected_dart_position) != 0:
+                self.log(f"Warning: Please remove all darts from the board")
+                continue
+            break
+        # Then, wait for the dart to be placed at the correct position
+        while True:
+            detected_dart_position = self.processed_frame_buffer[1]
+            if len(detected_dart_position) == 0:
+                self.log(f"No dart detected. Please place a dart at the position shown in the GUI ({worldPosition}).")
+            elif len(detected_dart_position) > 1:
+                self.log(f"Warning: More than one dart detected")
+            else:
+                self.log(f"Detected Position: {detected_dart_position[0]}")
+                break
+            time.sleep(1)
+        self.imagePoints[index] = detected_dart_position[0]
+        
 
     def log(self, message):
         print(f"[Camera {self.index}]: {message}")

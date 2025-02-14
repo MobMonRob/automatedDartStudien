@@ -124,17 +124,24 @@ class TrackerV1(AbstractTracker):
         return slope, intercept
 
     def drawLine(self, slope, line_mask, start_point):
-        if(slope == float("NaN")):
-            return
-        line_length = 600
+        try:
+            if slope == float("NaN") or slope == float("inf"):
+                return
+            line_length = 600
 
-        x_offset = line_length / np.sqrt(1 + slope**2)
-        y_offset = slope * x_offset
+            x_offset = line_length / np.sqrt(1 + slope**2)
+            y_offset = slope * x_offset
 
-        end_point = (int(start_point[0] + (x_offset if slope >= 0 else -x_offset)),
-                    int(start_point[1] + (y_offset if slope >= 0 else -y_offset)))
-        
-        cv2.line(line_mask, start_point, end_point, (255, 255, 255), 2)
+            if x_offset == float("NaN") or y_offset == float("NaN") :
+                return
+
+            end_point = (int(start_point[0] + (x_offset if slope >= 0 else -x_offset)),
+                        int(start_point[1] + (y_offset if slope >= 0 else -y_offset)))
+            
+            cv2.line(line_mask, start_point, end_point, (255, 255, 255), 2)
+        except ValueError:
+            print("VALUE ERROR")
+            print(f"slope: {slope}")
 
     def groupDots(self, centroids, point_mask, line_mask):
         groups = []

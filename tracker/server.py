@@ -39,9 +39,16 @@ def calibrate():
     if request.is_json:
         data = json.loads(request.data)
         actualPositions = data['actualPositions']
+        if(len(actualPositions) != 4):
+            return Response(status=400)
         darttracker.calibrateCameras(np.array(actualPositions))
         return Response(status=200)
     return Response(status=400)
+
+@app.route("/empty", methods=['POST'])
+def empty():
+    darttracker.resetEmptyFrame()
+    return Response(status=200)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
