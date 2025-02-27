@@ -1,7 +1,5 @@
-import { Component, Input, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DartEventService } from '../../services/dart-event.service';
-import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'dartapp-scoring-zoom-view',
@@ -10,43 +8,17 @@ import { Subscription } from 'rxjs';
   templateUrl: './scoring-zoom-view.component.html',
   styleUrl: './scoring-zoom-view.component.scss'
 })
-export class ScoringZoomViewComponent implements OnInit, OnDestroy {
-  @Input() availableDarts!: number;
-
-  private throwDartEventSub: Subscription | undefined;
+export class ScoringZoomViewComponent {
+  @Input() targetPosition!: { x: number, y: number };
+  @Input() customId!: string 
+  @Input() isThrown!: boolean
 
   dartboardImage = 'assets/dartboardPicture.png';
-  dartFields: number[][] = [];
-  currentPlayerIndex = 0;
-  calledAfterPlayerChange = false;
 
-  constructor(private dartEventService: DartEventService, private cdr: ChangeDetectorRef) {}
+  constructor() {}
 
-  ngOnInit(): void {
-    this.dartFields = new Array(this.availableDarts).fill([]);
-    this.throwDartEventSub = this.dartEventService.throwEvent$.subscribe((event) => {
-      this.dartFields = event.currentDartPositions
-      if(JSON.stringify(this.dartFields) === JSON.stringify([[], [], []])) { this.currentPlayerIndex = 0; this.calledAfterPlayerChange = true} else { this.currentPlayerIndex++; }
-      this.onDartHit();
-      this.calledAfterPlayerChange = false
-    })
-  }
-
-  ngOnDestroy(): void {
-    this.throwDartEventSub?.unsubscribe();
-  }
-
-  onDartHit(): void {
-    const zoomLevel = 2;
-
-    if(!this.calledAfterPlayerChange) {
-      this.cdr.detectChanges();
-      this.zoomOnField(this.currentPlayerIndex-1, this.dartFields[this.currentPlayerIndex-1][0], this.dartFields[this.currentPlayerIndex-1][1], zoomLevel);
-    }
-  }
-
-  private zoomOnField(index: number, x: number, y: number, zoomlevel: number): void {
-    const zoomField = document.getElementById('zoomfield' + index);
+  zoomOnField(customId: string, x: number, y: number, zoomlevel: number): void {
+    const zoomField = document.getElementById(customId);
     if (zoomField) {
       const container = zoomField.parentElement; 
       if (container) {
@@ -84,7 +56,13 @@ export class ScoringZoomViewComponent implements OnInit, OnDestroy {
      }
   }
 
-  isCurrentFieldThrown(index: number): boolean {
-    return this.dartFields[index].length > 0;
+  resetZoom(customId: string): void {
+    const zoomField = document.getElementById(customId);
+    if (zoomField) {
+      zoomField.style.transition = 'transform 0.5s ease-in-out';
+      requestAnimationFrame(() => {
+        zoomField.style.transform = 'scale(1)';
+      });
+    }
   }
 }

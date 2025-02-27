@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Player } from '../model/player.model';
 import { Observable, of } from 'rxjs';
 import { ArchiveGameData, GameStateX01 } from '../model/game.model';
+import { Calibration } from '../model/calibration.models';
 
 @Injectable({
   providedIn: 'root'
@@ -68,6 +69,16 @@ export class ApiService {
     currentPlayerIndex: 0,
     inVariant: '',
     outVariant: ''
+  };
+
+  mockCalibration: Calibration = {
+    currentZoomPosition: [120, 70],
+    errorMsg: '',
+    instructionMsg: 'Platziere den Pfeil in der Mitte des Ziels und drücke die Bestätigungstaste',
+    isFinished: false,
+    isCanceled: false,
+    currentStep: 1,
+    maximumSteps: 4
   };
 
   initialPointValue = 0;
@@ -143,5 +154,31 @@ export class ApiService {
     this.mockGame.players[this.mockGame.currentPlayerIndex].currentDartPositions = [[], [], []];
     this.afterPlayerChange = true;
     return of(this.mockGame);
+  }
+
+  initCalibrationStep(): Observable<Calibration> {
+    return of(this.mockCalibration);
+  }
+
+  evaluateCalibrationStepResult(): Observable<Calibration> {
+    return new Observable<Calibration>(observer => {
+      setTimeout(() => {
+        this.mockCalibration.currentStep++;
+        if (this.mockCalibration.currentStep >= this.mockCalibration.maximumSteps) {
+          this.mockCalibration.isFinished = true;
+        }
+        observer.next(this.mockCalibration);
+        observer.complete();
+      }, 3000);
+    });
+  }
+
+  cancelCalibration(): Observable<Calibration> {
+    this.mockCalibration.isFinished = false;
+    this.mockCalibration.isCanceled = true;
+    this.mockCalibration.errorMsg = 'Calibration was canceled by user';
+    this.mockCalibration.instructionMsg = '';
+    this.mockCalibration.currentStep = 0;
+    return of(this.mockCalibration);
   }
 }

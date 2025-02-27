@@ -1,13 +1,57 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-
 <div class="topbar">
   <h1 (click)="navHome()">DartApp</h1>
-  <!-- <nav>
-    <a href="gameSelect">Start Game</a>
-    <a href="#stats">Statistics</a>
-    <a href="#history">Game History</a>
-    <a href="#players">Players</a>
-  </nav> -->
-  <button class="login-btn"><i class="material-icons" style="font-size: 24px;">settings</i></button>
+  
+  <div class="button-container">
+    <button class="button calibrate-button" (click)="toggleCalibrationPopup()">
+      <div class="button-text">Kalibrierung</div>
+      <i class="material-icons" style="font-size: 24px;">adjust</i>
+    </button>
+
+    <button class="button settings-button" (click)="null">
+      <i class="material-icons" style="font-size: 24px;">settings</i>
+    </button>
+  </div>
+</div>
+
+<!-- Calibration Pop Up -->
+<div *ngIf="isPopupVisible" class="popup" (click)="closeCalibrationPopup($event)">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h1 class="calibration-header">{{ currentHeading }}</h1>
+      <!-- <button class="close-btn" (click)="closeCalibrationPopup($event)">&times;</button> -->
+    </div>
+    
+    <div class="animation-container">
+      <dartapp-scoring-zoom-view 
+        #calibrationZoom 
+        [targetPosition]="{x:zoomPosition[0], y:zoomPosition[1]}" 
+        [isThrown]="isCalibrationStarted" 
+        [customId]="customId"></dartapp-scoring-zoom-view>
+    </div>
+
+    <p [ngClass]="{ 'message-field': errorMsg.length === 0, 'error-message-field': errorMsg.length > 0 }">
+      {{ (errorMsg.length === 0)? instruction : errorMsg }}
+    </p>
+    
+    <p class="message">Kalibrierungsfortschritt: {{ currentStep }}/{{ maximumSteps }}</p>
+
+    <button 
+    class="buttom-custom calibrate-button-custom" 
+    (click)="startCalibrationStep()"
+    [disabled]="awaitingResult"
+    *ngIf="!isCalibrationStarted">Kalibrierung Starten</button>
+
+    <button 
+    class="buttom-custom calibrate-button-custom" 
+    (click)="awaitCalibrationStepResult()"
+    [disabled]="awaitingResult"
+    *ngIf="isCalibrationStarted"> Nächster Schritt</button>
+
+    <button 
+    class="buttom-custom cancel-button-custom" 
+    (click)="cancelCalibration()" 
+    [disabled]="!isCalibrationStarted">Abbrechen</button>
+  </div>
 </div>

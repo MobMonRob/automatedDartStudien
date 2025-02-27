@@ -32,13 +32,19 @@
 
       <button class="buttom-custom miss-button-custom" (click)="addMissThrow()" [disabled]="disableConsoleButtons()">Verfehlt</button>
       <button class="buttom-custom next-button-custom" (click)="nextPlayer()" [disabled]="!gameIsRunning">Nächster Spieler</button>
+      <!-- <button class="buttom-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neustart</button>
+      <button class="buttom-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neues Spiel</button> -->
     </div>
   </div>
 
   <div class="scoring-zoom-div">
-    <dartapp-scoring-zoom-view
-      [availableDarts]="3"
-    ></dartapp-scoring-zoom-view>
+    <div *ngFor="let dartPosition of currentDartPositions; let j = index"> 
+      <dartapp-scoring-zoom-view 
+        #zoomField
+        [targetPosition]="{ x: players[currentPlayerIndex].currentDartPositions[j][0], y: players[currentPlayerIndex].currentDartPositions[j][1]}" 
+        [customId]="customId+j" 
+        [isThrown]="players[currentPlayerIndex].currentDartPositions[j].length > 0"></dartapp-scoring-zoom-view>
+    </div>
   </div>
 
   <!-- Comment this out to get rid of Verticalscrollbar-->
