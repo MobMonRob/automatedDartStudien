@@ -47,6 +47,7 @@ class TrackerV1_2(AbstractTracker):
         kernel = np.ones((3, 3), np.uint8) 
         mask_eroded = cv2.erode(mask, kernel, iterations=1)
         
+        kernel = np.ones((2, 2), np.uint8) 
         mask_dilated = cv2.dilate(mask_eroded, kernel, iterations=1)
 
         return mask_dilated
@@ -147,7 +148,7 @@ class TrackerV1_2(AbstractTracker):
             print("VALUE ERROR")
             print(f"slope: {slope}")
 
-    def groupDots(self, centroids, point_mask, line_mask):
+    def groupDots(self, centroids, point_mask, line_mask, adapting_rate):
         groups = []
         while len(centroids) > 0 and len(groups) < 3:
             sorted_centroids = sorted(centroids, key=lambda y: y[1])
@@ -157,7 +158,7 @@ class TrackerV1_2(AbstractTracker):
             nearest_points = []
             nearest_points.append(current_point)
             tmp_point = current_point
-            point_range = len(centroids) if len(centroids) < 5 else 5
+            point_range = len(centroids) if len(centroids) < adapting_rate else adapting_rate
             for _ in range(point_range):
                 nearest_point = self.findClosestPoint(tmp_point, centroids)
                 tmp_point = nearest_point
@@ -220,12 +221,12 @@ class TrackerV1_2(AbstractTracker):
         #Find centroid points in mask, draw them into an empty mask, min area threshold removes ausreißer
         centroids = self.findPointsInMask(mask1, 5)
         for (cx, cy) in centroids:
-            cv2.circle(mask2, (cx, cy), 5, (255, 0, 0), -1)
+            cv2.circle(mask2, (cx, cy), 3, (255, 0, 0), -1)
 
         point_mask = np.zeros_like(self.dart_frame)
         line_mask = np.zeros_like(self.dart_frame)
 
-        groups, point_mask, line_mask = self.groupDots(centroids, point_mask, line_mask)
+        groups, point_mask, line_mask = self.groupDots(centroids, point_mask, line_mask, 3)
 
         #Mark ausreißer in the mask, not group points (left in centroids) get added to the groups so they can be added as ausreißer in the result image
         if len(centroids) > 0:
@@ -245,7 +246,7 @@ class TrackerV1_2(AbstractTracker):
         for index, group in enumerate(groups):
             color = colors[index % len(colors)] 
             for (cx, cy) in group:
-                cv2.circle(mask3, (cx, cy), 5, color, -1)
+                cv2.circle(mask3, (cx, cy), 3, color, -1)
 
         mask3 = cv2.add(line_mask, mask3)
 
