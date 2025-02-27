@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 
 from tracker.AbstractTracker import AbstractTracker
 
-class TrackerV1(AbstractTracker):
+class TrackerV1_2(AbstractTracker):
     # These are the functions needed for the main part
     def euclidean_distance(self, point1, point2):
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
@@ -27,25 +27,29 @@ class TrackerV1(AbstractTracker):
         return np.clip(contrast_image, 0, 255).astype(np.uint8)
 
     def prepareMask(self, emptyFrame, dartFrame):
-        brightness_factor = 0
+        brightness_factor = 10
         empty_dartboard_bright = self.brighten_image(emptyFrame, brightness_factor)
-        dartboard_with_darts_bright = self.brighten_image(dartFrame, brightness_factor)
+        dartboard_with_darts_bright = self.brighten_image(dartFrame, 0)
 
         contrast_factor = 1.2
         empty_dartboard_contrast = self.enhance_contrast(empty_dartboard_bright, contrast_factor)
-        dartboard_with_darts_contrast = self.enhance_contrast(dartboard_with_darts_bright, contrast_factor)
+        dartboard_with_darts_contrast = self.enhance_contrast(dartboard_with_darts_bright, 1.3)
         
         empty_gray = cv2.cvtColor(empty_dartboard_contrast, cv2.COLOR_BGR2GRAY)
         darts_gray = cv2.cvtColor(dartboard_with_darts_contrast, cv2.COLOR_BGR2GRAY)
         
-        difference = cv2.absdiff(empty_gray, darts_gray) 
+        difference = cv2.absdiff(empty_gray, darts_gray)
+        difference = self.enhance_contrast(difference, 1.5) 
         
         _, mask = cv2.threshold(difference, 40, 255, cv2.THRESH_BINARY)
         cv2.imwrite("premask.jpg",difference)
         
-        kernel = np.ones((4, 4), np.uint8) 
+        kernel = np.ones((3, 3), np.uint8) 
         mask_eroded = cv2.erode(mask, kernel, iterations=1)
-        return mask_eroded
+        
+        mask_dilated = cv2.dilate(mask_eroded, kernel, iterations=1)
+
+        return mask_dilated
 
     def findPointsInMask(self, mask, min_area_threshold):
         #Find Centerpoints in Contours of Mask
