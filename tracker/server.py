@@ -2,6 +2,7 @@ from flask import Flask, Response, render_template, request, json
 import cv2 as cv
 import numpy as np
 from DartTracker import DartTracker
+import random
 
 app = Flask(__name__)
 
@@ -10,8 +11,8 @@ darttracker = DartTracker()
 def generate_frames(camera_id):
     while True:
         _, frame = darttracker.getCameraFrame(index = camera_id)
-        _, buffer = cv.imencode('.jpg', frame)
-        #_, buffer = cv.imwrite(f'{random.random()}.jpg', frame)
+       # _, buffer = cv.imencode('.jpg', frame)
+        _, buffer = cv.imwrite(f'{random.random()}.jpg', frame)
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
