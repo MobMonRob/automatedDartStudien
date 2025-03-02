@@ -9,8 +9,8 @@ namespace backend.Controllers;
 public class TrackingDataController(DartPositionService dartPositionService)
 {
     [HttpPost]
-    public void PostTrackingData(TrackingData trackingData)
+    public async Task PostTrackingData(TrackingData trackingData)
     {
-        dartPositionService.HandleTrackingData(trackingData);
+        await dartPositionService.HandleTrackingData(trackingData);
     }
 }

@@ -12,7 +12,7 @@ public class GameStateX01 : GameState
         gameType = GameMode.X01;
     }
     
-    public new void AddPlayer(Player player)
+    public override void AddPlayer(Player player)
     {
         players.Add(player);
         points.Add(initialPoints);

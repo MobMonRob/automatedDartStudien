@@ -3,17 +3,20 @@ namespace backend.Models;
 public abstract class GameState
 {
     public GameMode gameType { get; set; }
-    public List<Player> players = [];
-    public List<int> points = [];
-    public List<int> averages = [];
-    public List<int> dartsThrown = [];
-    public List<List<DartPosition>> lastDarts = [];
+    public List<Player> players { get; set; } = new();
+    public List<int> points { get; set; } = new();
+    public List<int> averages { get; set; } = new();
+    public List<int> dartsThrown { get; set; } = new();
+    public List<List<DartPosition>> lastDarts { get; set; } = new();
+
     public bool bust { get; set; } = false;
     public int currentPlayer { get; set; } = 0;
     public DateTime start { get; set; } = DateTime.Now;
     public DateTime? end { get; set; }
+    
+    public const int DartsPerTurn = 1;
 
-    public void AddPlayer(Player player)
+    public virtual void AddPlayer(Player player)
     {
         players.Add(player);
         points.Add(0);
@@ -25,6 +28,35 @@ public abstract class GameState
     public int MoveToNextPlayer()
     {
         currentPlayer = (currentPlayer + 1) % players.Count;
+        lastDarts[currentPlayer].Clear();
         return currentPlayer;
+    }
+
+    public object Clone()
+    {
+        return this.MemberwiseClone();
+    }
+    
+    public override bool Equals(object? obj)
+    {
+        if (obj == null || GetType() != obj.GetType())
+        {
+            return false;
+        }
+
+        GameState other = (GameState) obj;
+        return gameType == other.gameType && players.SequenceEqual(other.players) && points.SequenceEqual(other.points) && averages.SequenceEqual(other.averages) && dartsThrown.SequenceEqual(other.dartsThrown) && lastDarts.SequenceEqual(other.lastDarts) && bust == other.bust && currentPlayer == other.currentPlayer && start == other.start && end == other.end;
+    }
+    
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(gameType,
+            players,
+            points,
+            averages,
+            dartsThrown,
+            lastDarts,
+            bust,
+            currentPlayer);
     }
 }

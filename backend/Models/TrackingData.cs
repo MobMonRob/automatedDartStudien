@@ -27,7 +27,7 @@ public class TrackingData
     { 
         // todo: make numerical calculation to determine "similarity"
         // right now an arbitrary value is used
-        return Math.Abs(compare.x - other.x) < 0.05 && Math.Abs(compare.y - other.y) < 0.05;
+        return Math.Abs(compare.x - other.x) < 0.005 && Math.Abs(compare.y - other.y) < 0.005;
     }
     
     

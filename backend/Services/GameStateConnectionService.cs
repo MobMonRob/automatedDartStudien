@@ -13,7 +13,10 @@ public class GameStateConnectionService
     {
         foreach (var s in _sockets)
         {
-            await s.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            if (s.State == WebSocketState.Open)
+            {
+                await s.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
         }
     }
     
@@ -39,12 +42,7 @@ public class GameStateConnectionService
                 break;
             }
             
-            HandleIncomingData(buffer);
-            
-            // foreach (var s in _sockets)
-            // {
-            //     await s.SendAsync(buffer[..result.Count], WebSocketMessageType.Text, true, CancellationToken.None);
-            // }
+            await HandleIncomingData(buffer);
         }
         _sockets.Remove(socket);
     }
@@ -55,7 +53,4 @@ public class GameStateConnectionService
         var buffer = Encoding.UTF8.GetBytes(jsonString);
         await SendToAllClients(buffer);
     }
-    
-    
-    
 }
