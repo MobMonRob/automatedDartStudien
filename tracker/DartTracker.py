@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import requests
 import datetime
+import json
 from dotenv import load_dotenv
 from itertools import islice
 
@@ -47,9 +48,29 @@ class DartTracker():
         
         if len(self.cameras) == self.CAMERA_COUNT:
             for _, camera in self.cameras.items():
+                self.setInitialCalibrationData(camera)                   
                 camera.start()
                 time.sleep(1/(camera.MAX_FPS*self.CAMERA_COUNT))
-            
+
+        for _, camera in self.cameras.items():
+            if not camera.isCameraCalibrated:
+                print(f"Camera {camera.index} is not calibrated. Starting calibration with default positions.")
+                self.calibrateCameras(np.array([[0,1],[0,-1],[-0.6294,0],[0.5986,0.1945]]))
+                return
+    
+    def setInitialCalibrationData(self, camera):
+        try:
+            with open(f"calibration/camera{camera.index}.json", "r") as file:
+                data = json.load(file)
+                camera.isCameraCalibrated = data["calibrated"]
+                if camera.isCameraCalibrated:
+                    camera.rotation_matrix = np.array(data["rotation_matrix"], dtype=np.float32)
+                    camera.translation = np.array(data["translation"], dtype=np.float32)
+                    camera.camera_matrix = np.array(data["camera_matrix"], dtype=np.float32)
+                    camera.dist_coeffs = np.array(data["dist_coeffs"], dtype=np.float32)
+        except FileNotFoundError:
+            print(f"Calibration data for camera {camera.index} not found")
+
 
     def getCameraFrame(self, index: int = None):
         if index is not None and len(self.cameras.keys()) > index:
@@ -83,6 +104,22 @@ class DartTracker():
         print("All points have been found. Starting calibration.")
         for _, camera in self.cameras.items():
             camera.calibrate()
+        self.saveCalibrationData()
+        
+    def saveCalibrationData(self):
+        if not os.path.exists("calibration"):
+            os.makedirs("calibration")
+        for _, camera in self.cameras.items():
+            data = {
+                "calibrated": camera.isCameraCalibrated,
+                "rotation_matrix": camera.rotation_matrix.tolist(),
+                "translation": camera.translation.tolist(),
+                "camera_matrix": camera.camera_matrix.tolist(),
+                "dist_coeffs": camera.dist_coeffs.tolist()
+            }
+            print(f"Saving calibration data for camera {camera.index}: \n {data}")
+            with open(f"calibration/camera{camera.index}.json", "w+") as file:
+                json.dump(data, file)
 
     def calculateDartPositions(self):
 
@@ -104,7 +141,7 @@ class DartTracker():
                 F /= np.linalg.norm(F)
             return F
 
-        def getEpipolarConstraint(F, x1, x2):
+        def getEpipolarDistance(F, x1, x2):
             # get distance of x2 to epipolar line of x1
             x1 = np.array([x1[0], x1[1], 1], dtype=np.float32)
             x2 = np.array([x2[0], x2[1], 1], dtype=np.float32)
@@ -123,42 +160,40 @@ class DartTracker():
                 return calculatedDartPositions
             projectionMatrices.append(camera.getProjectionMatrix())
         
-        camera0 = list(self.cameras.values())[0]
-        camera1 = list(self.cameras.values())[1]
+        cameras = list(self.cameras.values())
 
-        print(f"Camera 0 matrix: {camera0.rotation_matrix}")
-        print(f"Camera 1 matrix: {camera1.rotation_matrix}")
-
-        F = getFundamentalMatrix(camera0.camera_matrix, camera1.camera_matrix, camera0.rotation_matrix, camera1.rotation_matrix, camera0.translation, camera1.translation)
-
-        print(f"Fundamental Matrix: {F}")
+        F = getFundamentalMatrix(cameras[0].camera_matrix, cameras[1].camera_matrix, cameras[0].rotation_matrix, cameras[1].rotation_matrix, cameras[0].translation, cameras[1].translation)
 
         foundCorrespondences = []
         
         if len(list(self.dartPositions.values())) < 2:
             return calculatedDartPositions
-        positions1 = list(self.dartPositions.values())[0]
-        positions2 = list(self.dartPositions.values())[1]
 
-        print(f"Postions: {positions1} {positions2}")
+        positions = list(self.dartPositions.values())
+
+        positions1 = positions[0].copy()
+        positions2 = positions[1].copy()
 
         for point1 in positions1:
-            for point2 in positions2:
-                distance = getEpipolarConstraint(F, point1, point2)
-                foundCorrespondences.append(((point1, point2), distance))
+            bestFitIndex = -1
+            bestFit = ((0,0), np.float32(9999999999999))
+            for i, point2 in enumerate(positions2):
+                distance = np.abs(getEpipolarDistance(F, point1, point2))
+                if distance < bestFit[1]:
+                    bestFit = (point2, distance)
+                    bestFitIndex = i
+            if bestFitIndex != -1:
+                foundCorrespondences.append(((point1, bestFit[0]), bestFit[1]))
+                del positions2[bestFitIndex]
+            
 
         if len(foundCorrespondences) == 0:
             print("No correspondences found")
             return calculatedDartPositions
         
         print(f"All Correspondences: {foundCorrespondences}")
-        
-        # todo: also check if all points are used
-        best3Correspondences = sorted(foundCorrespondences, key=lambda x: x[1], reverse=True)[:3]
 
-        print(f"Best 3 Correspondences: {best3Correspondences}")
-
-        for i, (correspondence, _) in enumerate(best3Correspondences):
+        for i, (correspondence, _) in enumerate(foundCorrespondences):
             homogenousPoint = cv2.triangulatePoints(projectionMatrices[0], projectionMatrices[1], correspondence[0], correspondence[1])
             calculatedDartPositions.append(homogenousPoint / homogenousPoint[3])
 
@@ -167,12 +202,12 @@ class DartTracker():
     
     def receiveDartPositions(self, index, dartPositions):
         self.dartPositions[index] = dartPositions
-        print(f"Received dart positions from camera {index}: {dartPositions}")
+        print(f"Dart positions: {self.dartPositions}")
 
         # dispatch dart positions to backend async
         if not self.dispatcherThread.is_alive():
             positions = self.calculateDartPositions()
-            print("Calculated Positions {0}".format(positions))
+            print("Calculated Positions \n {0}".format(positions))
             self.dispatcherThread = threading.Thread(target=self.__dispatchDartPositions, args=(positions,), daemon=True)
             self.dispatcherThread.start()
 
@@ -187,25 +222,26 @@ class DartTracker():
             camera.resetEmptyFrame()
 
     def __dispatchDartPositions(self, dart_positions):
-        return
         url = f"{API_URL}/tracking-data"
 
         positions = []
-        for x, y in dart_positions:
-            positions.append({"x": str(x), "y": str(y)})
+        for position in dart_positions:
+            positions.append({"x": float(position[0]), "y": float(position[1])})
 
         data = {
                 "timestamp": str(datetime.datetime.now()),
-                "positions": positions,
-                "calibrated": self.isCalibrated()
+                "positions": positions#,
+                #"calibrated": self.isCalibrated()
         }
 
-        response = requests.post(url, json=data)
+        try:
+            response = requests.post(url, json=data)
+            if response.status_code != 200:
+                print(f"Error dispatching dart positions: {response.text}")
+                return
+        except:
+            pass
 
-        if response.status_code != 200:
-            print(f"Error dispatching dart positions: {response.text}")
-            return
-    
 class Camera():
 
     parent: DartTracker
