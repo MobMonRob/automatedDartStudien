@@ -1,13 +1,22 @@
 import { Injectable } from '@angular/core';
 import { Player } from '../model/player.model';
-import { Observable, of } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { ArchiveGameData, GameStateX01 } from '../model/game.model';
 import { Calibration } from '../model/calibration.models';
+import { environment } from '../../environments/environment';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
+
+  private apiUrl = environment.apiUrl
+  private gamestateUrl = environment.gamestateUrl
+  private ws: WebSocket;
+
+  private activeGamestate: GameStateX01;
+
   mockPlayers: Player[] = [
     {
       id: '481d6713-dcca-473b-a68b-97d55f9378f9',
@@ -85,19 +94,89 @@ export class ApiService {
   previousScoreValue = 0;
   afterPlayerChange = true;
 
-  constructor() {}
+  constructor(private httpClient: HttpClient) {
+    this.activeGamestate = this.mockGame;
+    this.ws = new WebSocket(this.gamestateUrl);
+    this.ws.onopen = () => {
+      console.log('WebSocket opened');
+    }
+    this.ws.onmessage = (event) => {
+      let data = JSON.parse(event.data) as WsGamestateMessage;
+      console.log(data);
+
+      // Update active gamestate
+      this.activeGamestate = {
+        gameType: 'X01',
+        players: data.players.map((apiPlayer, i) => {
+          return {
+            id: apiPlayer.id,
+            name: apiPlayer.name,
+            currentDarts: data.lastDarts[i].map(dart => this.getDartString(dart)),
+            currentDartPositions: [[0,0], [0,0], [0,0]]
+          }
+        }
+        ),
+        points: data.points,
+        averages: data.averages,
+        darts: data.dartsThrown,
+        bust: data.bust,
+        currentPlayerIndex: data.currentPlayer,
+        inVariant: '',
+        outVariant: ''
+      }
+      console.log(this.activeGamestate);
+      this.ws.onclose = () => {
+        console.log('WebSocket closed');
+      }
+    }
+  }
+
+  private getDartString(dart: ApiDartPosition): string {
+    return (dart.doubleField ? 'D' : '') + (dart.tripleField ? 'T' : '') + dart.points;
+  }
+
+
 
   initX01Game(gameState: GameStateX01) {
     this.mockGame = gameState;
     this.mockPlayers = gameState.players;
+
+    const body = {
+      gameMode: "X01",
+      playerIds: gameState.players.map(player => player.id)
+    }
+    console.log(body)
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    this.httpClient.post(`${this.apiUrl}/game/start-game`, JSON.stringify(body), {headers}).subscribe();
   }
 
-  addPlayer(player: Player) {
+  addPlayer(player: Player): Observable<Object> {
     this.mockPlayers.push(player);
+
+    const body = {
+      name: player.name
+    }
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.httpClient.post(`${this.apiUrl}/players`, JSON.stringify(body), {headers});
   }
 
   getPlayers(): Observable<Player[]> {
-    return of(this.mockPlayers);
+    return this.httpClient.get<ApiPlayer[]>(`${this.apiUrl}/players`).pipe(
+      // convert api response to Player model
+      map((apiPlayers: ApiPlayer[]) => {
+        return apiPlayers.map(apiPlayer => {
+          console.log(apiPlayer);
+          return {
+            id: apiPlayer.id,
+            name: apiPlayer.name,
+            
+            currentDarts: [],
+            currentDartPositions: [[], [], []]
+          }
+        });
+      }),
+      catchError(() => of(this.mockPlayers)),
+    )
   }
 
   getGameHistory(): Observable<ArchiveGameData[]>{
@@ -110,7 +189,7 @@ export class ApiService {
   }
 
   getCurrentGameStateX01(): Observable<GameStateX01> {
-    return of(this.mockGame);
+    return of(this.activeGamestate);
   }
 
   evaluateThrow(value: number, valueString: string, position: number[]): Observable<GameStateX01> {
@@ -144,7 +223,7 @@ export class ApiService {
     } else {
       this.evaluateNextPlayerX01();
     }
-    return of(this.mockGame);
+    return of(this.activeGamestate);
   }
 
   evaluateNextPlayerX01(): Observable<GameStateX01> {
@@ -181,4 +260,27 @@ export class ApiService {
     this.mockCalibration.currentStep = 0;
     return of(this.mockCalibration);
   }
+}
+
+interface ApiPlayer{
+  id: string;
+  name: string;
+}
+
+interface ApiDartPosition{
+  points: number;
+  doubleField: boolean;
+  tripleField: boolean;
+  position: number[];
+}
+
+interface WsGamestateMessage{
+  gameType: number;
+  players: ApiPlayer[];
+  points: number[];
+  averages: number[];
+  bust: boolean;
+  currentPlayer: number;
+  lastDarts: ApiDartPosition[][];
+  dartsThrown: number[];
 }

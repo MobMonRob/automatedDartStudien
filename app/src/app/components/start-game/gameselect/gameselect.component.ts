@@ -67,7 +67,7 @@ export class GameselectComponent {
             currentDarts: [],
             currentDartPositions: [[], [], []],
             name: player.name,
-            id: uuidv4()
+            id: player.id
           });
         });
 

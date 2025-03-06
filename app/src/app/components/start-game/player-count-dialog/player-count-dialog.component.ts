@@ -58,6 +58,8 @@ export class PlayerCountDialogComponent implements OnInit {
     }
   }
 
+  // todo: add delete player button
+
   addPlayer() {
     const dialogRef = this.dialog.open(PlayerNameDialogComponent, {
       width: '500px'
@@ -72,7 +74,11 @@ export class PlayerCountDialogComponent implements OnInit {
             name: result,
             id: uuidv4()
           };
-          this.apiservice.addPlayer(p);
+          this.apiservice.addPlayer(p).subscribe( () =>
+            this.apiservice.getPlayers().subscribe((players) => {
+              this.existingPlayers = players;
+            })
+          );
         }
       }
     });

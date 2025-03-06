@@ -8,6 +8,7 @@ namespace backend.Services;
 public class GameStateConnectionService
 {
     private readonly List<WebSocket> _sockets = [];
+    private GameState recentGameState;
 
     private async Task SendToAllClients(byte[] buffer)
     {
@@ -28,8 +29,13 @@ public class GameStateConnectionService
     
     public async Task HandleWebSocketConnection(WebSocket socket)
     {
-        Console.WriteLine("Hallo");
+        Console.WriteLine("New connection");
         _sockets.Add(socket);
+        
+        var jsonString = JsonSerializer.Serialize(recentGameState);
+        var gsBuffer = Encoding.UTF8.GetBytes(jsonString);
+        await socket.SendAsync(gsBuffer, WebSocketMessageType.Text, true, CancellationToken.None);
+        
         var buffer = new byte[1024 * 2];
         while (socket.State == WebSocketState.Open)
         {
@@ -49,6 +55,7 @@ public class GameStateConnectionService
 
     public async Task sendGamestateToClients(GameState gameState)
     {
+        recentGameState = gameState;
         var jsonString = JsonSerializer.Serialize(gameState);
         var buffer = Encoding.UTF8.GetBytes(jsonString);
         await SendToAllClients(buffer);

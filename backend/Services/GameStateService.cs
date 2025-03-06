@@ -5,7 +5,7 @@ namespace backend.Services;
 public class GameStateService(GameStateConnectionService gameStateConnectionService, GameState gameState)
 {
     private GameState _gameState = gameState;
-    private GameStateConnectionService _gameStateConnectionService = gameStateConnectionService;
+    private readonly GameStateConnectionService _gameStateConnectionService = gameStateConnectionService;
     private bool gameIsRunning = false;
     private bool throwIsOver = false;
     private List<DartPosition> currentThrow = [];
@@ -28,6 +28,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
                 break;
         }
         gameIsRunning = true;
+        _gameStateConnectionService.sendGamestateToClients(_gameState);
     }
 
     public async Task HandleDartPositions(List<DartPosition> dartPositions)
@@ -66,6 +67,8 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         // compare incoming dart positions with last dart positions
         var newDarts = dartPositions.Except(currentThrow).ToList();
         if (newDarts.Count == 0) return;
+        
+        gameState.bust = false;
         
         int points = gameState.points[gameState.currentPlayer];
         int dartsThrown = gameState.dartsThrown[gameState.currentPlayer];
@@ -124,5 +127,10 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         {
             throwIsOver = true;
         }
+    }
+    
+    public GameState GetGameState()
+    {
+        return _gameState;
     }
 }

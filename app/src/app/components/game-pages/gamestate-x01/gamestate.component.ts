@@ -7,6 +7,7 @@ import { DebugNumberConsoleComponent } from "../../debug-number-console/debug-nu
 import { TopbarComponent } from "../../topbar/topbar.component";
 import { DebugComponent } from '../../../model/debug.model';
 import { ScoringZoomViewComponent } from "../../scoring-zoom-view/scoring-zoom-view.component";
+import { Player } from '../../../model/player.model';
 
 
 @Component({
@@ -19,7 +20,7 @@ import { ScoringZoomViewComponent } from "../../scoring-zoom-view/scoring-zoom-v
 export class GamestateComponent implements OnInit, DebugComponent {
   @ViewChildren('zoomField') zoomFields!: QueryList<ScoringZoomViewComponent>;
 
-  players: any[] = [];
+  players: Player[] = [];
   gameMode: string = "";
   currentPlayerIndex = 0;
   points: number[] = [];
@@ -32,7 +33,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
 
   customId = "mainZoomField"
 
-  constructor (private apiService: ApiService, private cdr: ChangeDetectorRef ) {}
+  constructor (private apiService: ApiService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(){
     this.apiService.getInitStateOfCurrentGameX01().subscribe(game => {
@@ -49,7 +50,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
     this.gameIsRunning = true;
     this.currentPlayerIndex = game.currentPlayerIndex;
     this.currentDartPositions = game.players[this.currentPlayerIndex].currentDartPositions;
-    //this.watchGame();
+    this.watchGame();
   }
 
   watchGame() {
@@ -57,7 +58,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
       this.apiService.getCurrentGameStateX01().subscribe(async gameState => {
         this.reactOnNewGameState(gameState);
         await this.delay(1000);
-        //this.watchGame();
+        this.watchGame();
       })
     }
   }
@@ -86,6 +87,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
   }
 
   private reactOnNewGameState(gameState: GameStateX01){
+    this.players = gameState.players
     this.points = gameState.points;
     this.bust = {bust: gameState.bust, origin: gameState.players[this.currentPlayerIndex].name};
     if(this.points.indexOf(0) !== -1){
@@ -94,7 +96,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
     } 
     this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
     this.currentDartPositions = gameState.players[this.currentPlayerIndex].currentDartPositions;
-    this.triggerZoom(this.currentDarts.length-1, 2)
+    //this.triggerZoom(this.currentDarts.length-1, 2)
     this.darts = gameState.darts;
     this.averages = gameState.averages;
     this.currentPlayerIndex = gameState.currentPlayerIndex;

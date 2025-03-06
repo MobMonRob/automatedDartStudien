@@ -1,3 +1,4 @@
+using backend.Controllers;
 using backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,17 @@ builder.Services.AddSingleton<MongoDbService>();
 builder.Services.AddSingleton<DartPositionService>();
 builder.Services.AddSingleton<GameStateService>();
 builder.Services.AddSingleton<GameStateConnectionService>();
+builder.Services.AddSingleton<PlayersController>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -18,6 +30,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors();
 app.MapControllers();
 app.UseWebSockets();
 
