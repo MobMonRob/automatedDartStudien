@@ -102,7 +102,9 @@ export class ApiService {
     }
     this.ws.onmessage = (event) => {
       let data = JSON.parse(event.data) as WsGamestateMessage;
-      console.log(data);
+      console.log(data);    
+
+      const currentDartPositions = this.getCurrentDartPositions(data.lastDarts);
 
       // Update active gamestate
       this.activeGamestate = {
@@ -112,7 +114,7 @@ export class ApiService {
             id: apiPlayer.id,
             name: apiPlayer.name,
             currentDarts: data.lastDarts[i].map(dart => this.getDartString(dart)),
-            currentDartPositions: data.lastDarts[i].map(dart => this.getDartPosition(dart))
+            currentDartPositions: currentDartPositions[i]
           }
         }
         ),
@@ -131,28 +133,38 @@ export class ApiService {
     }
   }
 
+  private getCurrentDartPositions(lastDarts: ApiDartPosition[][]): number[][][] {
+    return lastDarts.map((playerDarts) => {
+      let currentDartPositions: number[][] = [[], [], []];
+      playerDarts.forEach((dart, i) => {
+          const position = this.convertDartPosition(dart);
+          currentDartPositions[i] = [position[0], position[1]];
+        })
+      return currentDartPositions;
+    });
+  }
+
   private getDartString(dart: ApiDartPosition): string {
     return (dart.doubleField ? 'D' : '') + (dart.tripleField ? 'T' : '') + dart.points;
   }
 
-  private getDartPosition(dart: ApiDartPosition): number[] {
-    if(dart !== undefined) {
-      const theta = Math.PI / 40; 
-      const cosTheta = Math.cos(-theta);
-      const sinTheta = Math.sin(-theta);
-  
-      const x = dart.position[0]
-      const y = dart.position[1]
-  
-      const xRot = x * cosTheta - y * sinTheta;
-      const yRot = x * sinTheta + y * cosTheta;
-  
-      const xImg = Math.round(125 + xRot * 125);
-      const yImg = Math.round(127 - yRot * 127);
-      return [xImg, yImg];
-    }
+  private convertDartPosition(dart: ApiDartPosition): number[] {
+    if(dart === undefined) return [0, 0];
 
-    return [0,0];
+    const theta = Math.PI / 40; 
+    const cosTheta = Math.cos(theta);
+    const sinTheta = Math.sin(theta);
+
+    const x = dart.position.x
+    const y = dart.position.y
+
+    const xRot = x * cosTheta - y * sinTheta;
+    const yRot = x * sinTheta + y * cosTheta;
+
+    const xImg = Math.round((xRot * 750 + 1000) * 250/2000);
+    const yImg = Math.round((yRot * -750 + 1000) * 254/2000);
+
+    return [xImg, yImg];
   }
 
   initX01Game(gameState: GameStateX01) {
@@ -289,7 +301,7 @@ interface ApiDartPosition{
   points: number;
   doubleField: boolean;
   tripleField: boolean;
-  position: number[];
+  position: { x: number, y: number };
 }
 
 interface WsGamestateMessage{
