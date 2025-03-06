@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
 import { GameStateX01 } from '../../../model/game.model';
@@ -12,7 +11,7 @@ import { Player } from '../../../model/player.model';
 @Component({
   selector: 'dartapp-gamestate-cricket',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent],
+  imports: [CommonModule, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent],
   templateUrl: './gamestate-cricket.component.html',
   styleUrl: './gamestate-cricket.component.scss'
 })

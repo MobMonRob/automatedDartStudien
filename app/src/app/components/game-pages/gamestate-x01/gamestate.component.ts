@@ -96,7 +96,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
     } 
     this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
     this.currentDartPositions = gameState.players[this.currentPlayerIndex].currentDartPositions;
-    //this.triggerZoom(this.currentDarts.length-1, 2)
+    this.triggerZoom(this.currentDarts.length-1, 2)
     this.darts = gameState.darts;
     this.averages = gameState.averages;
     this.currentPlayerIndex = gameState.currentPlayerIndex;
@@ -117,12 +117,14 @@ export class GamestateComponent implements OnInit, DebugComponent {
   }
 
   private triggerZoom(index: number, zoomLevel: number): void {
-    const zoomField = this.zoomFields.toArray()[index];
-    if (this.currentDarts.length > 0 && zoomField) {
-      const x = this.currentDartPositions[this.currentDarts.length-1][0]
-      const y = this.currentDartPositions[this.currentDarts.length-1][1]
-      this.cdr.detectChanges()
-      zoomField.zoomOnField(this.customId+index, x, y, zoomLevel);
+    if(this.zoomFields !== undefined) {
+      const zoomField = this.zoomFields.toArray()[index];
+      if (this.currentDarts.length > 0 && zoomField) {
+        const x = this.currentDartPositions[this.currentDarts.length-1][0]
+        const y = this.currentDartPositions[this.currentDarts.length-1][1]
+        this.cdr.detectChanges()
+        zoomField.zoomOnField(this.customId+index, x, y, zoomLevel);
+      }
     }
   }
 

@@ -4,6 +4,11 @@
   <h1 (click)="navHome()">DartApp</h1>
   
   <div class="button-container">
+    <button class="button calibrate-button" (click)="restartTracker()">
+      <div class="button-text">Tracker Neustarten</div>
+      <i class="material-icons" style="font-size: 24px;">restart_alt</i>
+    </button>
+
     <button class="button calibrate-button" (click)="toggleCalibrationPopup()">
       <div class="button-text">Kalibrierung</div>
       <i class="material-icons" style="font-size: 24px;">adjust</i>

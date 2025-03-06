@@ -112,7 +112,7 @@ export class ApiService {
             id: apiPlayer.id,
             name: apiPlayer.name,
             currentDarts: data.lastDarts[i].map(dart => this.getDartString(dart)),
-            currentDartPositions: [[0,0], [0,0], [0,0]]
+            currentDartPositions: data.lastDarts[i].map(dart => this.getDartPosition(dart))
           }
         }
         ),
@@ -135,7 +135,25 @@ export class ApiService {
     return (dart.doubleField ? 'D' : '') + (dart.tripleField ? 'T' : '') + dart.points;
   }
 
+  private getDartPosition(dart: ApiDartPosition): number[] {
+    if(dart !== undefined) {
+      const theta = Math.PI / 40; 
+      const cosTheta = Math.cos(-theta);
+      const sinTheta = Math.sin(-theta);
+  
+      const x = dart.position[0]
+      const y = dart.position[1]
+  
+      const xRot = x * cosTheta - y * sinTheta;
+      const yRot = x * sinTheta + y * cosTheta;
+  
+      const xImg = Math.round(125 + xRot * 125);
+      const yImg = Math.round(127 - yRot * 127);
+      return [xImg, yImg];
+    }
 
+    return [0,0];
+  }
 
   initX01Game(gameState: GameStateX01) {
     this.mockGame = gameState;

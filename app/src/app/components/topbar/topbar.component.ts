@@ -36,6 +36,11 @@ export class TopbarComponent {
     this.router.navigateByUrl('/');
   }
 
+  restartTracker(){
+    //TODO Nils
+    //this.apiService.restartTracker().subscribe();
+  }
+
   toggleCalibrationPopup(): void {
     this.isPopupVisible = !this.isPopupVisible;
   }
