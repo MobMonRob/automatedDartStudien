@@ -14,7 +14,7 @@ public abstract class GameState
     public DateTime start { get; set; } = DateTime.Now;
     public DateTime? end { get; set; }
     
-    public const int DartsPerTurn = 1;
+    public const int DartsPerTurn = 3;
 
     public virtual void AddPlayer(Player player)
     {
