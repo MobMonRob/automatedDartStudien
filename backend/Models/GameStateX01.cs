@@ -5,6 +5,8 @@ public class GameStateX01 : GameState
     public string? inVariant { get; set; }
     public string? outVariant { get; set; }
     
+    public new const int DartsPerTurn = 3;
+    
     public int initialPoints { get; set; }
     
     public GameStateX01()

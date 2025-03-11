@@ -9,6 +9,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
     private bool gameIsRunning = false;
     private bool throwIsOver = false;
     private List<DartPosition> currentThrow = [];
+    private List<bool> hasThrownDouble = [];
 
     public GameStateService(GameStateConnectionService gameStateConnectionService) : this(gameStateConnectionService, new GameStateX01()) {}
 
@@ -21,6 +22,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
                 _gameState = new GameStateX01();
                 ((GameStateX01) _gameState).initialPoints = xo1InitialPoints ?? 501;
                 players.ForEach(player => ((GameStateX01) _gameState).AddPlayer(player));
+                hasThrownDouble = new List<bool>(players.Count);
                 break;
             case GameMode.Cricket:
                 _gameState = new GameStateCricket();
@@ -39,8 +41,6 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         
         if (!gameIsRunning) return;
 
-        // Game Logic
-        
         if(throwIsOver)
         {
             if(dartPositions.Count != 0) return;
@@ -73,6 +73,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         int points = gameState.points[gameState.currentPlayer];
         int dartsThrown = gameState.dartsThrown[gameState.currentPlayer];
         List<DartPosition> lastDarts = gameState.lastDarts[gameState.currentPlayer];
+        int average = gameState.averages[gameState.currentPlayer];
         
         foreach (var dartPosition in newDarts)
         {
@@ -82,6 +83,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
             }
             else if (dartPosition.doubleField)
             {
+                hasThrownDouble[gameState.currentPlayer] = true;
                 points -= dartPosition.points * 2;
             }
             else
@@ -89,44 +91,61 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
                 points -= dartPosition.points;
             }
             
+            if(gameState.inVariant == "Double In" && !hasThrownDouble[gameState.currentPlayer])
+            {
+                points = 0;
+            }
+            
             dartsThrown++;
             lastDarts.Add(dartPosition);
+            average = (average * (dartsThrown - 1) + dartPosition.points) / dartsThrown;
         }
         
         gameState.points[gameState.currentPlayer] = points;
         gameState.dartsThrown[gameState.currentPlayer] = dartsThrown;
         gameState.lastDarts[gameState.currentPlayer] = lastDarts;
+        gameState.averages[gameState.currentPlayer] = average * GameStateX01.DartsPerTurn;
         
         if (points == 0)
         {
+            if(gameState.outVariant == "Double Out" && !lastDarts.Last().doubleField)
+            {
+                HandleBust(gameState, lastDarts);
+            }
             gameState.end = DateTime.Now;
             gameIsRunning = false;
         }
         else if (points < 0)
         {
-            gameState.bust = true;
-            foreach (var dartPosition in lastDarts)
-            {
-                if (dartPosition.tripleField)
-                {
-                    points += dartPosition.points * 3;
-                }
-                else if (dartPosition.doubleField)
-                {
-                    points += dartPosition.points * 2;
-                }
-                else
-                {
-                    points += dartPosition.points;
-                }
-            }
-            gameState.points[gameState.currentPlayer] = points;
-            throwIsOver = true;
+            HandleBust(gameState, lastDarts);
         }
         else if (lastDarts.Count >= GameStateX01.DartsPerTurn)
         {
             throwIsOver = true;
         }
+    }
+    
+    private void HandleBust(GameStateX01 gameState, List<DartPosition> lastDarts)
+    {
+        gameState.bust = true;
+        int points = gameState.points[gameState.currentPlayer];
+        foreach (var dartPosition in lastDarts)
+        {
+            if (dartPosition.tripleField)
+            {
+                points += dartPosition.points * 3;
+            }
+            else if (dartPosition.doubleField)
+            {
+                points += dartPosition.points * 2;
+            }
+            else
+            {
+                points += dartPosition.points;
+            }
+        }
+        gameState.points[gameState.currentPlayer] = points;
+        throwIsOver = true;
     }
     
     public GameState GetGameState()
