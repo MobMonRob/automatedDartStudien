@@ -15,6 +15,7 @@ from tracker.TemplateTracker import TemplateTracker
 from tracker.ZeroTracker import ZeroTracker
 from triangulators.AbstractTriangulator import AbstractTriangulator
 from triangulators.UnsortedTriangulator import UnsortedTriangulator
+from triangulators.SortedTriangulator import SortedTriangulator
 
 load_dotenv()
 API_URL = os.getenv("API_URL")
@@ -35,7 +36,7 @@ class DartTracker():
     def __init__(self):
         self.dispatcherThread = threading.Thread(target=self.__dispatchDartPositions, args=([],), daemon=True)
         self.initializeCameras()
-        self.triangulator = UnsortedTriangulator(list(self.cameras.values()))
+        self.triangulator = SortedTriangulator(sorted(self.cameras.items(), key=lambda x: x[0]))
 
     def initializeCameras(self):
         # Test for camera indices
@@ -110,6 +111,7 @@ class DartTracker():
         for _, camera in self.cameras.items():
             camera.calibrate()
         self.saveCalibrationData()
+        self.triangulator = SortedTriangulator(sorted(self.cameras.items(), key=lambda x: x[0]))
         
     def saveCalibrationData(self):
         if not os.path.exists("calibration"):
@@ -127,7 +129,7 @@ class DartTracker():
                 json.dump(data, file)
 
     def calculateDartPositions(self):
-        return self.triangulator.triangulate(list(self.dartPositions.values()))    
+        return self.triangulator.triangulate(sorted(self.dartPositions.items(), key=lambda x: x[0])) 
     
     def receiveDartPositions(self, index, dartPositions):
         if self.triangulator is None:
