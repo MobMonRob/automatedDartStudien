@@ -49,9 +49,10 @@ class SortedTriangulator(AbstractTriangulator):
 
         pointCorrespondences = sorted(pointCorrespondences.items(), key=lambda x: x[0])
 
-        validCorrespondences = []
+        validCorrespondences = {}
         # check epipolar constraint for each point
         for i, value in enumerate(pointCorrespondences):
+            validCorrespondences[i] = []
             for j in range(len(value) - 1):
                 for k in range(j + 1, len(value)):
                     F = fundamentalMatrices[value[j][1]][value[k][1]]
@@ -59,14 +60,24 @@ class SortedTriangulator(AbstractTriangulator):
                         continue
                     distance = np.abs(self.getEpipolarDistance(F, value[j][0], value[k][0]))
                     if distance < 0.1:
-                        validCorrespondences.append((value[j], value[k]))
+                        validCorrespondences[i].append(((value[j], value[k]), distance))
 
-        for correspondence in validCorrespondences:
-            homogenousPoint = cv2.triangulatePoints(
-                projectionMatrices[correspondence[0][1]], 
-                projectionMatrices[correspondence[1][1]], 
-                correspondence[0][0], 
-                correspondence[1][0])
-            calculatedDartPositions.append(homogenousPoint / homogenousPoint[3])    
+        for i, validCorrespondence in validCorrespondences.items():
+            averagePoint = np.array([0, 0, 0], dtype=np.float32)
+            total_error = 0
+            for correspondence in validCorrespondence:
+                # correspondence = ((((x1, y1), camera1), ((x2, y2), camera2)), inverse_error)
+                # sorry :(
+                error = 1 / correspondence[1]
+                total_error += error
+                homogenousPoint = cv2.triangulatePoints(
+                    projectionMatrices[correspondence[0][0][1]], 
+                    projectionMatrices[correspondence[0][1][1]], 
+                    correspondence[0][0][0], 
+                    correspondence[0][1][0])
+                # weighted average with respect to the error
+                averagePoint += (homogenousPoint / homogenousPoint[3]) * error
+            averagePoint = averagePoint * total_error
+            calculatedDartPositions.append(averagePoint)
 
         return calculatedDartPositions
