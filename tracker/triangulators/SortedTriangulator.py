@@ -19,10 +19,11 @@ class SortedTriangulator(AbstractTriangulator):
         if len(points) != len(self.cameras):
             return calculatedDartPositions
         
-        for point in points:
-            if len(point) != 3:
-                print(f"Error: Points have the wrong format. Expected 3 values, got {len(point)}.")
-                return calculatedDartPositions
+        for cameraPoints in points:
+            for point in cameraPoints:
+                if len(point) != 3:
+                    print(f"Error: Points have the wrong format. Expected 3 values, got {len(point)}.")
+                    return calculatedDartPositions
 
         projectionMatrices = []
         for camera in self.cameras:
@@ -47,7 +48,7 @@ class SortedTriangulator(AbstractTriangulator):
                     pointCorrespondences[point[2]] = []
                 pointCorrespondences[point[2]].append((point[:2], i))
 
-        pointCorrespondences = sorted(pointCorrespondences.items(), key=lambda x: x[0])
+        pointCorrespondences = [value for key, value in sorted(pointCorrespondences.items(), key=lambda x: x[0])]
 
         validCorrespondences = {}
         # check epipolar constraint for each point
@@ -63,21 +64,24 @@ class SortedTriangulator(AbstractTriangulator):
                         validCorrespondences[i].append(((value[j], value[k]), distance))
 
         for i, validCorrespondence in validCorrespondences.items():
-            averagePoint = np.array([0, 0, 0], dtype=np.float32)
+            if len(validCorrespondence) == 0:
+                continue
+            averagePoint = np.zeros((4,1), dtype=np.float32)
             total_error = 0
             for correspondence in validCorrespondence:
                 # correspondence = ((((x1, y1), camera1), ((x2, y2), camera2)), inverse_error)
                 # sorry :(
-                error = 1 / correspondence[1]
+                error = 1.0 / correspondence[1]
                 total_error += error
                 homogenousPoint = cv2.triangulatePoints(
                     projectionMatrices[correspondence[0][0][1]], 
                     projectionMatrices[correspondence[0][1][1]], 
-                    correspondence[0][0][0], 
-                    correspondence[0][1][0])
+                    np.array(correspondence[0][0][0], dtype=np.float32), 
+                    np.array(correspondence[0][1][0], dtype=np.float32))
                 # weighted average with respect to the error
-                averagePoint += (homogenousPoint / homogenousPoint[3]) * error
-            averagePoint = averagePoint * total_error
+                homogenousPoint /= homogenousPoint[3]
+                averagePoint += homogenousPoint * error
+            averagePoint = averagePoint / total_error
             calculatedDartPositions.append(averagePoint)
 
         return calculatedDartPositions

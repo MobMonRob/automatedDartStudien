@@ -16,7 +16,7 @@ class Dart:
         self.posX = posX
         self.posY = posY
 
-class TrackerV1_2(AbstractTracker):
+class TrackerV2(AbstractTracker):
     currentRunDarts = []
     run = 1
     # These are the functions needed for the main part
@@ -148,15 +148,24 @@ class TrackerV1_2(AbstractTracker):
         return slope, intercept
 
     def drawLine(self, slope, line_mask, start_point):
-        line_length = 600
+        try:
+            if slope == float("NaN") or slope == float("inf"):
+                return
+            line_length = 600
 
-        x_offset = line_length / np.sqrt(1 + slope**2)
-        y_offset = slope * x_offset
+            x_offset = line_length / np.sqrt(1 + slope**2)
+            y_offset = slope * x_offset
 
-        end_point = (int(start_point[0] + (x_offset if slope >= 0 else -x_offset)),
-                    int(start_point[1] + (y_offset if slope >= 0 else -y_offset)))
-        
-        cv2.line(line_mask, start_point, end_point, (255, 255, 255), 2)
+            if x_offset == float("NaN") or y_offset == float("NaN") :
+                return
+
+            end_point = (int(start_point[0] + (x_offset if slope >= 0 else -x_offset)),
+                        int(start_point[1] + (y_offset if slope >= 0 else -y_offset)))
+            
+            cv2.line(line_mask, start_point, end_point, (255, 255, 255), 2)
+        except ValueError:
+            print("VALUE ERROR")
+            print(f"slope: {slope}")
 
 
     def groupDots(self, centroids, point_mask, line_mask, adapting_rate, currentRunDarts, fluctationThreshhold):
@@ -167,7 +176,8 @@ class TrackerV1_2(AbstractTracker):
             groups, centroids, used_points = self.analyzeDartCorrespondences(centroids, currentRunDarts, fluctationThreshhold)
         
         current_point = self.getTopMostPoint(centroids)
-        self.processGrouping(current_point, centroids, point_mask, line_mask, adapting_rate, used_points, fluctationThreshhold, groups)
+        if current_point is not None:
+            self.processGrouping(current_point, centroids, point_mask, line_mask, adapting_rate, used_points, fluctationThreshhold, groups)
 
         if len(centroids) > 0:
             allGrouped, groups = self.tryAfterGrouping(centroids, groups)
