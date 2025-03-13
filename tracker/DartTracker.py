@@ -13,6 +13,8 @@ from tracker.TrackerV1_2 import TrackerV1_2
 from tracker.AbstractTracker import AbstractTracker
 from tracker.TemplateTracker import TemplateTracker
 from tracker.ZeroTracker import ZeroTracker
+from triangulators.AbstractTriangulator import AbstractTriangulator
+from triangulators.UnsortedTriangulator import UnsortedTriangulator
 
 load_dotenv()
 API_URL = os.getenv("API_URL")
@@ -27,10 +29,13 @@ class DartTracker():
     dartPositions = {}
 
     dispatcherThread : threading.Thread = None
+
+    triangulator: AbstractTriangulator = None
     
     def __init__(self):
         self.dispatcherThread = threading.Thread(target=self.__dispatchDartPositions, args=([],), daemon=True)
         self.initializeCameras()
+        self.triangulator = UnsortedTriangulator(list(self.cameras.values()))
 
     def initializeCameras(self):
         # Test for camera indices
@@ -122,85 +127,11 @@ class DartTracker():
                 json.dump(data, file)
 
     def calculateDartPositions(self):
-
-        def getFundamentalMatrix(K1, K2, R1, R2, t1, t2):
-            # returns the fundamental matrix, the matrix that describes the epipolar geometry between two cameras
-            
-            R = R2 @ R1.T # relative rotation
-            t = t2 - R @ t1 # relative translation
-
-            t_skew = np.array([
-                [0, -t[2, 0], t[1, 0]],
-                [t[2, 0], 0, -t[0, 0]],
-                [-t[1, 0], t[0, 0], 0]
-            ])
-            E = t_skew @ R
-
-            F = np.linalg.inv(K2).T @ E @ np.linalg.inv(K1)
-            if np.linalg.norm(F) != 0:
-                F /= np.linalg.norm(F)
-            return F
-
-        def getEpipolarDistance(F, x1, x2):
-            # get distance of x2 to epipolar line of x1
-            x1 = np.array([x1[0], x1[1], 1], dtype=np.float32)
-            x2 = np.array([x2[0], x2[1], 1], dtype=np.float32)
-            return x2.T @ F @ x1
-        
-        calculatedDartPositions = []
-
-        # todo: make work with more than 2 cameras
-        if len(self.cameras) != 2:
-            print("Error: Only 2 cameras are supported as of now")
-            return calculatedDartPositions
-        
-        projectionMatrices = []
-        for _, camera in self.cameras.items():
-            if not camera.isCameraCalibrated:
-                return calculatedDartPositions
-            projectionMatrices.append(camera.getProjectionMatrix())
-        
-        cameras = list(self.cameras.values())
-
-        F = getFundamentalMatrix(cameras[0].camera_matrix, cameras[1].camera_matrix, cameras[0].rotation_matrix, cameras[1].rotation_matrix, cameras[0].translation, cameras[1].translation)
-
-        foundCorrespondences = []
-        
-        if len(list(self.dartPositions.values())) < 2:
-            return calculatedDartPositions
-
-        positions = list(self.dartPositions.values())
-
-        positions1 = positions[0].copy()
-        positions2 = positions[1].copy()
-
-        for point1 in positions1:
-            bestFitIndex = -1
-            bestFit = ((0,0), np.float32(9999999999999))
-            for i, point2 in enumerate(positions2):
-                distance = np.abs(getEpipolarDistance(F, point1, point2))
-                if distance < bestFit[1]:
-                    bestFit = (point2, distance)
-                    bestFitIndex = i
-            if bestFitIndex != -1:
-                foundCorrespondences.append(((point1, bestFit[0]), bestFit[1]))
-                del positions2[bestFitIndex]
-            
-
-        if len(foundCorrespondences) == 0:
-            print("No correspondences found")
-            return calculatedDartPositions
-        
-        print(f"All Correspondences: {foundCorrespondences}")
-
-        for i, (correspondence, _) in enumerate(foundCorrespondences):
-            homogenousPoint = cv2.triangulatePoints(projectionMatrices[0], projectionMatrices[1], correspondence[0], correspondence[1])
-            calculatedDartPositions.append(homogenousPoint / homogenousPoint[3])
-
-        return calculatedDartPositions
-    
+        return self.triangulator.triangulate(list(self.dartPositions.values()))    
     
     def receiveDartPositions(self, index, dartPositions):
+        if self.triangulator is None:
+            return
         self.dartPositions[index] = dartPositions
         print(f"Dart positions: {self.dartPositions}")
 
