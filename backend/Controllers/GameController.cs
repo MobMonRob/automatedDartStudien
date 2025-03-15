@@ -23,6 +23,12 @@ public class GameController(GameStateService gameStateService, PlayersController
         gameStateService.StartGame(gameMode, players, x01InitialPoints);
     }
     
+    [HttpPost("miss")]
+    public async Task Miss()
+    {
+        await gameStateService.SubmitDart(new DartPosition(0, false, false));
+    }
+    
     public class StartGameRequest
     {
         public String gameMode { get; set; }

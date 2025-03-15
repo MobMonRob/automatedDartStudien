@@ -64,9 +64,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
   }
 
   addMissThrow() {
-    this.apiService.evaluateThrow(0,"0", [10,10]).subscribe(gameState => {
-      this.reactOnNewGameState(gameState);
-    });
+    this.apiService.handleMiss();
   }
 
   nextPlayer() {
