@@ -9,7 +9,7 @@ import json
 from dotenv import load_dotenv
 from itertools import islice
 
-from tracker.TrackerV2 import TrackerV2
+from tracker.TrackerV2_3 import TrackerV2_3
 from tracker.AbstractTracker import AbstractTracker
 from tracker.TemplateTracker import TemplateTracker
 from tracker.ZeroTracker import ZeroTracker
@@ -253,7 +253,7 @@ class Camera():
         if POSITION_MODE:
             self.tracker = ZeroTracker(self.frame_buffer)
         else:
-            self.tracker = TrackerV2(self.frame_buffer)
+            self.tracker = TrackerV2_3(self.frame_buffer)
 
 
     def start(self):
