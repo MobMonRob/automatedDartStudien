@@ -31,11 +31,12 @@ class TrackerV2_2(AbstractTracker):
     #Used for the amount of connected dots to be grouped together to recalculate the line
     adaptionRate = 3
     #Describes the amount of pixel fluctation between the runs within the dart centroid positions
-    fluctationThreshhold = 5
+    fluctationThreshhold = 7
     #Working with the same dart groups in the next run, sometimes new centroids are detected which are part of the old darts. To enable these centroids to be collected turn on recircleUsedDarts. 
     #The threshhold describes the maximum distance to the line to be added to the dart group
     recircleUsedDarts = True
-    recircleThreshhold = 8
+    recircleThreshhold = 14
+    recircleThreshholdUpward = 15
 
     # These are the functions needed for the main part
     def euclidean_distance(self, point1, point2):
@@ -186,12 +187,12 @@ class TrackerV2_2(AbstractTracker):
             print(f"slope: {slope}")
 
 
-    def groupDots(self, centroids, point_mask, line_mask, adapting_rate, currentRunDarts, fluctationThreshhold, recircleUsedDarts, recircleThreshhold):
+    def groupDots(self, centroids, point_mask, line_mask, adapting_rate, currentRunDarts, fluctationThreshhold, recircleUsedDarts, recircleThreshhold, upwardsThreshhold):
         groups = []
         used_points = set() 
 
         if len(currentRunDarts) > 0:
-            groups, centroids, used_points = self.analyzeDartCorrespondences(centroids, currentRunDarts, fluctationThreshhold, recircleUsedDarts, recircleThreshhold, line_mask)
+            groups, centroids, used_points = self.analyzeDartCorrespondences(centroids, currentRunDarts, fluctationThreshhold, recircleUsedDarts, recircleThreshhold, upwardsThreshhold, line_mask)
         
         current_point = self.getTopMostPoint(centroids)
         if current_point is not None:
@@ -202,7 +203,7 @@ class TrackerV2_2(AbstractTracker):
 
         return groups, point_mask, line_mask
 
-    def analyzeDartCorrespondences(self, centroids, currentRunDarts, fluctationThreshhold, recircleUsedDarts, recircleThreshhold, line_mask):
+    def analyzeDartCorrespondences(self, centroids, currentRunDarts, fluctationThreshhold, recircleUsedDarts, recircleThreshhold, upwardsThreshhold, line_mask):
         groups = []
         remaining_centroids = centroids.copy()
         used_points = set() 
@@ -244,7 +245,7 @@ class TrackerV2_2(AbstractTracker):
                     x0, y0 = point
                     distance = abs(slope * x0 - y0 + intercept) / np.sqrt(slope**2 + 1)
         
-                    if distance <= recircleThreshhold and y0 >= group.posY - recircleThreshhold: 
+                    if distance <= recircleThreshhold and y0 >= group.posY - upwardsThreshhold: 
                         added_points.add((x0, y0))
                 
                 group.centroids.extend(added_points)
@@ -357,7 +358,7 @@ class TrackerV2_2(AbstractTracker):
         #For Line Mask to be filled, set self.printLinesIntoResultImage to True
         line_mask = np.zeros_like(self.dart_frame)
 
-        groups, point_mask, line_mask = self.groupDots(centroids, point_mask, line_mask, self.adaptionRate, self.currentRunDarts, self.fluctationThreshhold, self.recircleUsedDarts, self.recircleThreshhold)
+        groups, point_mask, line_mask = self.groupDots(centroids, point_mask, line_mask, self.adaptionRate, self.currentRunDarts, self.fluctationThreshhold, self.recircleUsedDarts, self.recircleThreshhold, self.recircleThreshholdUpward)
 
         #Neglect strays and find positions for the dart groups 
         darts = self.findDartPositions(groups, self.currentRunDarts)
