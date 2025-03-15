@@ -68,10 +68,7 @@ export class GamestateComponent implements OnInit, DebugComponent {
   }
 
   nextPlayer() {
-    this.apiService.evaluateNextPlayerX01().subscribe(gameState => {
-      this.reactOnNewGameState(gameState);
-      this.resetZoom();
-    });
+    this.apiService.handleUndo();
   }
 
   evaluateDebugThrow(value: number, valueString: string, position: []):void{

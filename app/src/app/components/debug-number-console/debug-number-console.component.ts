@@ -50,12 +50,11 @@ export class DebugNumberConsoleComponent {
       multiplier = Math.floor(Math.random() * 3) + 1; 
     }
 
-    const totalScore = score * multiplier;
     const positionType = multiplier === 1 ? 'single' : multiplier === 2 ? 'double' : 'triple';
     const position = fieldData?.positions?.[positionType] || [0, 0];
 
     console.log(this.getDartValueString(score, multiplier) + ' thrown at position: ' + position);
-    this.component.evaluateDebugThrow(totalScore, this.getDartValueString(score, multiplier), position);
+    this.component.evaluateDebugThrow(score, this.getDartValueString(score, multiplier), position);
   }
 
   disableConsole(): boolean {

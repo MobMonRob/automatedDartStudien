@@ -149,7 +149,7 @@ export class ApiService {
   }
 
   private convertDartPosition(dart: ApiDartPosition): number[] {
-    if(dart === undefined) return [0, 0];
+    if(dart === undefined || !dart.position) return [0, 0];
 
     const theta = Math.PI / 40; 
     const cosTheta = Math.cos(theta);
@@ -229,7 +229,7 @@ export class ApiService {
       tripleField: valueString.includes('T')
     }
     console.log(body);
-    this.httpClient.post(`${this.apiUrl}/game/submit-throw`, body).subscribe();
+    this.httpClient.post(`${this.apiUrl}/game/submit-dart`, body).subscribe();
     let curPlayInd = this.mockGame.currentPlayerIndex;
     let currentThrow = this.mockGame.players[curPlayInd].currentDarts;
     if (currentThrow.length < 3) {
@@ -283,7 +283,7 @@ export class ApiService {
   }
 
   handleUndo(){
-    return this.httpClient.post(`${this.apiUrl}/game/undo`, {}).pipe(
+    return this.httpClient.post(`${this.apiUrl}/game/undo-dart`, {}).pipe(
       catchError(() => of(null))
     ).subscribe();
   }
