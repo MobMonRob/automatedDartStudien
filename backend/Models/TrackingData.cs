@@ -11,24 +11,21 @@ public class TrackingData
         return
             $"TrackingData(calibrated: {calibrated}, timestamp: {timestamp}, positions: {String.Join(", ", positions)})";
     }
-
-    // Calculate whether this instance's positions are similar enough to the other's to be determined as equal
-    public bool HasSimilarPositions(List<Vector2> other)
+    
+    public List<Vector2> GetNewPositions(List<Vector2> old)
     {
-        if (this.positions.Count != other.Count) return false;
-        for (var i = 0; i < this.positions.Count; ++i)
+        List<Vector2> newPositions = [];
+        if(positions.Count > old.Count)
         {
-            if (!IsSimilarPosition(this.positions[i], other[i])) return false;
+            newPositions.AddRange(positions.GetRange(old.Count, positions.Count - old.Count));
         }
-        return true;
+        return newPositions;
     }
 
     private static bool IsSimilarPosition(Vector2 compare, Vector2 other)
     { 
         // todo: make numerical calculation to determine "similarity"
         // right now an arbitrary value is used
-        return Math.Abs(compare.x - other.x) < 0.005 && Math.Abs(compare.y - other.y) < 0.005;
+        return Math.Abs(compare.x - other.x) < 0.01 && Math.Abs(compare.y - other.y) < 0.01;
     }
-    
-    
 }

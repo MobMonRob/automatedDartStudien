@@ -8,20 +8,25 @@ public class DartPositionService(GameStateService gameStateService)
 
     public async Task HandleTrackingData(TrackingData data)
     {
-        Console.WriteLine("Handling tracking data:  " + data);
+        Console.WriteLine("Handling tracking data: " + data);
 
-        if (data.HasSimilarPositions(positions)) return;
-
+        var distinctPositions = data.GetNewPositions(positions);
         positions = data.positions;
-        List<DartPosition> dartPositions = [];
-        foreach (var position in positions)
+        
+        if (data.positions.Count == 0)
+        {
+            gameStateService.HandleEmptyBoard();
+            return;
+        }
+
+        if (distinctPositions.Count == 0) return;
+        
+        foreach (var position in distinctPositions)
         {
             DartPosition dartPosition = GetDartPosition(position);
             dartPosition.position = position;
-            dartPositions.Add(dartPosition);
+            await gameStateService.HandleDartPosition(dartPosition);
         }
-
-        await gameStateService.HandleDartPositions(dartPositions);
     }
     
     private DartPosition GetDartPosition(Vector2 position)
@@ -31,10 +36,10 @@ public class DartPositionService(GameStateService gameStateService)
         // Dart is outside the board
         if (distance > 1) return new DartPosition(0, false, false);
 
-        if (distance < 31.8 / 170f)
+        if (distance < 31.8 * 0.5 / 170f)
         {
             // Bulls eye
-            return new DartPosition(25, distance < 12.7 / 170f, false);
+            return new DartPosition(25, distance < 12.7 * 0.5 / 170f, false);
         }
         
         bool doubleField = (distance > 162f / 170f);

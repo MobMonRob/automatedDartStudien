@@ -223,6 +223,13 @@ export class ApiService {
   }
 
   evaluateThrow(value: number, valueString: string, position: number[]): Observable<GameStateX01> {
+    let body = {
+      points: value,
+      doubleField: valueString.includes('D'),
+      tripleField: valueString.includes('T')
+    }
+    console.log(body);
+    this.httpClient.post(`${this.apiUrl}/game/submit-throw`, body).subscribe();
     let curPlayInd = this.mockGame.currentPlayerIndex;
     let currentThrow = this.mockGame.players[curPlayInd].currentDarts;
     if (currentThrow.length < 3) {
@@ -267,6 +274,18 @@ export class ApiService {
 
   initCalibrationStep(): Observable<Calibration> {
     return of(this.mockCalibration);
+  }
+
+  handleMiss() {
+    return this.httpClient.post(`${this.apiUrl}/game/miss`, {}).pipe(
+      catchError(() => of(null))
+    ).subscribe();
+  }
+
+  handleUndo(){
+    return this.httpClient.post(`${this.apiUrl}/game/undo`, {}).pipe(
+      catchError(() => of(null))
+    ).subscribe();
   }
 
   evaluateCalibrationStepResult(): Observable<Calibration> {
