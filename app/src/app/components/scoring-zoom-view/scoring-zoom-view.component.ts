@@ -17,7 +17,7 @@ export class ScoringZoomViewComponent {
 
   constructor() {}
 
-  zoomOnField(customId: string, x: number, y: number, zoomlevel: number): void {
+  zoomOnField(customId: string, x: number, y: number, zoomlevel: number, keepZoom: boolean): void {
     const zoomField = document.getElementById(customId);
     if (zoomField) {
       const container = zoomField.parentElement; 
@@ -46,13 +46,18 @@ export class ScoringZoomViewComponent {
             yAdapter = 15;
           }
         }
-  
-        zoomField.style.transition = 'transform 0.5s ease-in-out';
+        
+        if (!keepZoom) {
+          zoomField.style.transition = 'transform 0.5s ease-in-out';
+        } else {
+            zoomField.style.transition = 'none';
+        }
+        
         requestAnimationFrame(() => {
-          zoomField.style.transform = `scale(${zoomlevel})`;
-          zoomField.style.transformOrigin = `${x + xAdapter}px ${y + yAdapter}px`;
+            zoomField.style.transform = `scale(${zoomlevel})`;
+            zoomField.style.transformOrigin = `${x + xAdapter}px ${y + yAdapter}px`;
         });
-      }
+        }
      }
   }
 
@@ -64,5 +69,9 @@ export class ScoringZoomViewComponent {
         zoomField.style.transform = 'scale(1)';
       });
     }
+  }
+
+  getIsThrown(): boolean {
+    return this.isThrown;
   }
 }

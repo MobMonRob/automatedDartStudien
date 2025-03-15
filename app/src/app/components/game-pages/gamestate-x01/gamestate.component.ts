@@ -67,14 +67,12 @@ export class GamestateComponent implements OnInit, DebugComponent {
     this.apiService.handleMiss();
   }
 
-  nextPlayer() {
+  revertLastThrow() {
     this.apiService.handleUndo();
   }
 
   evaluateDebugThrow(value: number, valueString: string, position: []):void{
-    this.apiService.evaluateThrow(value, valueString, position).subscribe(gameState => {
-      this.reactOnNewGameState(gameState);
-    });
+    this.apiService.evaluateThrow(value, valueString, position)
   }
 
   disableConsoleButtons():boolean {
@@ -90,6 +88,10 @@ export class GamestateComponent implements OnInit, DebugComponent {
       this.endGame(this.points.indexOf(0));
     } 
     this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
+    if (this.currentDartPositions.length < gameState.players[this.currentPlayerIndex].currentDartPositions.length) {
+      //Dart was removed
+      this.resetZoomAfterDartRemoved(gameState.players[this.currentPlayerIndex].currentDartPositions.length - this.currentDartPositions.length);
+    }
     this.currentDartPositions = gameState.players[this.currentPlayerIndex].currentDartPositions;
     this.triggerZoom(this.currentDarts.length-1, 2)
     this.darts = gameState.darts;
@@ -113,14 +115,23 @@ export class GamestateComponent implements OnInit, DebugComponent {
 
   private triggerZoom(index: number, zoomLevel: number): void {
     if(this.zoomFields !== undefined) {
-      const zoomField = this.zoomFields.toArray()[index];
-      if (this.currentDarts.length > 0 && zoomField) {
-        const x = this.currentDartPositions[this.currentDarts.length-1][0]
-        const y = this.currentDartPositions[this.currentDarts.length-1][1]
-        this.cdr.detectChanges()
-        zoomField.zoomOnField(this.customId+index, x, y, zoomLevel);
+      const allThrown = this.zoomFields.toArray().slice(0, index + 1).every(field => field.getIsThrown());
+      if(!allThrown){
+        for(let i = 0; i < index+1; i++){
+          const zoomField = this.zoomFields.toArray()[i];
+          if (this.currentDarts.length > 0 && zoomField) {
+            const x = this.currentDartPositions[index][0]
+            const y = this.currentDartPositions[index][1]
+            this.cdr.detectChanges()
+            zoomField.zoomOnField(this.customId+i, x, y, zoomLevel, i!==index);
+          }
+        }
       }
     }
+  }
+
+  private resetZoomAfterDartRemoved(amount: number): void {
+    console.log(amount)
   }
 
   private resetZoom(): void {

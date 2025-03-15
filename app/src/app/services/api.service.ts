@@ -222,45 +222,14 @@ export class ApiService {
     return of(this.activeGamestate);
   }
 
-  evaluateThrow(value: number, valueString: string, position: number[]): Observable<GameStateX01> {
+  evaluateThrow(value: number, valueString: string, position: number[]) {
     let body = {
       points: value,
       doubleField: valueString.includes('D'),
       tripleField: valueString.includes('T')
     }
-    console.log(body);
+    console.log(body); //TODO Nils add position to body
     this.httpClient.post(`${this.apiUrl}/game/submit-dart`, body).subscribe();
-    let curPlayInd = this.mockGame.currentPlayerIndex;
-    let currentThrow = this.mockGame.players[curPlayInd].currentDarts;
-    if (currentThrow.length < 3) {
-      if (this.afterPlayerChange) {
-        this.previousScoreValue = this.mockGame.points[curPlayInd];
-      }
-      this.afterPlayerChange = false;
-      if (this.mockGame.bust) {
-        currentThrow = [];
-        this.mockGame.bust = false;
-      }
-      this.mockGame.players[curPlayInd].currentDarts.push(valueString);
-      this.mockGame.players[curPlayInd].currentDartPositions[currentThrow.length-1] = position;
-      this.mockGame.darts[curPlayInd] += 1;
-
-      let nextValue = this.mockGame.points[curPlayInd] - value;
-      if (nextValue < 0) {
-        //Bust
-        this.mockGame.bust = true;
-        this.mockGame.points[curPlayInd] = this.previousScoreValue;
-      } else {
-        //Win and No Bust (View handles Win)
-        this.mockGame.points[curPlayInd] = nextValue;
-      }
-      this.mockGame.averages[curPlayInd] = Math.round(
-        (this.initialPointValue - this.mockGame.points[curPlayInd]) / this.mockGame.darts[curPlayInd]
-      );
-    } else {
-      this.evaluateNextPlayerX01();
-    }
-    return of(this.activeGamestate);
   }
 
   evaluateNextPlayerX01(): Observable<GameStateX01> {
@@ -273,7 +242,7 @@ export class ApiService {
   }
 
   initCalibrationStep(): Observable<Calibration> {
-    return of(this.mockCalibration);
+    return of(this.mockCalibration); //TODO Nils call Endpoint here
   }
 
   handleMiss() {

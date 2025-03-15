@@ -57,7 +57,7 @@ export class TopbarComponent {
   triggerZoom() {
     if(this.zoomField){
       this.cdr.detectChanges()
-      this.zoomField.zoomOnField(this.customId, this.zoomPosition[0],  this.zoomPosition[1], 2)
+      this.zoomField.zoomOnField(this.customId, this.zoomPosition[0],  this.zoomPosition[1], 2, false)
     }
   }
 
