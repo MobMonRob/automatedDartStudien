@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+import os
+import subprocess
+import tempfile
 
 from matplotlib import pyplot as plt
 
@@ -9,6 +12,7 @@ from sklearn.decomposition import PCA
 from PIL import Image
 
 from pixelmatch.contrib.PIL import pixelmatch
+from pybind11_pixelmatch import pixelmatch as pixelmatchBind
 
 from tracker.AbstractTracker import AbstractTracker
 
@@ -47,7 +51,8 @@ class TrackerV2_4(AbstractTracker):
     maxAllowedDistance = 150
 
     #PixelMatch Library Intergration and parameters
-    usePixelmatchLibrary = True
+    usePixelmatchLibrary = False
+    usePixelmatchLibraryBinded = True
     pixelmatchThreshhold = 0.15
     pixelmatchUseAA = True
 
@@ -68,11 +73,16 @@ class TrackerV2_4(AbstractTracker):
         contrast_image = 128 + factor * (contrast_image - 128)
         return np.clip(contrast_image, 0, 255).astype(np.uint8)
 
-    def prepareMask(self, emptyFrame, dartFrame, baseBinaryThreshhold, usePixelmatch, pixelMatchThreshhold, pixelMatchUseAA):
+    def prepareMask(self, emptyFrame, dartFrame, baseBinaryThreshhold, usePixelmatch, usePixelmatchBinded, pixelMatchThreshhold, pixelMatchUseAA):
         difference = None
         if usePixelmatch:
             baseBinaryThreshhold += 30
             _, difference = self.pixelmatchCall(emptyFrame, dartFrame, pixelMatchThreshhold, pixelMatchUseAA)
+        elif not usePixelmatch and usePixelmatchBinded:
+            baseBinaryThreshhold += 30
+            difference = self.pixelmatchCallBinded(emptyFrame, dartFrame, pixelMatchThreshhold, pixelMatchUseAA)
+        elif usePixelmatch and usePixelmatchBinded:
+            raise ValueError("Only one pixelmatch library can be used at a time.")
         else: 
             brightness_factor = 10
             empty_dartboard_bright = self.adjust_brightness(emptyFrame, -brightness_factor)
@@ -95,7 +105,7 @@ class TrackerV2_4(AbstractTracker):
 
         _, mask = cv2.threshold(difference, baseBinaryThreshhold, 255, cv2.THRESH_BINARY)
 
-        if not usePixelmatch:
+        if not usePixelmatch and not usePixelmatchBinded:
             kernel = np.ones((3, 3), np.uint8)
             mask_eroded = cv2.erode(mask, kernel, iterations=1)
 
@@ -123,6 +133,38 @@ class TrackerV2_4(AbstractTracker):
             img_diff = cv2.cvtColor(img_diff, cv2.COLOR_RGB2GRAY)
 
         return mismatch, img_diff
+
+    def pixelmatchCallBinded(self, img_a_cv, img_b_cv, pixelMatchThreshhold, pixelMatchUseAA):
+        #Pixelmatch Library wrapper for C++17 binded version via pybind11
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_a, \
+            tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_b, \
+            tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_out:
+
+            cv2.imwrite(temp_a.name, img_a_cv)
+            cv2.imwrite(temp_b.name, img_b_cv)
+
+            cmd = [
+                "python3", "-m", "pybind11_pixelmatch",
+                temp_a.name, temp_b.name, temp_out.name,
+                "--threshold", str(pixelMatchThreshhold),
+                "--includeAA", str(pixelMatchUseAA)
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                print("Error while running pixelmatch:", result.stderr)
+                return None
+
+            img_diff = cv2.imread(temp_out.name, cv2.IMREAD_UNCHANGED)
+            img_diff = cv2.cvtColor(img_diff, cv2.COLOR_RGBA2GRAY)
+            img_diff = cv2.bitwise_not(img_diff)
+
+            os.remove(temp_a.name)
+            os.remove(temp_b.name)
+            os.remove(temp_out.name)
+
+            return img_diff
 
     def findPointsInMask(self, mask, min_area_threshold):
         # Find Centerpoints in Contours of Mask
@@ -504,7 +546,7 @@ class TrackerV2_4(AbstractTracker):
         difference = cv2.cvtColor(difference, cv2.COLOR_GRAY2BGR)
 
         # Build difference so only darts are left
-        mask0, mask1 = self.prepareMask(dartFrameRotated, emptyFrameRotated, self.baseBinaryThreshhold, self.usePixelmatchLibrary, self.pixelmatchThreshhold, self.pixelmatchUseAA)
+        mask0, mask1 = self.prepareMask(dartFrameRotated, emptyFrameRotated, self.baseBinaryThreshhold, self.usePixelmatchLibrary, self.usePixelmatchBinded, self.pixelmatchThreshhold, self.pixelmatchUseAA)
 
         mask2 = np.zeros_like(mask1)
         # Find centroid points in mask, draw them into an empty mask, min area threshold removes strays
