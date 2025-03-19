@@ -5,7 +5,7 @@ public abstract class GameState
     public GameMode gameType { get; set; }
     public List<Player> players { get; set; } = new();
     public List<int> points { get; set; } = new();
-    public List<int> averages { get; set; } = new();
+    public List<double> averages { get; set; } = new();
     public List<int> dartsThrown { get; set; } = new();
     public List<List<DartPosition>> lastDarts { get; set; } = new();
 
@@ -14,13 +14,13 @@ public abstract class GameState
     public DateTime start { get; set; } = DateTime.Now;
     public DateTime? end { get; set; }
     
-    public const int DartsPerTurn = 1;
+    public const int DartsPerTurn = 3;
 
     public virtual void AddPlayer(Player player)
     {
         players.Add(player);
         points.Add(0);
-        averages.Add(0);
+        averages.Add(0.0);
         dartsThrown.Add(0);
         lastDarts.Add([]);
     }
@@ -29,6 +29,12 @@ public abstract class GameState
     {
         currentPlayer = (currentPlayer + 1) % players.Count;
         lastDarts[currentPlayer].Clear();
+        return currentPlayer;
+    }
+    
+    public int MoveToPreviousPlayer()
+    {
+        currentPlayer = (currentPlayer - 1 + players.Count) % players.Count;
         return currentPlayer;
     }
 

@@ -149,7 +149,7 @@ export class ApiService {
   }
 
   private convertDartPosition(dart: ApiDartPosition): number[] {
-    if(dart === undefined) return [0, 0];
+    if(dart === undefined || !dart.position) return [0, 0];
 
     const theta = Math.PI / 40; 
     const cosTheta = Math.cos(theta);
@@ -222,38 +222,14 @@ export class ApiService {
     return of(this.activeGamestate);
   }
 
-  evaluateThrow(value: number, valueString: string, position: number[]): Observable<GameStateX01> {
-    let curPlayInd = this.mockGame.currentPlayerIndex;
-    let currentThrow = this.mockGame.players[curPlayInd].currentDarts;
-    if (currentThrow.length < 3) {
-      if (this.afterPlayerChange) {
-        this.previousScoreValue = this.mockGame.points[curPlayInd];
-      }
-      this.afterPlayerChange = false;
-      if (this.mockGame.bust) {
-        currentThrow = [];
-        this.mockGame.bust = false;
-      }
-      this.mockGame.players[curPlayInd].currentDarts.push(valueString);
-      this.mockGame.players[curPlayInd].currentDartPositions[currentThrow.length-1] = position;
-      this.mockGame.darts[curPlayInd] += 1;
-
-      let nextValue = this.mockGame.points[curPlayInd] - value;
-      if (nextValue < 0) {
-        //Bust
-        this.mockGame.bust = true;
-        this.mockGame.points[curPlayInd] = this.previousScoreValue;
-      } else {
-        //Win and No Bust (View handles Win)
-        this.mockGame.points[curPlayInd] = nextValue;
-      }
-      this.mockGame.averages[curPlayInd] = Math.round(
-        (this.initialPointValue - this.mockGame.points[curPlayInd]) / this.mockGame.darts[curPlayInd]
-      );
-    } else {
-      this.evaluateNextPlayerX01();
+  evaluateThrow(value: number, valueString: string, position: number[]) {
+    let body = {
+      points: value,
+      doubleField: valueString.includes('D'),
+      tripleField: valueString.includes('T')
     }
-    return of(this.activeGamestate);
+    console.log(body); //TODO Nils add position to body
+    this.httpClient.post(`${this.apiUrl}/game/submit-dart`, body).subscribe();
   }
 
   evaluateNextPlayerX01(): Observable<GameStateX01> {
@@ -266,7 +242,19 @@ export class ApiService {
   }
 
   initCalibrationStep(): Observable<Calibration> {
-    return of(this.mockCalibration);
+    return of(this.mockCalibration); //TODO Nils call Endpoint here
+  }
+
+  handleMiss() {
+    return this.httpClient.post(`${this.apiUrl}/game/miss`, {}).pipe(
+      catchError(() => of(null))
+    ).subscribe();
+  }
+
+  handleUndo(){
+    return this.httpClient.post(`${this.apiUrl}/game/undo-dart`, {}).pipe(
+      catchError(() => of(null))
+    ).subscribe();
   }
 
   evaluateCalibrationStepResult(): Observable<Calibration> {

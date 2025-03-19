@@ -48,9 +48,7 @@ export class GamestateCricketComponent implements OnInit, DebugComponent {
   }
 
   addMissThrow() {
-    this.apiService.evaluateThrow(0,"0", [0,0]).subscribe(gameState => {
-      this.reactOnNewGameState(gameState);
-    });
+    this.apiService.evaluateThrow(0,"0", [0,0])
   }
 
   nextPlayer() {
@@ -60,9 +58,7 @@ export class GamestateCricketComponent implements OnInit, DebugComponent {
   }
 
   evaluateDebugThrow(value: number, valueString: string, position: number[]) {
-    this.apiService.evaluateThrow(value,valueString, position).subscribe(gameState => {
-      this.reactOnNewGameState(gameState);
-    });
+    this.apiService.evaluateThrow(value,valueString, position)
   }
 
   disableConsoleButtons():boolean {

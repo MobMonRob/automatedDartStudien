@@ -31,7 +31,7 @@
       </div>
 
       <button class="buttom-custom miss-button-custom" (click)="addMissThrow()" [disabled]="disableConsoleButtons()">Verfehlt</button>
-      <button class="buttom-custom next-button-custom" (click)="nextPlayer()" [disabled]="!gameIsRunning">Nächster Spieler</button>
+      <button class="buttom-custom next-button-custom" (click)="revertLastThrow()">Letzten Wurf entfernen</button>
       <!-- <button class="buttom-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neustart</button>
       <button class="buttom-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neues Spiel</button> -->
     </div>

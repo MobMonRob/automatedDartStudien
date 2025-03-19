@@ -4,10 +4,18 @@ namespace backend.Models;
 
 public class DartPosition
 {
+    
     public byte points { get; set; }
     public bool doubleField { get; set; }
     public bool tripleField { get; set; }
     public Vector2? position { get; set; }
+    
+    public DartPosition()
+    {
+        points = 0;
+        doubleField = false;
+        tripleField = false;
+    }
 
     public DartPosition(byte points, bool doubleField, bool tripleField)
     {
@@ -49,6 +57,10 @@ public class DartPosition
     public override bool Equals(object? obj)
     {
         if (obj == null || GetType() != obj.GetType())
+        {
+            return false;
+        }
+        if(position == null && ((DartPosition) obj).position == null)
         {
             return false;
         }
