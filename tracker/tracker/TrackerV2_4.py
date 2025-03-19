@@ -70,7 +70,7 @@ class TrackerV2_4(AbstractTracker):
 
     def prepareMask(self, emptyFrame, dartFrame, baseBinaryThreshhold, usePixelmatch, pixelMatchThreshhold, pixelMatchUseAA):
         difference = None
-        if usePixelmatch:
+        if usePixelmatch and not usePixelmatchBinded:
             baseBinaryThreshhold += 30
             _, difference = self.pixelmatchCall(emptyFrame, dartFrame, pixelMatchThreshhold, pixelMatchUseAA)
         else: 
