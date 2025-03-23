@@ -12,7 +12,6 @@ from sklearn.decomposition import PCA
 from PIL import Image
 
 from pixelmatch.contrib.PIL import pixelmatch
-from pybind11_pixelmatch import pixelmatch as pixelmatchBind
 
 from tracker.AbstractTracker import AbstractTracker
 
@@ -37,23 +36,24 @@ class TrackerV2_4(AbstractTracker):
 
     # Parameter for the Tracker
     # Used for the binary mask to remove occurence of single pixels and strays
+    baseBinaryThreshold = 20
     min_area_threshold = 5
     # Used for the amount of connected dots to be grouped together to recalculate the line
     adaptionRate = 3
     # Describes the amount of pixel fluctation between the runs within the dart centroid positions
-    fluctationThreshhold = 7
+    fluctationThreshold = 7
     # Working with the same dart groups in the next run, sometimes new centroids are detected which are part of the old darts. To enable these centroids to be collected turn on recircleUsedDarts.
-    # The threshhold describes the maximum distance to the line to be added to the dart group
+    # The threshold describes the maximum distance to the line to be added to the dart group
     recircleUsedDarts = True
-    recircleThreshhold = 14
-    recircleThreshholdUpward = 15
+    recircleThreshold = 14
+    recircleThresholdUpward = 15
     #Defines the maximum between to points for them to be considered grouped together
     maxAllowedDistance = 150
 
     #PixelMatch Library Intergration and parameters
     usePixelmatchLibrary = False
     usePixelmatchLibraryBinded = True
-    pixelmatchThreshhold = 0.15
+    pixelmatchThreshold = 0.15
     pixelmatchUseAA = True
 
     # These are the functions needed for the main part
@@ -73,14 +73,14 @@ class TrackerV2_4(AbstractTracker):
         contrast_image = 128 + factor * (contrast_image - 128)
         return np.clip(contrast_image, 0, 255).astype(np.uint8)
 
-    def prepareMask(self, emptyFrame, dartFrame, baseBinaryThreshhold, usePixelmatch, usePixelmatchBinded, pixelMatchThreshhold, pixelMatchUseAA):
+    def prepareMask(self, emptyFrame, dartFrame, baseBinaryThreshold, usePixelmatch, usePixelmatchBinded, pixelMatchThreshold, pixelMatchUseAA):
         difference = None
         if usePixelmatch and not usePixelmatchBinded:
-            baseBinaryThreshhold += 30
-            _, difference = self.pixelmatchCall(emptyFrame, dartFrame, pixelMatchThreshhold, pixelMatchUseAA)
+            baseBinaryThreshold += 30
+            _, difference = self.pixelmatchCall(emptyFrame, dartFrame, pixelMatchThreshold, pixelMatchUseAA)
         elif not usePixelmatch and usePixelmatchBinded:
-            baseBinaryThreshhold += 30
-            difference = self.pixelmatchCallBinded(emptyFrame, dartFrame, pixelMatchThreshhold, pixelMatchUseAA)
+            baseBinaryThreshold += 30
+            difference = self.pixelmatchCallBinded(emptyFrame, dartFrame, pixelMatchThreshold, pixelMatchUseAA)
         elif usePixelmatch and usePixelmatchBinded:
             raise ValueError("Only one pixelmatch library can be used at a time.")
         else: 
@@ -103,26 +103,25 @@ class TrackerV2_4(AbstractTracker):
             difference = self.enhance_contrast(difference, 1.8)
             difference = self.adjust_brightness(difference, 15)
 
-        _, mask = cv2.threshold(difference, baseBinaryThreshhold, 255, cv2.THRESH_BINARY)
+        _, mask = cv2.threshold(difference, baseBinaryThreshold, 255, cv2.THRESH_BINARY)
 
         if not usePixelmatch and not usePixelmatchBinded:
             kernel = np.ones((3, 3), np.uint8)
             mask_eroded = cv2.erode(mask, kernel, iterations=1)
 
             kernel = np.ones((3, 3), np.uint8)
-            mask_dilated = cv2.dilate(mask_eroded, kernel, iterations=1)
-            mask = mask_dilated
+            mask = cv2.dilate(mask_eroded, kernel, iterations=1)
 
         return difference, mask
 
-    def pixelmatchCall(self, img_a_cv, img_b_cv, pixelMatchThreshhold, pixelMatchUseAA):
+    def pixelmatchCall(self, img_a_cv, img_b_cv, pixelMatchThreshold, pixelMatchUseAA):
         #Pixelmatch Library wrapper
         img_a = Image.fromarray(cv2.cvtColor(img_a_cv, cv2.COLOR_BGR2RGB))
         img_b = Image.fromarray(cv2.cvtColor(img_b_cv, cv2.COLOR_BGR2RGB))
         
         img_diff = Image.new("RGBA", img_a.size)
 
-        mismatch = pixelmatch(img_a, img_b, img_diff, pixelMatchThreshhold, pixelMatchUseAA)
+        mismatch = pixelmatch(img_a, img_b, img_diff, pixelMatchThreshold, pixelMatchUseAA)
 
         img_diff = np.array(img_diff)
         img_diff = 255 - img_diff
@@ -134,7 +133,7 @@ class TrackerV2_4(AbstractTracker):
 
         return mismatch, img_diff
 
-    def pixelmatchCallBinded(self, img_a_cv, img_b_cv, pixelMatchThreshhold, pixelMatchUseAA):
+    def pixelmatchCallBinded(self, img_a_cv, img_b_cv, pixelMatchThreshold, pixelMatchUseAA):
         #Pixelmatch Library wrapper for C++17 binded version via pybind11
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_a, \
             tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_b, \
@@ -146,7 +145,7 @@ class TrackerV2_4(AbstractTracker):
             cmd = [
                 "python3", "-m", "pybind11_pixelmatch",
                 temp_a.name, temp_b.name, temp_out.name,
-                "--threshold", str(pixelMatchThreshhold),
+                "--threshold", str(pixelMatchThreshold),
                 "--includeAA", str(pixelMatchUseAA)
             ]
 
@@ -230,15 +229,15 @@ class TrackerV2_4(AbstractTracker):
 
             y_position_on_dart = abs(y0 - init_y)
 
-            # Expand the threshhold for the distance to the line based on the y-position difference to the dart
+            # Expand the threshold for the distance to the line based on the y-position difference to the dart
             if y_position_on_dart < 200:
-                max_distance_threshhold = 25
+                max_distance_threshold = 25
             elif y_position_on_dart < 300:
-                max_distance_threshhold = 30
+                max_distance_threshold = 30
             elif y_position_on_dart < 400:
-                max_distance_threshhold = 35
+                max_distance_threshold = 35
             else:
-                max_distance_threshhold = 85
+                max_distance_threshold = 85
 
             if slope == float("inf"):
                 distance_to_line = abs(x0 - intercept)
@@ -249,7 +248,7 @@ class TrackerV2_4(AbstractTracker):
 
             if (
                 distance_to_line < min_distance_to_line
-                and distance_to_line < max_distance_threshhold
+                and distance_to_line < max_distance_threshold
             ):
                 min_distance_to_line = distance_to_line
                 nearest_point = point
@@ -303,10 +302,10 @@ class TrackerV2_4(AbstractTracker):
         line_mask,
         adapting_rate,
         currentRunDarts,
-        fluctationThreshhold,
+        fluctationThreshold,
         recircleUsedDarts,
-        recircleThreshhold,
-        upwardsThreshhold,
+        recircleThreshold,
+        upwardsThreshold,
         maxAllowedDistance
     ):
         groups = []
@@ -316,10 +315,10 @@ class TrackerV2_4(AbstractTracker):
             groups, centroids, used_points = self.analyzeDartCorrespondences(
                 centroids,
                 currentRunDarts,
-                fluctationThreshhold,
+                fluctationThreshold,
                 recircleUsedDarts,
-                recircleThreshhold,
-                upwardsThreshhold,
+                recircleThreshold,
+                upwardsThreshold,
                 line_mask,
             )
 
@@ -332,7 +331,7 @@ class TrackerV2_4(AbstractTracker):
                 line_mask,
                 adapting_rate,
                 used_points,
-                fluctationThreshhold,
+                fluctationThreshold,
                 groups,
                 maxAllowedDistance
             )
@@ -346,10 +345,10 @@ class TrackerV2_4(AbstractTracker):
         self,
         centroids,
         currentRunDarts,
-        fluctationThreshhold,
+        fluctationThreshold,
         recircleUsedDarts,
-        recircleThreshhold,
-        upwardsThreshhold,
+        recircleThreshold,
+        upwardsThreshold,
         line_mask,
     ):
         groups = []
@@ -363,8 +362,8 @@ class TrackerV2_4(AbstractTracker):
             corresponding_points = [
                 point for point in remaining_centroids
                 if any(
-                    abs(point[0] - centroid[0]) <= fluctationThreshhold
-                    and abs(point[1] - centroid[1]) <= fluctationThreshhold
+                    abs(point[0] - centroid[0]) <= fluctationThreshold
+                    and abs(point[1] - centroid[1]) <= fluctationThreshold
                     for centroid in dart.centroids
                 )
             ]
@@ -401,7 +400,7 @@ class TrackerV2_4(AbstractTracker):
                     x0, y0 = point
                     distance = abs(slope * x0 - y0 + intercept) / np.sqrt(slope**2 + 1)
 
-                    if distance <= recircleThreshhold and y0 >= group.posY - upwardsThreshhold:
+                    if distance <= recircleThreshold and y0 >= group.posY - upwardsThreshold:
                         added_points.add((x0, y0))
 
                 group.centroids.extend(added_points)
@@ -419,7 +418,7 @@ class TrackerV2_4(AbstractTracker):
         line_mask,
         adaption_rate,
         used_points,
-        fluctationThreshhold,
+        fluctationThreshold,
         groups,
         maxAllowedDistance
     ):
@@ -432,7 +431,7 @@ class TrackerV2_4(AbstractTracker):
 
         for _ in range(min(len(centroids), adaption_rate)):
             nearest_point = self.findNextPoint(
-                tmp_point, centroids, used_points, fluctationThreshhold, maxAllowedDistance
+                tmp_point, centroids, used_points, fluctationThreshold, maxAllowedDistance
             )
             if nearest_point:
                 tmp_point = nearest_point
@@ -450,7 +449,7 @@ class TrackerV2_4(AbstractTracker):
             intercept,
             line_mask,
             used_points,
-            fluctationThreshhold,
+            fluctationThreshold,
             adaption_rate,
         )
 
@@ -464,13 +463,13 @@ class TrackerV2_4(AbstractTracker):
             return None
         return min(centroids, key=lambda point: point[1])
 
-    def findNextPoint(self, current_point, centroids, used_points, threshhold, maxAllowedDistance):
+    def findNextPoint(self, current_point, centroids, used_points, threshold, maxAllowedDistance):
         # Add Threhshold for pixel fluctation between runtimes
         new_points = [
             p
             for p in centroids
             if not any(
-                abs(p[0] - ux) <= threshhold and abs(p[1] - uy) <= threshhold
+                abs(p[0] - ux) <= threshold and abs(p[1] - uy) <= threshold
                 for ux, uy in used_points
             )
         ]
@@ -486,7 +485,7 @@ class TrackerV2_4(AbstractTracker):
         intercept,
         line_mask,
         used_points,
-        threshhold,
+        threshold,
         adaption_rate,
     ):
         points_grouped = 0
@@ -494,7 +493,7 @@ class TrackerV2_4(AbstractTracker):
 
         while True:
             nearest_point = self.findClosestPointBasedOnLine(
-                slope, intercept, centroids, init_y, used_points, threshhold
+                slope, intercept, centroids, init_y, used_points, threshold
             )
             if not nearest_point:
                 break
@@ -546,7 +545,7 @@ class TrackerV2_4(AbstractTracker):
         difference = cv2.cvtColor(difference, cv2.COLOR_GRAY2BGR)
 
         # Build difference so only darts are left
-        mask0, mask1 = self.prepareMask(dartFrameRotated, emptyFrameRotated, self.baseBinaryThreshhold, self.usePixelmatchLibrary, self.usePixelmatchBinded, self.pixelmatchThreshhold, self.pixelmatchUseAA)
+        mask0, mask1 = self.prepareMask(dartFrameRotated, emptyFrameRotated, self.baseBinaryThreshold, self.usePixelmatchLibrary, self.usePixelmatchBinded, self.pixelmatchThreshold, self.pixelmatchUseAA)
 
         mask2 = np.zeros_like(mask1)
         # Find centroid points in mask, draw them into an empty mask, min area threshold removes strays
@@ -567,10 +566,10 @@ class TrackerV2_4(AbstractTracker):
             line_mask,
             self.adaptionRate,
             self.currentRunDarts,
-            self.fluctationThreshhold,
+            self.fluctationThreshold,
             self.recircleUsedDarts,
-            self.recircleThreshhold,
-            self.recircleThreshholdUpward,
+            self.recircleThreshold,
+            self.recircleThresholdUpward,
             self.maxAllowedDistance
         )
 

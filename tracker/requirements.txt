@@ -4,3 +4,6 @@ matplotlib
 requests
 python-dotenv
 scikit-learn
+pixelmatch
+pybind11-pixelmatch
+fire
