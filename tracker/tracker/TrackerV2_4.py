@@ -213,19 +213,13 @@ class TrackerV2_4(AbstractTracker):
         return nearest_point
 
     def findClosestPointBasedOnLine(
-        self, slope, intercept, points, init_y, used_points, tolerance=2
+        self, slope, intercept, points, init_y
     ):
         nearest_point = None
         min_distance_to_line = float("inf")
 
         for point in points:
             x0, y0 = point
-
-            if any(
-                abs(x0 - ux) <= tolerance and abs(y0 - uy) <= tolerance
-                for ux, uy in used_points
-            ):
-                continue
 
             y_position_on_dart = abs(y0 - init_y)
 
@@ -309,10 +303,9 @@ class TrackerV2_4(AbstractTracker):
         maxAllowedDistance
     ):
         groups = []
-        used_points = set()
 
         if len(currentRunDarts) > 0:
-            groups, centroids, used_points = self.analyzeDartCorrespondences(
+            groups, centroids = self.analyzeDartCorrespondences(
                 centroids,
                 currentRunDarts,
                 fluctationThreshold,
@@ -330,8 +323,6 @@ class TrackerV2_4(AbstractTracker):
                 point_mask,
                 line_mask,
                 adapting_rate,
-                used_points,
-                fluctationThreshold,
                 groups,
                 maxAllowedDistance
             )
@@ -353,7 +344,6 @@ class TrackerV2_4(AbstractTracker):
     ):
         groups = []
         remaining_centroids = centroids.copy()
-        used_points = set()
 
         for dart in currentRunDarts:
             if dart.isStrayGroup:
@@ -373,15 +363,12 @@ class TrackerV2_4(AbstractTracker):
 
             highest_point = min(corresponding_points, key=lambda p: p[1], default=None)
 
-            used_points.update(corresponding_points)
             for point in corresponding_points:
                 remaining_centroids.remove(point)
 
-            dart_points = corresponding_points.copy()
-
             groups.append(
                 Dart(
-                    dart_points,
+                    corresponding_points.copy(),
                     len(groups) + 1,
                     isStrayGroup=False,
                     posX=highest_point[0],
@@ -404,11 +391,10 @@ class TrackerV2_4(AbstractTracker):
                         added_points.add((x0, y0))
 
                 group.centroids.extend(added_points)
-                used_points.update(added_points)
                 for point in added_points:
                     remaining_centroids.remove(point)
 
-        return groups, remaining_centroids, used_points
+        return groups, remaining_centroids
 
     def processGrouping(
         self,
@@ -417,8 +403,6 @@ class TrackerV2_4(AbstractTracker):
         point_mask,
         line_mask,
         adaption_rate,
-        used_points,
-        fluctationThreshold,
         groups,
         maxAllowedDistance
     ):
@@ -427,29 +411,24 @@ class TrackerV2_4(AbstractTracker):
             groups.append(Dart([current_point], 0, isStrayGroup=True, posX=0, posY=0))
             return
         nearest_points = [current_point]
-        tmp_point = current_point
 
         for _ in range(min(len(centroids), adaption_rate)):
-            nearest_point = self.findNextPoint(
-                tmp_point, centroids, used_points, fluctationThreshold, maxAllowedDistance
-            )
+            nearest_point = self.findClosestPoint(current_point, centroids, maxAllowedDistance)
             if nearest_point:
-                tmp_point = nearest_point
-                nearest_points.append(tmp_point)
+                current_point = nearest_point
+                nearest_points.append(current_point)
                 centroids.remove(nearest_point)
 
         slope, intercept = self.calculateLine(nearest_points)
         if self.printLinesIntoResultImage:
             self.drawLine(slope, line_mask, nearest_points[0])
 
-        self.updateLineAndGroup(
+        self.updateLine(
             nearest_points,
             centroids,
             slope,
             intercept,
             line_mask,
-            used_points,
-            fluctationThreshold,
             adaption_rate,
         )
 
@@ -463,29 +442,13 @@ class TrackerV2_4(AbstractTracker):
             return None
         return min(centroids, key=lambda point: point[1])
 
-    def findNextPoint(self, current_point, centroids, used_points, threshold, maxAllowedDistance):
-        # Add Threhshold for pixel fluctation between runtimes
-        new_points = [
-            p
-            for p in centroids
-            if not any(
-                abs(p[0] - ux) <= threshold and abs(p[1] - uy) <= threshold
-                for ux, uy in used_points
-            )
-        ]
-        if new_points:
-            return self.findClosestPoint(current_point, new_points, maxAllowedDistance)
-        return self.findClosestPoint(current_point, centroids, maxAllowedDistance)
-
-    def updateLineAndGroup(
+    def updateLine(
         self,
         nearest_points,
         centroids,
         slope,
         intercept,
         line_mask,
-        used_points,
-        threshold,
         adaption_rate,
     ):
         points_grouped = 0
@@ -493,7 +456,7 @@ class TrackerV2_4(AbstractTracker):
 
         while True:
             nearest_point = self.findClosestPointBasedOnLine(
-                slope, intercept, centroids, init_y, used_points, threshold
+                slope, intercept, centroids, init_y
             )
             if not nearest_point:
                 break
