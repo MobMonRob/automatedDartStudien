@@ -5,5 +5,5 @@ requests
 python-dotenv
 scikit-learn
 pixelmatch
-pybind11-pixelmatch
+pybind11_pixelmatch
 fire

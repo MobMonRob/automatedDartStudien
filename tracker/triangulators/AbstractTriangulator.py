@@ -4,10 +4,29 @@ import numpy as np
 class AbstractTriangulator(ABC):
 
     cameras = []
+    projectionMatrices = []
+    fundamentalMatrices = []
+
+    calibrated = True
 
     def __init__(self, cameras):
         super().__init__()
         self.cameras = cameras
+
+        for camera in cameras:
+            if not camera.isCameraCalibrated:
+                self.calibrated = False
+                continue
+            self.projectionMatrices.append(camera.getProjectionMatrix())
+
+        for camera1 in cameras:
+            matrices = []
+            for camera2 in cameras:
+                if camera1.index == camera2.index:
+                    matrices.append(None)
+                    continue
+                matrices.append(self.getFundamentalMatrix(camera1, camera2))
+            self.fundamentalMatrices.append(matrices)
 
     def getFundamentalMatrix(self, camera1, camera2):
         K1 = camera1.camera_matrix

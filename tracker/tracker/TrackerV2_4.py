@@ -30,29 +30,33 @@ class TrackerV2_4(AbstractTracker):
     utilImagesCircleDiameter = 3
     printLinesIntoResultImage = True
     showPixelCoordinatesInResultImage = False  # Can be messy with many darts
+    drawPerpendicularLinesForShapeDetection = True
 
     currentRunDarts = []
     run = 1
 
     # Parameter for the Tracker
     # Used for the binary mask to remove occurence of single pixels and strays
-    baseBinaryThreshold = 20
-    min_area_threshold = 5
+    min_area_threshold = 8
+    baseBinaryThreshold = 26
+    #Parameters used to fit the detection to the dart outline. Threshold based on distance to the tip of the dart 
+    distance_parameters = [(50, 35), (100, 40), (150, 35), (200, 55), (250, 120), (300, 150), (0, 175)]
     # Used for the amount of connected dots to be grouped together to recalculate the line
     adaptionRate = 3
     # Describes the amount of pixel fluctation between the runs within the dart centroid positions
-    fluctationThreshold = 7
+    fluctationThreshold = 9
     # Working with the same dart groups in the next run, sometimes new centroids are detected which are part of the old darts. To enable these centroids to be collected turn on recircleUsedDarts.
     # The threshold describes the maximum distance to the line to be added to the dart group
     recircleUsedDarts = True
-    recircleThreshold = 14
-    recircleThresholdUpward = 15
-    #Defines the maximum between to points for them to be considered grouped together
+    recircleThreshold = 15
+    recircleDistanceParameterFactor = 0.06
+    recircleThresholdUpward = 30
+    #Defines the maximum between two points for them to be considered grouped together
     maxAllowedDistance = 150
 
     #PixelMatch Library Intergration and parameters
     usePixelmatchLibrary = False
-    usePixelmatchLibraryBinded = True
+    usePixelmatchLibraryBinded = False
     pixelmatchThreshold = 0.15
     pixelmatchUseAA = True
 
@@ -84,16 +88,14 @@ class TrackerV2_4(AbstractTracker):
         elif usePixelmatch and usePixelmatchBinded:
             raise ValueError("Only one pixelmatch library can be used at a time.")
         else: 
-            brightness_factor = 10
-            empty_dartboard_bright = self.adjust_brightness(emptyFrame, -brightness_factor)
-            dartboard_with_darts_bright = self.adjust_brightness(dartFrame, 0)
+            empty_dartboard_bright = self.adjust_brightness(emptyFrame, 30)
+            dartboard_with_darts_bright = self.adjust_brightness(dartFrame, 45)
 
-            contrast_factor = 1.2
             empty_dartboard_contrast = self.enhance_contrast(
-                empty_dartboard_bright, contrast_factor
+                empty_dartboard_bright, 1.3
             )
             dartboard_with_darts_contrast = self.enhance_contrast(
-                dartboard_with_darts_bright, 1.3
+                dartboard_with_darts_bright, 1.5
             )
 
             empty_gray = cv2.cvtColor(empty_dartboard_contrast, cv2.COLOR_BGR2GRAY)
@@ -178,8 +180,13 @@ class TrackerV2_4(AbstractTracker):
             if area > min_area_threshold:
                 # Append Highgest Point
                 topmost_point = min(contour_mask, key=lambda point: point[0][1])
-                cx, cy = int(topmost_point[0][0]), int(topmost_point[0][1])
-                centroids.append((cx, cy))
+                bottommost_point = max(contour_mask, key=lambda point: point[0][1])
+
+                cx_top, cy_top = int(topmost_point[0][0]), int(topmost_point[0][1])
+                cx_bottom, cy_bottom = int(bottommost_point[0][0]), int(bottommost_point[0][1])
+
+                centroids.append((cx_top, cy_top))
+                centroids.append((cx_bottom, cy_bottom))
                 # Append Centerpoints
                 M = cv2.moments(contour_mask)
                 if M["m00"] != 0:
@@ -213,7 +220,7 @@ class TrackerV2_4(AbstractTracker):
         return nearest_point
 
     def findClosestPointBasedOnLine(
-        self, slope, intercept, points, init_y
+        self, slope, intercept, points, init_y, distance_parameters
     ):
         nearest_point = None
         min_distance_to_line = float("inf")
@@ -224,14 +231,12 @@ class TrackerV2_4(AbstractTracker):
             y_position_on_dart = abs(y0 - init_y)
 
             # Expand the threshold for the distance to the line based on the y-position difference to the dart
-            if y_position_on_dart < 200:
-                max_distance_threshold = 25
-            elif y_position_on_dart < 300:
-                max_distance_threshold = 30
-            elif y_position_on_dart < 400:
-                max_distance_threshold = 35
-            else:
-                max_distance_threshold = 85
+            default_threshold = next(threshold for y, threshold in distance_parameters if y == 0)
+
+            max_distance_threshold = next(
+                (threshold for y, threshold in distance_parameters if y_position_on_dart < y),
+                default_threshold
+            )
 
             if slope == float("inf"):
                 distance_to_line = abs(x0 - intercept)
@@ -276,7 +281,7 @@ class TrackerV2_4(AbstractTracker):
             x_offset = line_length / np.sqrt(1 + slope**2)
             y_offset = slope * x_offset
 
-            if x_offset == float("NaN") or y_offset == float("NaN"):
+            if any(math.isnan(v) for v in [x_offset, y_offset]):
                 return
 
             end_point = (
@@ -285,6 +290,24 @@ class TrackerV2_4(AbstractTracker):
             )
 
             cv2.line(line_mask, start_point, end_point, (255, 255, 255), 2)
+
+            if not self.drawPerpendicularLinesForShapeDetection:
+                return
+            
+            perpendicular_slope = -1 / slope if slope != 0 else float("inf")
+
+            for distance, length in self.distance_parameters:
+                x_pos = int(start_point[0] + (distance if slope > 0 else -distance) / np.sqrt(1 + slope**2))  
+                y_pos = int(start_point[1] + slope * (x_pos - start_point[0]))
+
+                perp_x_offset = length / (2 * np.sqrt(1 + perpendicular_slope**2))
+                if not np.isinf(perpendicular_slope) and not np.isnan(perpendicular_slope):
+                    perp_y_offset = perpendicular_slope * perp_x_offset
+
+                perp_start = (int(x_pos + perp_x_offset), int(y_pos + perp_y_offset))
+                perp_end = (int(x_pos - perp_x_offset), int(y_pos - perp_y_offset))
+
+                cv2.line(line_mask, perp_start, perp_end, (128, 0, 128), 2)
         except ValueError:
             print("VALUE ERROR")
             print(f"slope: {slope}")
@@ -300,7 +323,9 @@ class TrackerV2_4(AbstractTracker):
         recircleUsedDarts,
         recircleThreshold,
         upwardsThreshold,
-        maxAllowedDistance
+        maxAllowedDistance,
+        distance_parameters,
+        recircleDistanceParameterFactor
     ):
         groups = []
 
@@ -313,19 +338,23 @@ class TrackerV2_4(AbstractTracker):
                 recircleThreshold,
                 upwardsThreshold,
                 line_mask,
+                distance_parameters,
+                recircleDistanceParameterFactor
             )
-
-        current_point = self.getTopMostPoint(centroids)
-        if current_point is not None:
-            self.processGrouping(
-                current_point,
-                centroids,
-                point_mask,
-                line_mask,
-                adapting_rate,
-                groups,
-                maxAllowedDistance
-            )
+        
+        if len(groups) < 3:
+            current_point = self.getTopMostPoint(centroids)
+            if current_point is not None:
+                self.processGrouping(
+                    current_point,
+                    centroids,
+                    point_mask,
+                    line_mask,
+                    adapting_rate,
+                    groups,
+                    maxAllowedDistance,
+                    distance_parameters
+                )
 
         if len(centroids) > 0:
             groups.append(Dart(centroids, 0, isStrayGroup=True, posX=0, posY=0))
@@ -341,6 +370,8 @@ class TrackerV2_4(AbstractTracker):
         recircleThreshold,
         upwardsThreshold,
         line_mask,
+        distance_parameters,
+        recircleDistanceParameterFactor
     ):
         groups = []
         remaining_centroids = centroids.copy()
@@ -387,7 +418,16 @@ class TrackerV2_4(AbstractTracker):
                     x0, y0 = point
                     distance = abs(slope * x0 - y0 + intercept) / np.sqrt(slope**2 + 1)
 
-                    if distance <= recircleThreshold and y0 >= group.posY - upwardsThreshold:
+                    y_position_on_dart = abs(y0 - group.posY)
+
+                    default_threshold = next(threshold for y, threshold in distance_parameters if y == 0)
+
+                    max_distance_threshold = next(
+                        ((threshold*recircleDistanceParameterFactor + recircleThreshold) for y, threshold in distance_parameters if y_position_on_dart < y),
+                        (default_threshold*recircleDistanceParameterFactor + recircleThreshold)
+                    )
+
+                    if distance <= max_distance_threshold and y0 >= group.posY - upwardsThreshold:
                         added_points.add((x0, y0))
 
                 group.centroids.extend(added_points)
@@ -404,7 +444,8 @@ class TrackerV2_4(AbstractTracker):
         line_mask,
         adaption_rate,
         groups,
-        maxAllowedDistance
+        maxAllowedDistance,
+        distance_parameters
     ):
         centroids.remove(current_point)
         if len(centroids) == 0:
@@ -430,12 +471,16 @@ class TrackerV2_4(AbstractTracker):
             intercept,
             line_mask,
             adaption_rate,
+            distance_parameters
         )
 
         if self.saveTrackingUtilImages:
             self.drawGroupedPoints(nearest_points, point_mask, line_mask)
-
-        groups.append(Dart(nearest_points, len(groups) + 1, isStrayGroup=False, posX=0, posY=0))
+        
+        if nearest_points and len(nearest_points) >= 2:
+            groups.append(Dart(nearest_points, len(groups) + 1, isStrayGroup=False, posX=0, posY=0))
+        else: 
+            centroids.extend(nearest_points)
 
     def getTopMostPoint(self, centroids):
         if not centroids:
@@ -450,13 +495,14 @@ class TrackerV2_4(AbstractTracker):
         intercept,
         line_mask,
         adaption_rate,
+        distance_parameters
     ):
         points_grouped = 0
         init_y = nearest_points[0][1]
 
         while True:
             nearest_point = self.findClosestPointBasedOnLine(
-                slope, intercept, centroids, init_y
+                slope, intercept, centroids, init_y, distance_parameters
             )
             if not nearest_point:
                 break
@@ -508,11 +554,15 @@ class TrackerV2_4(AbstractTracker):
         difference = cv2.cvtColor(difference, cv2.COLOR_GRAY2BGR)
 
         # Build difference so only darts are left
-        mask0, mask1 = self.prepareMask(dartFrameRotated, emptyFrameRotated, self.baseBinaryThreshold, self.usePixelmatchLibrary, self.usePixelmatchBinded, self.pixelmatchThreshold, self.pixelmatchUseAA)
+        mask0, mask1 = self.prepareMask(dartFrameRotated, emptyFrameRotated, self.baseBinaryThreshold, self.usePixelmatchLibrary, self.usePixelmatchLibraryBinded, self.pixelmatchThreshold, self.pixelmatchUseAA)
 
         mask2 = np.zeros_like(mask1)
         # Find centroid points in mask, draw them into an empty mask, min area threshold removes strays
         centroids = self.findPointsInMask(mask1, self.min_area_threshold)
+        if len(centroids) < 1: 
+            self.tracked_frame = mask1
+            self.dart_positions = []
+            return
         if self.saveTrackingUtilImages:
             for cx, cy in centroids:
                 cv2.circle(
@@ -533,7 +583,9 @@ class TrackerV2_4(AbstractTracker):
             self.recircleUsedDarts,
             self.recircleThreshold,
             self.recircleThresholdUpward,
-            self.maxAllowedDistance
+            self.maxAllowedDistance,
+            self.distance_parameters,
+            self.recircleDistanceParameterFactor
         )
 
         # Neglect strays and find positions for the dart groups
@@ -548,6 +600,7 @@ class TrackerV2_4(AbstractTracker):
         )
         mask3 = cv2.add(line_mask, mask3)
 
+        difference= self.adjust_brightness(difference, 50)
         result_image = cv2.add(mask3, difference)
         if self.saveTrackingUtilImages:
             print(darts)
@@ -561,10 +614,11 @@ class TrackerV2_4(AbstractTracker):
             plt.imshow(result_image)
             plt.show()
 
+        #self.tracked_frame = cv2.rotate(result_image, cv2.ROTATE_180)
         self.tracked_frame = result_image
         self.run += 1
         self.dart_positions = [
-            [dart.posX, dart.posY, dart.dartNumber] for dart in darts[0:3]
+            [dart.posX, dart.posY, dart.dartNumber] for dart in darts if not dart.isStrayGroup
         ]
 
     def setCleanFrame(self, clean_frame):
