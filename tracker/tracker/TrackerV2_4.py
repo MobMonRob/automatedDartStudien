@@ -178,7 +178,7 @@ class TrackerV2_4(AbstractTracker):
             area = cv2.contourArea(contour_mask)
 
             if area > min_area_threshold:
-                # Append Highgest Point
+                # Append Highest and Lowest Point
                 topmost_point = min(contour_mask, key=lambda point: point[0][1])
                 bottommost_point = max(contour_mask, key=lambda point: point[0][1])
 
@@ -500,13 +500,9 @@ class TrackerV2_4(AbstractTracker):
         points_grouped = 0
         init_y = nearest_points[0][1]
 
-        while True:
-            nearest_point = self.findClosestPointBasedOnLine(
-                slope, intercept, centroids, init_y, distance_parameters
-            )
-            if not nearest_point:
-                break
-
+        while (nearest_point := self.findClosestPointBasedOnLine(
+            slope, intercept, centroids, init_y, distance_parameters
+        )):
             centroids.remove(nearest_point)
             nearest_points.append(nearest_point)
             points_grouped += 1
