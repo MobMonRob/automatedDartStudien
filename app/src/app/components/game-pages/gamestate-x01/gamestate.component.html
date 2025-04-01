@@ -1,5 +1,5 @@
 <dartapp-topbar></dartapp-topbar>
-<div class="container" *ngIf="gameMode === 'X01'">
+<div class="container" *ngIf="gameMode === GameType.X01">
   <div class="left-side">
     <h1 class="players-header">{{ gameMode + ' - Spieler' }}</h1>
     <div class="player-list">
@@ -63,9 +63,9 @@
   </div>
 </div>
 
-<div class="container" *ngIf="gameMode !== 'X01'">
+<div class="container" *ngIf="gameMode !== GameType.X01">
   <dartapp-loading-indicator
-    [loading]="gameMode === 'loading'"
-    [error]="gameMode === 'error'"
+    [loading]="gameMode === GameType.LOADING"
+    [error]="gameMode === GameType.ERROR"
     errorMsg="Fehler beim Laden des Spiels. Versuche es erneut."></dartapp-loading-indicator>
 </div>

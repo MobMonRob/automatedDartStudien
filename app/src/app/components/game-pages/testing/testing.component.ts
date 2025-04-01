@@ -8,6 +8,7 @@ import { ApiService } from '../../../services/api.service';
 import { Player } from '../../../model/player.model';
 import { GameState } from '../../../model/game.model';
 import { ComponentUtils } from '../../../utils/utils';
+import { GameType } from '../../../model/api.models';
 
 @Component({
   selector: 'dartapp-testing',
@@ -17,7 +18,8 @@ import { ComponentUtils } from '../../../utils/utils';
   styleUrl: './testing.component.scss'
 })
 export class TestingComponent implements OnInit, DebugComponent {
-  gameMode: string = '';
+  GameType = GameType;
+  gameMode: GameType = GameType.LOADING;
   players: Player[] = [];
   currentPlayerIndex = 0;
   gameIsRunning = true;
@@ -35,12 +37,12 @@ export class TestingComponent implements OnInit, DebugComponent {
   awaitGameStart() {
     this.apiService.getCurrentGameState().subscribe(async (game) => {
       this.gameMode = game.gameType;
-      if (this.gameMode === 'testing' && game.players.length > 0) {
+      if (this.gameMode === GameType.TESTING && game.players.length > 0) {
         this.startGame(game);
-      } else if (this.gameMode === 'testing' && game.players.length === 0) {
-        this.gameMode = 'error';
+      } else if (this.gameMode === GameType.TESTING && game.players.length === 0) {
+        this.gameMode = GameType.ERROR;
         console.log('Error retreiving player data');
-      } else if (this.gameMode === 'loading') {
+      } else if (this.gameMode === GameType.LOADING) {
         await ComponentUtils.delay(1000);
         this.awaitGameStart();
       } else {

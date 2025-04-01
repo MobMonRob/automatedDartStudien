@@ -1,5 +1,5 @@
 <dartapp-topbar></dartapp-topbar>
-<div class="container" *ngIf="gameMode === 'testing'">
+<div class="container" *ngIf="gameMode === GameType.TESTING">
   <div class="players-wrapper">
     <div class="current-player" *ngFor="let player of players; let i = index" [ngClass]="{ active: currentPlayerIndex === i }">
       <h2 class="current-player-tag">{{ player.name }}</h2>
@@ -56,11 +56,9 @@
   </div>
 </div>
 
-<div class="container" *ngIf="gameMode !== 'testing'">
-    <div class="container" *ngIf="gameMode !== 'X01'">
-        <dartapp-loading-indicator
-          [loading]="gameMode === 'loading'"
-          [error]="gameMode === 'error'"
-          errorMsg="Fehler beim Laden des Spiels. Versuche es erneut."></dartapp-loading-indicator>
-      </div>
+<div class="container" *ngIf="gameMode !== GameType.TESTING">
+  <dartapp-loading-indicator
+    [loading]="gameMode === GameType.LOADING"
+    [error]="gameMode === GameType.ERROR"
+    errorMsg="Fehler beim Laden des Spiels. Versuche es erneut."></dartapp-loading-indicator>
 </div>

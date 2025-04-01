@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Player } from '../model/player.model';
 import { catchError, map, Observable, of } from 'rxjs';
 import { ArchiveGameData, GameState } from '../model/game.model';
-import { WsGamestateMessage, ApiDartPosition, ApiPlayer } from '../model/api.models';
+import { WsGamestateMessage, ApiDartPosition, ApiPlayer, GameType } from '../model/api.models';
 import { Calibration } from '../model/calibration.models';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -17,7 +17,7 @@ export class ApiService {
   private ws: WebSocket;
 
   private activeGamestate: GameState = {
-    gameType: 'loading',
+    gameType: GameType.LOADING,
     players: [],
     points: [101, 101, 101],
     averages: [0, 0, 0],
@@ -34,8 +34,9 @@ export class ApiService {
 
   constructor(private httpClient: HttpClient) {
     this.ws = new WebSocket(this.gamestateUrl);
-    this.ws.onerror = () => {
-      this.activeGamestate.gameType = 'error';
+    this.ws.onerror = (error) => {
+      console.log(error)
+      this.activeGamestate.gameType = GameType.ERROR;
     };
     this.ws.onopen = () => {
       console.log('WebSocket opened');
@@ -43,12 +44,15 @@ export class ApiService {
     this.ws.onmessage = (event) => {
       let data = JSON.parse(event.data) as WsGamestateMessage;
       console.log(data);
+      if(data === null){
+        return;
+      }
 
       const currentDartPositions = this.getCurrentDartPositions(data.lastDarts);
 
       // Update active gamestate
       this.activeGamestate = {
-        gameType: 'X01',
+        gameType: data.gameType,
         players: data.players.map((apiPlayer, i) => {
           return {
             id: apiPlayer.id,
