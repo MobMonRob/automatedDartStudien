@@ -60,10 +60,6 @@ public class DartPosition
         {
             return false;
         }
-        if(position == null && ((DartPosition) obj).position == null)
-        {
-            return false;
-        }
 
         DartPosition other = (DartPosition) obj;
         return points == other.points && doubleField == other.doubleField && tripleField == other.tripleField;

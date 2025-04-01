@@ -58,6 +58,7 @@ public class GameStateConnectionService
         recentGameState = gameState;
         var jsonString = JsonSerializer.Serialize(gameState);
         var buffer = Encoding.UTF8.GetBytes(jsonString);
+        Console.WriteLine(jsonString);
         await SendToAllClients(buffer);
     }
 }

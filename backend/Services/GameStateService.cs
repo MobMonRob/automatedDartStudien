@@ -1,19 +1,26 @@
 using backend.Models;
+using MongoDB.Driver;
 
 namespace backend.Services;
 
-public class GameStateService(GameStateConnectionService gameStateConnectionService, GameState gameState)
+public class GameStateService(GameStateConnectionService gameStateConnectionService, MongoDbService mongoDbService, GameState gameState)
 {
     private GameState _gameState = gameState;
     private readonly GameStateConnectionService _gameStateConnectionService = gameStateConnectionService;
+    private readonly IMongoCollection<DbThrow> _throwCollection = mongoDbService.Database.GetCollection<DbThrow>("throws");
+    
     private bool gameIsRunning = false;
     private bool throwIsOver = false;
     private List<bool> hasThrownDouble = [];
     
+    List<List<DartPosition>> correctedDarts = [];
+    
+    List<DartPosition> undoneDarts = [];
+    
     private const int REQUIRED_EMPTY_BOARD_FRAMES = 5;
     private int emptyBoardFrames = 0;
 
-    public GameStateService(GameStateConnectionService gameStateConnectionService) : this(gameStateConnectionService, new GameStateX01()) {}
+    public GameStateService(GameStateConnectionService gameStateConnectionService, MongoDbService mongoDbService) : this(gameStateConnectionService, mongoDbService, new GameStateX01()) {}
 
     public void StartGame(GameMode gameMode, List<Player> players, int? xo1InitialPoints)
     {
@@ -61,6 +68,34 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         emptyBoardFrames++;
         if (!throwIsOver || !gameIsRunning || emptyBoardFrames < REQUIRED_EMPTY_BOARD_FRAMES) return;
 
+        var dartPositions = _gameState.lastDarts[_gameState.currentPlayer];
+        List<ThrowElement> throwElements = [];
+        
+        foreach (var dartPosition in dartPositions)
+        {
+            ThrowElement throwElement = new ThrowElement
+            {
+                points = dartPosition.points,
+                doubleField = dartPosition.doubleField,
+                tripleField = dartPosition.tripleField,
+                position = dartPosition.position
+            };
+            
+            throwElements.Add(throwElement);
+        }
+        
+        var dbThrow = new DbThrow
+        {
+            playerId = _gameState.players[_gameState.currentPlayer].id,
+            time = DateTime.Now,
+            throws = throwElements,
+            correctedThrows = correctedDarts
+        };
+        _throwCollection.InsertOne(dbThrow);
+        
+        undoneDarts.Clear();
+        correctedDarts.Clear();
+        
         throwIsOver = false;
         hasThrownDouble[_gameState.currentPlayer] = false;
         _gameState.MoveToNextPlayer();
@@ -85,28 +120,10 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         {
             points = 0;
         }
-        else if (dartPosition.doubleField)
-        {
-            hasThrownDouble[gameState.currentPlayer] = true;
-            points -= dartPosition.points * 2;
-        }
-        else
-        {
-            points -= dartPosition.points;
-        }
-        
-        if(gameState.inVariant == "Double In" && !hasThrownDouble[gameState.currentPlayer])
-        {
-            points = 0;
-        }
         
         dartsThrown++;
         lastDarts.Add(dartPosition);
-        average = (average * (dartsThrown - 1) + dartPosition.points) / dartsThrown;
-        
-        dartsThrown++;
-        lastDarts.Add(dartPosition);
-        average = (average * (dartsThrown - 1) + dartPosition.points) / dartsThrown;
+        average = (average * (dartsThrown - 1) + dartPosition.getPositionValue()) / dartsThrown;
         
         gameState.points[gameState.currentPlayer] = points;
         gameState.dartsThrown[gameState.currentPlayer] = dartsThrown;
@@ -121,6 +138,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
             }
             gameState.end = DateTime.Now;
             gameIsRunning = false;
+            throwIsOver = true;
         }
         else if (points < 0)
         {
@@ -152,6 +170,18 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
     public async Task SubmitDart(DartPosition dartPosition)
     {
         if (!gameIsRunning) return;
+        if(undoneDarts.Count > 0)
+        {
+            if(undoneDarts.Last().position != null)
+            {
+                correctedDarts.Add([dartPosition, undoneDarts.Last()]);
+            }
+            undoneDarts.RemoveAt(undoneDarts.Count - 1);
+        }
+        else
+        {
+            correctedDarts.Add([dartPosition]);
+        }
         await HandleDartPosition(dartPosition);
     }
 
@@ -169,6 +199,14 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         _gameState.points[_gameState.currentPlayer] += currentThrow.Last().getPositionValue();
         _gameState.dartsThrown[_gameState.currentPlayer]--;
         _gameState.averages[_gameState.currentPlayer] = _gameState.averages[_gameState.currentPlayer] * _gameState.dartsThrown[_gameState.currentPlayer] / (_gameState.dartsThrown[_gameState.currentPlayer] + 1);
+        if (currentThrow.Last().position != null)
+        {
+            undoneDarts.Add(currentThrow.Last());
+        }
+        else
+        {
+            correctedDarts.RemoveAt(correctedDarts.Count - 1);
+        }
         currentThrow.RemoveAt(currentThrow.Count - 1);
         
         throwIsOver = false;
