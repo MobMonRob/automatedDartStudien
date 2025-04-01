@@ -10,6 +10,7 @@ import { ScoringZoomViewComponent } from '../../scoring-zoom-view/scoring-zoom-v
 import { Player } from '../../../model/player.model';
 import { LoadingIndicatorComponent } from '../../loading-indicator/loading-indicator.component';
 import { ComponentUtils } from '../../../utils/utils';
+import { GameType } from '../../../model/api.models';
 
 @Component({
   selector: 'dartapp-gamestate',
@@ -20,9 +21,10 @@ import { ComponentUtils } from '../../../utils/utils';
 })
 export class GamestateComponent implements OnInit, DebugComponent {
   @ViewChildren('zoomField') zoomFields!: QueryList<ScoringZoomViewComponent>;
+  GameType = GameType;
 
   players: Player[] = [];
-  gameMode: string = '';
+  gameMode: GameType = GameType.LOADING;
   currentPlayerIndex = 0;
   points: number[] = [];
   darts: number[] = [];
@@ -47,12 +49,12 @@ export class GamestateComponent implements OnInit, DebugComponent {
     this.apiService.getCurrentGameState().subscribe(async (game) => {
       console.log(game);
       this.gameMode = game.gameType;
-      if (this.gameMode === 'X01' && game.players.length > 0) {
+      if (this.gameMode === GameType.X01 && game.players.length > 0) {
         this.startGame(game);
-      } else if (this.gameMode === 'X01' && game.players.length === 0) {
-        this.gameMode = 'error';
+      } else if (this.gameMode === GameType.X01 && game.players.length === 0) {
+        this.gameMode = GameType.ERROR;
         console.log('Error retreiving player data');
-      } else if (this.gameMode === 'loading') {
+      } else if (this.gameMode === GameType.LOADING) {
         await ComponentUtils.delay(1000);
         this.awaitGameStart();
       } else {
@@ -130,7 +132,6 @@ export class GamestateComponent implements OnInit, DebugComponent {
     playerCards[winnerIndex * 2].classList.add('winner-card');
   }
 
-  //TODO Fix Zoom Position to be independent
   private triggerZoom(index: number, zoomLevel: number): void {
     if (this.zoomFields !== undefined) {
       const allThrown = this.zoomFields
@@ -141,8 +142,8 @@ export class GamestateComponent implements OnInit, DebugComponent {
         for (let i = 0; i < index + 1; i++) {
           const zoomField = this.zoomFields.toArray()[i];
           if (this.currentDarts.length > 0 && zoomField) {
-            const x = this.currentDartPositions[index][0];
-            const y = this.currentDartPositions[index][1];
+            const x = this.currentDartPositions[i][0];
+            const y = this.currentDartPositions[i][1];
             this.cdr.detectChanges();
             zoomField.zoomOnField(this.customId + i, x, y, zoomLevel, i !== index);
           }

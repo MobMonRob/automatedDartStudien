@@ -1,7 +1,8 @@
+import { GameType } from './api.models';
 import { Player } from './player.model';
 
 export interface GameState {
-  gameType: string;
+  gameType: GameType;
   players: Player[];
   points: number[];
   averages: number[];
