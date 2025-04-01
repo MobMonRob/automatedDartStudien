@@ -57,11 +57,17 @@ class DartTracker():
                 self.setInitialCalibrationData(camera)                   
                 camera.start()
                 time.sleep(1/(camera.MAX_FPS*self.CAMERA_COUNT))
-        if False:
+        if True:
             for _, camera in self.cameras.items():
                 if not camera.isCameraCalibrated:
                     print(f"Camera {camera.index} is not calibrated. Starting calibration with default positions.")
-                    self.calibrateCameras(np.array([[0,1],[0,-1],[-0.6294,0],[0.5986,0.1945]]))
+                    threading.Thread(target=self.calibrateCameras,
+                                     daemon=True,
+                                     args=(np.array([
+                        [0.199569,0.59232],
+                        [-0.934412,0.006765],
+                        [-0.199569,-0.59232],
+                        [0.886588,-0.295183]]),)).start()
                     return
     
     def setInitialCalibrationData(self, camera):
@@ -139,15 +145,15 @@ class DartTracker():
         print(f"Dart positions: {self.dartPositions}")
 
         # save current frames for each camera
-        for _, camera in self.cameras.items():
-            _, frame = camera.getEditedFrame()
-            if frame is not None:
-                cv2.imwrite(f"frames/{time.time()}/camera{camera.index}.jpg", frame)
+        # for _, camera in self.cameras.items():
+        #     _, frame = camera.getEditedFrame()
+        #     if frame is not None:
+        #         cv2.imwrite(f"frames/{time.time()}/camera{camera.index}.jpg", frame)
 
         # dispatch dart positions to backend async
         if not self.dispatcherThread.is_alive():
             positions = self.calculateDartPositions()
-            print("Calculated Positions \n {0}".format(positions))
+            self.printPositions(positions)
             self.dispatcherThread = threading.Thread(target=self.__dispatchDartPositions, args=(positions,), daemon=True)
             self.dispatcherThread.start()
 
@@ -182,13 +188,23 @@ class DartTracker():
         except:
             pass
 
+    def printPositions(self, positions):
+        if len(positions) < 1:
+            print("No calculated positions")
+            return
+        print(f"{'X':>10} {'Y':>10} {'Z':>10}")
+        print("-" * 35)
+        for point in positions:
+            flat_point = point.flatten()  # Convert column vector to 1D array
+            print(f"{flat_point[0]:10.5f} {flat_point[1]:10.5f} {flat_point[2]:10.5f}")
+
 class Camera():
 
     parent: DartTracker
 
     WIDTH = 1280
     HEIGHT = 720
-    MAX_FPS = 1
+    MAX_FPS = 3
 
     # The number over how many of the last frametimes the average is calculated.
     ROLLING_FRAMETIME_AVERAGE = 50
@@ -247,7 +263,7 @@ class Camera():
         camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.WIDTH)
         camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.HEIGHT)
         camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-        camera.set(cv2.CAP_PROP_EXPOSURE, 1850)
+        camera.set(cv2.CAP_PROP_EXPOSURE, 2400)
 
         ret, self.frame_buffer = camera.read()
         self.processed_frame_buffer = self.frame_buffer, []
@@ -342,7 +358,7 @@ class Camera():
         self.worldPoints[index] = worldPosition
         # First, ensure that no dart is on the board
         while True:
-            time.sleep(1)
+            time.sleep(1/self.MAX_FPS)
             detected_dart_position = self.processed_frame_buffer[1]
             if len(detected_dart_position) != 0:
                 self.log(f"Warning: Please remove all darts from the board")
@@ -352,6 +368,7 @@ class Camera():
         previous_dart_position = []
         same_position_count = 0
         while True:
+            time.sleep(1/self.MAX_FPS)
             detected_dart_position = self.processed_frame_buffer[1]
             if len(detected_dart_position) == 0:
                 self.log(f"No dart detected. Please place a dart at the position shown in the GUI ({worldPosition}).")
@@ -369,7 +386,7 @@ class Camera():
                     same_position_count = 0
                     previous_dart_position = detected_dart_position[0][:2]
 
-                if same_position_count < 20:
+                if same_position_count < 10:
                     self.log(f"Detected dart. Waiting for stable position (Iteration {same_position_count+1}).")
                     continue
 
@@ -380,7 +397,6 @@ class Camera():
                 cv2.imwrite(f"{path}/detected.jpg", self.processed_frame_buffer[0])
                 break
 
-            time.sleep(0.1)
         self.imagePoints[index] = detected_dart_position[0][:2]
 
     def isEqualPosition(self, position1, position2):
