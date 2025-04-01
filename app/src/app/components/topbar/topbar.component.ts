@@ -37,8 +37,7 @@ export class TopbarComponent {
   }
 
   restartTracker(){
-    //TODO Nils
-    //this.apiService.restartTracker().subscribe();
+    this.apiService.restartTracker();
   }
 
   toggleCalibrationPopup(): void {

@@ -16,7 +16,10 @@ export class LandingPageComponent {
   constructor(private router: Router){}
 
   navToHistory(){
-    console.log("E")
     this.router.navigateByUrl("/history")
+  }
+
+  navToTestingSuite(){
+    this.router.navigateByUrl("/game/testing")
   }
 }

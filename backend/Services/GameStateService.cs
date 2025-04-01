@@ -13,7 +13,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
     private const int REQUIRED_EMPTY_BOARD_FRAMES = 5;
     private int emptyBoardFrames = 0;
 
-    public GameStateService(GameStateConnectionService gameStateConnectionService) : this(gameStateConnectionService, new GameStateX01()) {}
+    public GameStateService(GameStateConnectionService gameStateConnectionService) : this(gameStateConnectionService, new GameState()) {}
 
     public void StartGame(GameMode gameMode, List<Player> players, int? xo1InitialPoints)
     {
@@ -21,9 +21,9 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         switch (gameMode)
         {
             case GameMode.X01:
-                _gameState = new GameStateX01();
-                ((GameStateX01) _gameState).initialPoints = xo1InitialPoints ?? 501;
-                players.ForEach(player => ((GameStateX01) _gameState).AddPlayer(player));
+                _gameState = new GameState();
+                ((GameState) _gameState).initialPoints = xo1InitialPoints ?? 501;
+                players.ForEach(player => ((GameState) _gameState).AddPlayer(player));
                 players.ForEach(_ => hasThrownDouble.Add(false));
                 break;
             case GameMode.Cricket:
@@ -45,8 +45,8 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
 
         switch (_gameState)
         {
-            case GameStateX01 gameStateX01:
-                HandleGameLogicX01(gameStateX01, dartPosition);
+            case GameState GameState:
+                HandleGameLogicX01(GameState, dartPosition);
                 break;
             case GameStateCricket gameStateCricket:
                 throw new NotImplementedException();
@@ -69,7 +69,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         _gameStateConnectionService.sendGamestateToClients(_gameState);
     }
     
-    private void HandleGameLogicX01(GameStateX01 gameState, DartPosition dartPosition)
+    private void HandleGameLogicX01(GameState gameState, DartPosition dartPosition)
     {
         emptyBoardFrames = 0;
         if(throwIsOver) return;
@@ -126,13 +126,13 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         {
             HandleBust(gameState, lastDarts);
         }
-        else if (lastDarts.Count >= GameStateX01.DartsPerTurn)
+        else if (lastDarts.Count >= GameState.DartsPerTurn)
         {
             throwIsOver = true;
         }
     }
     
-    private void HandleBust(GameStateX01 gameState, List<DartPosition> lastDarts)
+    private void HandleBust(GameState gameState, List<DartPosition> lastDarts)
     {
         gameState.bust = true;
         int points = gameState.points[gameState.currentPlayer];

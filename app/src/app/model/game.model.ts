@@ -1,6 +1,6 @@
 import { Player } from './player.model';
 
-export interface GameStateX01 {
+export interface GameState {
   gameType: string;
   players: Player[];
   points: number[];
@@ -32,7 +32,7 @@ export interface GameStateCricket {
   bust: boolean;
   currentPlayerIndex: number;
   //Cricket specific fields
-  indcludeBullsEye: boolean,
+  indcludeBullsEye: boolean;
   hitMatrix: number[][];
   closedFields: boolean[][];
 }
