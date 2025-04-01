@@ -1,0 +1,16 @@
+<div class="loading-overlay">
+    <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Lade Spiel...</p>
+    </div>
+
+    <div *ngIf="error" class="warning-container">
+    <div class="warning-triangle">
+        <i class="material-icons">warning</i>
+    </div>
+    <p class="error-loading-contrainer">{{errorMsg}}</p>
+    <button class="button-custom miss-button-custom" (click)="reloadPage()">Neuladen</button>
+    </div>
+</div>
+
+  

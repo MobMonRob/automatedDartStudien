@@ -1,7 +1,7 @@
 <dartapp-topbar></dartapp-topbar>
-<div class="container">
+<div class="container" *ngIf="gameMode === 'X01'">
   <div class="left-side">
-    <h1 class="players-header">{{gameMode + " - Spieler"}}</h1>
+    <h1 class="players-header">{{ gameMode + ' - Spieler' }}</h1>
     <div class="player-list">
       <div class="players">
         <dartapp-player-card
@@ -12,8 +12,7 @@
           [darts]="darts[i]"
           [lastDarts]="player.currentDarts"
           [bust]="bust"
-          class="player-card"
-        ></dartapp-player-card>
+          class="player-card"></dartapp-player-card>
       </div>
     </div>
   </div>
@@ -25,31 +24,48 @@
       <div class="current-score">{{ points[currentPlayerIndex] }}</div>
 
       <div class="current-darts">
-        <div class="dart-field" id="dart1" [ngClass]="{'blink': bust.bust}">{{ players[currentPlayerIndex].currentDarts[0] }}</div>
-        <div class="dart-field" id="dart2" [ngClass]="{'blink': bust.bust}">{{ players[currentPlayerIndex].currentDarts[1] }}</div>
-        <div class="dart-field" id="dart3" [ngClass]="{'blink': bust.bust}">{{ players[currentPlayerIndex].currentDarts[2] }}</div>
+        <div class="dart-field" id="dart1" [ngClass]="{ blink: bust.bust }">
+          {{ players[currentPlayerIndex].currentDarts[0] }}
+        </div>
+        <div class="dart-field" id="dart2" [ngClass]="{ blink: bust.bust }">
+          {{ players[currentPlayerIndex].currentDarts[1] }}
+        </div>
+        <div class="dart-field" id="dart3" [ngClass]="{ blink: bust.bust }">
+          {{ players[currentPlayerIndex].currentDarts[2] }}
+        </div>
       </div>
 
-      <button class="buttom-custom miss-button-custom" (click)="addMissThrow()" [disabled]="disableConsoleButtons()">Verfehlt</button>
-      <button class="buttom-custom next-button-custom" (click)="revertLastThrow()">Letzten Wurf entfernen</button>
-      <!-- <button class="buttom-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neustart</button>
-      <button class="buttom-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neues Spiel</button> -->
+      <button class="button-custom miss-button-custom" (click)="addMissThrow()" [disabled]="disableConsoleButtons()">
+        Verfehlt
+      </button>
+      <button class="button-custom next-button-custom" (click)="revertLastThrow()">Letzten Wurf entfernen</button>
+      <!-- <button class="button-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neustart</button>
+      <button class="button-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neues Spiel</button> -->
     </div>
   </div>
 
   <div class="scoring-zoom-div">
-    <div *ngFor="let dartPosition of currentDartPositions; let j = index"> 
-      <dartapp-scoring-zoom-view 
+    <div *ngFor="let dartPosition of currentDartPositions; let j = index">
+      <dartapp-scoring-zoom-view
         #zoomField
-        [targetPosition]="{ x: players[currentPlayerIndex].currentDartPositions[j][0], y: players[currentPlayerIndex].currentDartPositions[j][1]}" 
-        [customId]="customId+j" 
+        [targetPosition]="{
+          x: players[currentPlayerIndex].currentDartPositions[j][0],
+          y: players[currentPlayerIndex].currentDartPositions[j][1]
+        }"
+        [customId]="customId + j"
         [isThrown]="players[currentPlayerIndex].currentDartPositions[j].length > 0"></dartapp-scoring-zoom-view>
     </div>
   </div>
 
   <!-- Comment this out to get rid of Verticalscrollbar-->
-  <div class="debug-div"> 
+  <div class="debug-div">
     <dartapp-debug-number-console [component]="this"></dartapp-debug-number-console>
-  </div> 
+  </div>
 </div>
 
+<div class="container" *ngIf="gameMode !== 'X01'">
+  <dartapp-loading-indicator
+    [loading]="gameMode === 'loading'"
+    [error]="gameMode === 'error'"
+    errorMsg="Fehler beim Laden des Spiels. Versuche es erneut."></dartapp-loading-indicator>
+</div>

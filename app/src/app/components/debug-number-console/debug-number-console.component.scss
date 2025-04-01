@@ -31,7 +31,7 @@
 button {
   background-color: #f44336; 
   color: white; 
-  border: none;
+  border: 2px solid transparent; 
   border-radius: 5px;
   padding: 10px 20px;
   font-size: 16px;
@@ -42,7 +42,7 @@ button {
 button:disabled {
   background-color: #d3d3d3;  
   color: #7a7a7a; 
-  border: 2px solid #ccc; 
+  border: 2px solid #ccc;
   cursor: default; 
   box-shadow: none; 
   opacity: 0.6; 
@@ -50,15 +50,4 @@ button:disabled {
 
 button:disabled:hover {
   background-color: #d3d3d3;
-}
-
-.dart-button:active {
-  transform: scale(0.95); 
-}
-
-@media (max-width: 600px) {
-  .dart-button {
-    font-size: 14px;
-    padding: 12px;
-  }
 }

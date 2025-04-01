@@ -1,0 +1,66 @@
+<dartapp-topbar></dartapp-topbar>
+<div class="container" *ngIf="gameMode === 'testing'">
+  <div class="players-wrapper">
+    <div class="current-player" *ngFor="let player of players; let i = index" [ngClass]="{ active: currentPlayerIndex === i }">
+      <h2 class="current-player-tag">{{ player.name }}</h2>
+
+      <div class="current-darts" [ngClass]="{ 'editing-mode': editingMode && currentPlayerIndex === i }">
+        <div
+          class="dart-field"
+          id="dart1"
+          [ngClass]="{
+            'blink-gray': editingMode && currentPlayerIndex === i,
+            'blink-red': selectedDartIndex === 0 && currentPlayerIndex === i
+          }"
+          (click)="selectDart(0, i)">
+          {{ getUpdatedDartValue(i, 0, player.currentDarts[0]) }}
+        </div>
+        <div
+          class="dart-field"
+          id="dart2"
+          [ngClass]="{
+            'blink-gray': editingMode && currentPlayerIndex === i,
+            'blink-red': selectedDartIndex === 1 && currentPlayerIndex === i
+          }"
+          (click)="selectDart(1, i)">
+          {{ getUpdatedDartValue(i, 1, player.currentDarts[1]) }}
+        </div>
+        <div
+          class="dart-field"
+          id="dart3"
+          [ngClass]="{
+            'blink-gray': editingMode && currentPlayerIndex === i,
+            'blink-red': selectedDartIndex === 2 && currentPlayerIndex === i
+          }"
+          (click)="selectDart(2, i)">
+          {{ getUpdatedDartValue(i, 2, player.currentDarts[2]) }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="button-container">
+    <button *ngIf="editingMode" class="button-custom miss-button-custom" (click)="disableEditingMode()">
+      {{ 'Abbrechen' }}
+    </button>
+    <button
+      class="button-custom"
+      [ngClass]="editingMode ? 'next-button-custom' : 'miss-button-custom'"
+      (click)="toggleEditingMode()">
+      {{ editingMode ? 'Änderungen Speichern' : 'Änderungen Eintragen' }}
+    </button>
+  </div>
+
+  <div class="debug-div">
+    <dartapp-debug-number-console [component]="this"></dartapp-debug-number-console>
+  </div>
+</div>
+
+<div class="container" *ngIf="gameMode !== 'testing'">
+    <div class="container" *ngIf="gameMode !== 'X01'">
+        <dartapp-loading-indicator
+          [loading]="gameMode === 'loading'"
+          [error]="gameMode === 'error'"
+          errorMsg="Fehler beim Laden des Spiels. Versuche es erneut."></dartapp-loading-indicator>
+      </div>
+</div>

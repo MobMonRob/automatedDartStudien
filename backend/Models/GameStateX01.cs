@@ -1,6 +1,6 @@
 namespace backend.Models;
 
-public class GameStateX01 : GameState
+public class GameState : GameState
 {
     public string? inVariant { get; set; }
     public string? outVariant { get; set; }
@@ -9,7 +9,7 @@ public class GameStateX01 : GameState
     
     public int initialPoints { get; set; }
     
-    public GameStateX01()
+    public GameState()
     {
         gameType = GameMode.X01;
     }
