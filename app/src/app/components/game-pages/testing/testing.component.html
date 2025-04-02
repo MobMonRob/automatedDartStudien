@@ -51,6 +51,15 @@
     </button>
   </div>
 
+  <div>
+    <label for="reasonSelect">Grund auswählen:</label>
+    <select id="reasonSelect" [(ngModel)]="selectedReason" (change)="setSelectedReason($event)">
+        <option *ngFor="let reason of getReasons()" [value]="reason.value">
+          {{ reason.key }}
+        </option>
+      </select>
+  </div>
+
   <div class="debug-div">
     <dartapp-debug-number-console [component]="this"></dartapp-debug-number-console>
   </div>

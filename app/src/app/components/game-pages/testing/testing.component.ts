@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { TopbarComponent } from '../../topbar/topbar.component';
 import { DebugComponent } from '../../../model/debug.model';
 import { DebugNumberConsoleComponent } from '../../debug-number-console/debug-number-console.component';
@@ -8,21 +9,24 @@ import { ApiService } from '../../../services/api.service';
 import { Player } from '../../../model/player.model';
 import { GameState } from '../../../model/game.model';
 import { ComponentUtils } from '../../../utils/utils';
-import { GameType } from '../../../model/api.models';
+import { GameType, Reasons } from '../../../model/api.models';
 
 @Component({
   selector: 'dartapp-testing',
   standalone: true,
-  imports: [CommonModule, TopbarComponent, DebugNumberConsoleComponent, LoadingIndicatorComponent],
+  imports: [CommonModule, FormsModule, TopbarComponent, DebugNumberConsoleComponent, LoadingIndicatorComponent],
   templateUrl: './testing.component.html',
   styleUrl: './testing.component.scss'
 })
 export class TestingComponent implements OnInit, DebugComponent {
   GameType = GameType;
+  reasonsEnum = Reasons; 
+  selectedReason: Reasons = 0;
   gameMode: GameType = GameType.LOADING;
   players: Player[] = [];
   currentPlayerIndex = 0;
   gameIsRunning = true;
+  reason = '';
 
   editingMode: boolean = false;
   selectedDartIndex: number | null = null;
@@ -83,7 +87,7 @@ export class TestingComponent implements OnInit, DebugComponent {
     if (this.editingMode) {
       this.changes.sort((a, b) => a.replacementIndex - b.replacementIndex);
       this.changes.forEach((change) => {
-        this.apiService.replaceDebugThrow(change.replacementIndex, change.value, change.valueString, change.position);
+        this.apiService.replaceDebugThrow(change.replacementIndex, change.value, change.valueString, this.selectedReason, change.position);
       });
       this.changes.forEach((change) => {
         this.players[this.currentPlayerIndex].currentDarts[change.replacementIndex] = change.valueString;
@@ -130,6 +134,21 @@ export class TestingComponent implements OnInit, DebugComponent {
 
   disableConsoleButtons(): boolean {
     return !this.editingMode;
+  }
+
+  getReasons(): { key: string; value: Reasons }[] {
+    return Object.keys(this.reasonsEnum)
+      .filter(key => isNaN(Number(key)))
+      .map(key => ({ key, value: this.reasonsEnum[key as keyof typeof Reasons] }));
+  }
+
+  onEnumOptionChange(event: any) {
+    this.reason = event.target.value;
+  }
+
+  setSelectedReason(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedReason = Number(value) as Reasons;
   }
 
   //TODO Utils Out Source + Wrapper for GameStates
