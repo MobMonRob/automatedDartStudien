@@ -28,3 +28,12 @@ export enum GameType {
   ERROR = 3,
   LOADING = 4
 }
+
+export enum Reasons {
+  TRACKER = 0,
+  MASK = 1,
+  CAMERAHIT = 2, 
+  BADTHROW = 3,
+  BACKEND = 4,
+  UNDEFINED = 5
+}

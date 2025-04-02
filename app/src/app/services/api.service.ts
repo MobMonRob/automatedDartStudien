@@ -16,9 +16,16 @@ export class ApiService {
   private piUrl = environment.piUrl;
   private ws: WebSocket;
 
+  private mockPlayer ={
+    id: '1',
+    name: 'Nils',
+    currentDarts: [],
+    currentDartPositions: [[], [], []]
+  }
+
   private activeGamestate: GameState = {
-    gameType: GameType.LOADING,
-    players: [],
+    gameType: GameType.TESTING,
+    players: [this.mockPlayer],
     points: [101, 101, 101],
     averages: [0, 0, 0],
     darts: [0, 0, 0],
@@ -162,7 +169,7 @@ export class ApiService {
     this.httpClient.post(`${this.apiUrl}/game/submit-dart`, body).subscribe();
   }
 
-  replaceDebugThrow(replacementIndex: number, value: number, valueString: string, position: number[]) {
+  replaceDebugThrow(replacementIndex: number, value: number, valueString: string, reason: number, position: number[]) {
     let dartValue = {
       points: value,
       doubleField: valueString.includes('D'),
@@ -170,7 +177,8 @@ export class ApiService {
     };
     let body = {
       replace_index: replacementIndex,
-      replace_with: dartValue
+      replace_with: dartValue,
+      reason: reason
     };
     console.log(body); //TODO Nils add position to body
     this.httpClient.post(`${this.apiUrl}/game/replace-dart`, body).subscribe();
