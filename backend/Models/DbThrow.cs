@@ -3,9 +3,9 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace backend.Models;
 
-public class DbThrow(string? id, string? playerId, string? gameId, DateTime? time, List<ThrowElement> throws)
+public class DbThrow(string? id, string? playerId, string? gameId, DateTime? time, List<DartPosition> throws)
 {
-    public DbThrow() : this(null, null, null, null, new List<ThrowElement>())
+    public DbThrow() : this(null, null, null, null, new List<DartPosition>())
     { }
     [BsonId]
     [BsonElement("_id"), BsonRepresentation(BsonType.ObjectId)]
@@ -20,15 +20,14 @@ public class DbThrow(string? id, string? playerId, string? gameId, DateTime? tim
     [BsonElement("time"), BsonRepresentation(BsonType.DateTime)]
     public DateTime? time { get; set; } = time;
     
-    public List<ThrowElement> throws { get; set; } = throws;
+    public List<DartPosition> throws { get; set; } = throws;
     
-    public List<List<DartPosition>> correctedThrows { get; set; } = [];
+    public List<CorrectedPosition> correctedThrows { get; set; } = [];
 }
 
-public class ThrowElement
+public class CorrectedPosition
 {
-    public int points { get; set; }
-    public Vector2? position { get; set; }
-    public bool doubleField { get; set; }
-    public bool tripleField { get; set; }
+    public int index { get; set; }
+    public DartPosition? position { get; set; }
+    public int? reason { get; set; }
 }

@@ -16,11 +16,9 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
     private bool throwIsOver = false;
     private List<bool> hasThrownDouble = [];
     
-    List<List<DartPosition>> correctedDarts = [];
-    
     List<DartPosition> undoneDarts = [];
     
-    List<DbTestThrowsReplacements> correctedTestDarts = [];
+    List<CorrectedPosition> correctedDarts = [];
     
     private const int REQUIRED_EMPTY_BOARD_FRAMES = 5;
     private int emptyBoardFrames = 0;
@@ -99,7 +97,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         if (!throwIsOver || !gameIsRunning || emptyBoardFrames < REQUIRED_EMPTY_BOARD_FRAMES) return;
 
         var dartPositions = _gameState.lastDarts[_gameState.currentPlayer];
-        List<ThrowElement> throwElements = [];
+        List<CorrectedPosition> throwElements = [];
 
         if (_gameState is GameStateTesting)
         {
@@ -108,30 +106,17 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
                 id = null,
                 time = DateTime.Now,
                 throws = dartPositions,
-                correctedThrows = correctedTestDarts
+                correctedThrows = correctedDarts
             };
             _testCollection.InsertOne(dbTestThrow);
         }
         else
         {
-            foreach (var dartPosition in dartPositions)
-            {
-                ThrowElement throwElement = new ThrowElement
-                {
-                    points = dartPosition.points,
-                    doubleField = dartPosition.doubleField,
-                    tripleField = dartPosition.tripleField,
-                    position = dartPosition.position
-                };
-            
-                throwElements.Add(throwElement);
-            }
-            
             var dbThrow = new DbThrow
             {
                 playerId = _gameState.players[_gameState.currentPlayer].id,
                 time = DateTime.Now,
-                throws = throwElements,
+                throws = dartPositions,
                 correctedThrows = correctedDarts
             };
             _throwCollection.InsertOne(dbThrow);
@@ -141,7 +126,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         
         undoneDarts.Clear();
         correctedDarts.Clear();
-        correctedTestDarts.Clear();
+        correctedDarts.Clear();
         
         throwIsOver = false;
         _gameState.MoveToNextPlayer();
@@ -212,53 +197,6 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
     {
         return _gameState;
     }
-    
-    public async Task SubmitDart(DartPosition dartPosition)
-    {
-        if (!gameIsRunning || _gameState is GameStateTesting) return;
-        if(undoneDarts.Count > 0)
-        {
-            if(undoneDarts.Last().position != null)
-            {
-                correctedDarts.Add([dartPosition, undoneDarts.Last()]);
-            }
-            undoneDarts.RemoveAt(undoneDarts.Count - 1);
-        }
-        else
-        {
-            correctedDarts.Add([dartPosition]);
-        }
-        await HandleDartPosition(dartPosition);
-    }
-
-    public async Task UndoLastDart()
-    {
-        if (!gameIsRunning || _gameState is GameStateTesting) return;
-        
-        var currentThrow = _gameState.lastDarts[_gameState.currentPlayer];
-        if (currentThrow.Count == 0)
-        {
-            _gameState.MoveToPreviousPlayer();
-            currentThrow = _gameState.lastDarts[_gameState.currentPlayer];
-        }
-        if(currentThrow.Count == 0) return;
-        _gameState.points[_gameState.currentPlayer] += currentThrow.Last().getPositionValue();
-        _gameState.dartsThrown[_gameState.currentPlayer]--;
-        _gameState.averages[_gameState.currentPlayer] = _gameState.averages[_gameState.currentPlayer] * _gameState.dartsThrown[_gameState.currentPlayer] / (_gameState.dartsThrown[_gameState.currentPlayer] + 1);
-        if (currentThrow.Last().position != null)
-        {
-            undoneDarts.Add(currentThrow.Last());
-        }
-        else
-        {
-            correctedDarts.RemoveAt(correctedDarts.Count - 1);
-        }
-        currentThrow.RemoveAt(currentThrow.Count - 1);
-        
-        throwIsOver = false;
-        _gameState.lastDarts[_gameState.currentPlayer] = currentThrow;
-        await _gameStateConnectionService.sendGamestateToClients(_gameState);
-    }
 
     public async Task ReplaceDart(int index, DartPosition position, int? reason = null)
     {
@@ -278,14 +216,28 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
             replacedPosition = currentThrow[index];
             currentThrow[index] = position;
         }
-        _gameState.lastDarts[_gameState.currentPlayer] = currentThrow;
         
-        correctedTestDarts.Add(new DbTestThrowsReplacements
+        correctedDarts.Add(new CorrectedPosition()
         {
             index = index,
             position = replacedPosition,
             reason = reason
         });
+        
+        if(_gameState is not GameStateTesting)
+        {
+            if (replacedPosition != null)
+            {
+                _gameState.points[_gameState.currentPlayer] += replacedPosition.getPositionValue();
+            }else
+            {
+                _gameState.dartsThrown[_gameState.currentPlayer]++;
+            }
+            _gameState.points[_gameState.currentPlayer] -= position.getPositionValue();
+            _gameState.averages[_gameState.currentPlayer] = (_gameState.averages[_gameState.currentPlayer] * (_gameState.dartsThrown[_gameState.currentPlayer] - 1) + position.getPositionValue()) / _gameState.dartsThrown[_gameState.currentPlayer];
+        }
+        
+        _gameState.lastDarts[_gameState.currentPlayer] = currentThrow;
         
         await _gameStateConnectionService.sendGamestateToClients(_gameState);
     }
@@ -300,15 +252,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         [BsonElement("time"), BsonRepresentation(BsonType.DateTime)]
         public DateTime time { get; set; }
 
-        public List<DbTestThrowsReplacements> correctedThrows { get; set; } = [];
-    }
-
-    private class DbTestThrowsReplacements
-    {
-        public int index { get; set; }
-        public DartPosition? position { get; set; }
-        
-        public int? reason { get; set; }
+        public List<CorrectedPosition> correctedThrows { get; set; } = [];
     }
 }
 

@@ -22,25 +22,6 @@ public class GameController(GameStateService gameStateService, PlayersController
         int? x01InitialPoints = startGameRequest.x01InitialPoints;
         gameStateService.StartGame(gameMode, players, x01InitialPoints);
     }
-    
-    [HttpPost("miss")]
-    public async Task Miss()
-    {
-        await gameStateService.SubmitDart(new DartPosition(0, false, false));
-    }
-    
-    [HttpPost("submit-dart")]
-    public async Task SubmitDart([FromBody] DartPosition dartPosition)
-    {
-        await gameStateService.SubmitDart(dartPosition);
-    }
-    
-    [HttpPost("undo-dart")]
-    public async Task UndoDart()
-    {
-        await gameStateService.UndoLastDart();
-    }
-    
         
     [HttpPost("replace-dart")]
     public async Task ReplaceDart([FromBody] ReplaceDartRequest replaceDartRequest)
