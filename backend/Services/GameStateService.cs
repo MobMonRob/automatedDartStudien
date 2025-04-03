@@ -1,4 +1,6 @@
 using backend.Models;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 
 namespace backend.Services;
@@ -8,6 +10,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
     private GameState _gameState = gameState;
     private readonly GameStateConnectionService _gameStateConnectionService = gameStateConnectionService;
     private readonly IMongoCollection<DbThrow> _throwCollection = mongoDbService.Database.GetCollection<DbThrow>("throws");
+    private readonly IMongoCollection<DbTestThrows> _testCollection = mongoDbService.Database.GetCollection<DbTestThrows>("test_throws");
     
     private bool gameIsRunning = false;
     private bool throwIsOver = false;
@@ -16,6 +19,8 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
     List<List<DartPosition>> correctedDarts = [];
     
     List<DartPosition> undoneDarts = [];
+    
+    List<DbTestThrowsReplacements> correctedTestDarts = [];
     
     private const int REQUIRED_EMPTY_BOARD_FRAMES = 5;
     private int emptyBoardFrames = 0;
@@ -37,19 +42,24 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
                 _gameState = new GameStateCricket();
                 players.ForEach(player => _gameState.AddPlayer(player));
                 break;
+            case GameMode.Testing:
+                _gameState = new GameStateTesting();
+                players.ForEach(player =>  _gameState.AddPlayer(player));
+                break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(gameMode), gameMode, null);
         }
         gameIsRunning = true;
         _gameStateConnectionService.sendGamestateToClients(_gameState);
     }
+    
 
     public async Task HandleDartPosition(DartPosition dartPosition)
     {
         Console.WriteLine("Received dart position: " + dartPosition);
-                
-        if (!gameIsRunning) return;
 
+        if (!gameIsRunning) return;
+        
         switch (_gameState)
         {
             case GameStateX01 gameStateX01:
@@ -58,9 +68,29 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
             case GameStateCricket gameStateCricket:
                 throw new NotImplementedException();
                 break;
+            case GameStateTesting gameStateTesting:
+                HandleTestModeThrow(gameStateTesting, dartPosition);
+                break;
         }
         
         await _gameStateConnectionService.sendGamestateToClients(_gameState);
+    }
+    
+    public void HandleTestModeThrow(GameStateTesting gameState, DartPosition dartPosition)
+    {
+        emptyBoardFrames = 0;
+        if(throwIsOver) return;
+        
+        List<DartPosition> lastDarts = gameState.lastDarts[gameState.currentPlayer];
+        
+        lastDarts.Add(dartPosition);
+        
+        gameState.lastDarts[gameState.currentPlayer] = lastDarts;
+        
+        if (lastDarts.Count >= GameStateX01.DartsPerTurn)
+        {
+            throwIsOver = true;
+        }
     }
 
     public void HandleEmptyBoard()
@@ -70,34 +100,50 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
 
         var dartPositions = _gameState.lastDarts[_gameState.currentPlayer];
         List<ThrowElement> throwElements = [];
-        
-        foreach (var dartPosition in dartPositions)
+
+        if (_gameState is GameStateTesting)
         {
-            ThrowElement throwElement = new ThrowElement
+            var dbTestThrow = new DbTestThrows
             {
-                points = dartPosition.points,
-                doubleField = dartPosition.doubleField,
-                tripleField = dartPosition.tripleField,
-                position = dartPosition.position
+                id = null,
+                time = DateTime.Now,
+                throws = dartPositions,
+                correctedThrows = correctedTestDarts
             };
-            
-            throwElements.Add(throwElement);
+            _testCollection.InsertOne(dbTestThrow);
         }
-        
-        var dbThrow = new DbThrow
+        else
         {
-            playerId = _gameState.players[_gameState.currentPlayer].id,
-            time = DateTime.Now,
-            throws = throwElements,
-            correctedThrows = correctedDarts
-        };
-        _throwCollection.InsertOne(dbThrow);
+            foreach (var dartPosition in dartPositions)
+            {
+                ThrowElement throwElement = new ThrowElement
+                {
+                    points = dartPosition.points,
+                    doubleField = dartPosition.doubleField,
+                    tripleField = dartPosition.tripleField,
+                    position = dartPosition.position
+                };
+            
+                throwElements.Add(throwElement);
+            }
+            
+            var dbThrow = new DbThrow
+            {
+                playerId = _gameState.players[_gameState.currentPlayer].id,
+                time = DateTime.Now,
+                throws = throwElements,
+                correctedThrows = correctedDarts
+            };
+            _throwCollection.InsertOne(dbThrow);
+            
+            hasThrownDouble[_gameState.currentPlayer] = false;
+        }
         
         undoneDarts.Clear();
         correctedDarts.Clear();
+        correctedTestDarts.Clear();
         
         throwIsOver = false;
-        hasThrownDouble[_gameState.currentPlayer] = false;
         _gameState.MoveToNextPlayer();
         _gameState.bust = false;
         
@@ -169,7 +215,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
     
     public async Task SubmitDart(DartPosition dartPosition)
     {
-        if (!gameIsRunning) return;
+        if (!gameIsRunning || _gameState is GameStateTesting) return;
         if(undoneDarts.Count > 0)
         {
             if(undoneDarts.Last().position != null)
@@ -187,7 +233,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
 
     public async Task UndoLastDart()
     {
-        if (!gameIsRunning) return;
+        if (!gameIsRunning || _gameState is GameStateTesting) return;
         
         var currentThrow = _gameState.lastDarts[_gameState.currentPlayer];
         if (currentThrow.Count == 0)
@@ -213,4 +259,57 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         _gameState.lastDarts[_gameState.currentPlayer] = currentThrow;
         await _gameStateConnectionService.sendGamestateToClients(_gameState);
     }
+
+    public async Task ReplaceDart(int index, DartPosition position, int? reason = null)
+    {
+        if(_gameState is not GameStateTesting) return;
+        var currentThrow = _gameState.lastDarts[_gameState.currentPlayer];
+        DartPosition? replacedPosition = null;
+        if (index >= currentThrow.Count)
+        {
+            if(index >= GameStateTesting.DartsPerTurn) return;
+            currentThrow.Add(position);
+            if(index == GameStateTesting.DartsPerTurn - 1)
+            {
+                throwIsOver = true;
+            }
+        }
+        else
+        {
+            replacedPosition = currentThrow[index];
+            currentThrow[index] = position;
+        }
+        _gameState.lastDarts[_gameState.currentPlayer] = currentThrow;
+        
+        correctedTestDarts.Add(new DbTestThrowsReplacements
+        {
+            index = index,
+            position = replacedPosition,
+            reason = reason
+        });
+        
+        await _gameStateConnectionService.sendGamestateToClients(_gameState);
+    }
+
+    private class DbTestThrows
+    {
+        [BsonId]
+        [BsonElement("_id"), BsonRepresentation(BsonType.ObjectId)]
+        public string? id { get; set; } = null;
+
+        public List<DartPosition> throws { get; set; } = [];
+        [BsonElement("time"), BsonRepresentation(BsonType.DateTime)]
+        public DateTime time { get; set; }
+
+        public List<DbTestThrowsReplacements> correctedThrows { get; set; } = [];
+    }
+
+    private class DbTestThrowsReplacements
+    {
+        public int index { get; set; }
+        public DartPosition? position { get; set; }
+        
+        public int? reason { get; set; }
+    }
 }
+
