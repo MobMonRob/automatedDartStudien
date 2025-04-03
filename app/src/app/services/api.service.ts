@@ -16,16 +16,9 @@ export class ApiService {
   private piUrl = environment.piUrl;
   private ws: WebSocket;
 
-  private mockPlayer ={
-    id: '1',
-    name: 'Nils',
-    currentDarts: [],
-    currentDartPositions: [[], [], []]
-  }
-
   private activeGamestate: GameState = {
-    gameType: GameType.TESTING,
-    players: [this.mockPlayer],
+    gameType: GameType.LOADING,
+    players: [],
     points: [101, 101, 101],
     averages: [0, 0, 0],
     darts: [0, 0, 0],
@@ -159,16 +152,6 @@ export class ApiService {
     return of(this.activeGamestate);
   }
 
-  submitDebugThrow(value: number, valueString: string, position: number[]) {
-    let body = {
-      points: value,
-      doubleField: valueString.includes('D'),
-      tripleField: valueString.includes('T')
-    };
-    console.log(body); //TODO Nils add position to body
-    this.httpClient.post(`${this.apiUrl}/game/submit-dart`, body).subscribe();
-  }
-
   replaceDebugThrow(replacementIndex: number, value: number, valueString: string, reason: number, position: number[]) {
     let dartValue = {
       points: value,
@@ -182,20 +165,6 @@ export class ApiService {
     };
     console.log(body); //TODO Nils add position to body
     this.httpClient.post(`${this.apiUrl}/game/replace-dart`, body).subscribe();
-  }
-
-  handleMiss() {
-    return this.httpClient
-      .post(`${this.apiUrl}/game/miss`, {})
-      .pipe(catchError(() => of(null)))
-      .subscribe();
-  }
-
-  handleUndo() {
-    return this.httpClient
-      .post(`${this.apiUrl}/game/undo-dart`, {})
-      .pipe(catchError(() => of(null)))
-      .subscribe();
   }
 
   //Tracker Reset

@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
 import { GameState } from '../../../model/game.model';
@@ -10,12 +11,12 @@ import { ScoringZoomViewComponent } from '../../scoring-zoom-view/scoring-zoom-v
 import { Player } from '../../../model/player.model';
 import { LoadingIndicatorComponent } from '../../loading-indicator/loading-indicator.component';
 import { ComponentUtils } from '../../../utils/utils';
-import { GameType } from '../../../model/api.models';
+import { GameType, Reasons } from '../../../model/api.models';
 
 @Component({
   selector: 'dartapp-gamestate',
   standalone: true,
-  imports: [CommonModule, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent, ScoringZoomViewComponent, LoadingIndicatorComponent],
+  imports: [CommonModule, FormsModule, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent, ScoringZoomViewComponent, LoadingIndicatorComponent],
   templateUrl: './gamestate.component.html',
   styleUrl: './gamestate.component.scss'
 })
@@ -35,6 +36,14 @@ export class GamestateComponent implements OnInit, DebugComponent {
   bust = { bust: false, origin: '' };
 
   customId = 'mainZoomField';
+
+  editingMode: boolean = false;
+  selectedDartIndex: number | null = null;
+  changes: { value: number; valueString: string; position: number[]; replacementIndex: number }[] = [];
+  public reasons = Object.entries(Reasons)
+      .filter(([key, value]) => typeof value === 'number') 
+      .map(([key, value]) => ({ key, value }));
+  selectedReason: Reasons = 0;
 
   constructor(
     private apiService: ApiService,
@@ -82,22 +91,6 @@ export class GamestateComponent implements OnInit, DebugComponent {
         this.watchGame();
       });
     }
-  }
-
-  addMissThrow() {
-    this.apiService.handleMiss();
-  }
-
-  revertLastThrow() {
-    this.apiService.handleUndo();
-  }
-
-  evaluateDebugThrow(value: number, valueString: string, position: []): void {
-    this.apiService.submitDebugThrow(value, valueString, position);
-  }
-
-  disableConsoleButtons(): boolean {
-    return this.players[this.currentPlayerIndex].currentDarts.length === 3 || this.bust.bust || !this.gameIsRunning;
   }
 
   private reactOnNewGameState(gameState: GameState) {
@@ -160,5 +153,74 @@ export class GamestateComponent implements OnInit, DebugComponent {
     this.zoomFields.toArray().forEach((zoomField, index) => {
       zoomField.resetZoom(this.customId + index);
     });
+  }
+
+  disableMissedButtons(): boolean {
+    return this.players[this.currentPlayerIndex].currentDarts.length === 3 || this.bust.bust || !this.gameIsRunning;
+  }
+
+  //Correction Service
+  disableConsoleButtons(): boolean {
+    return !this.editingMode;
+  }
+
+  evaluateDebugThrow(value: number, valueString: string, position: []): void {
+    if (this.editingMode) {
+      if (this.selectedDartIndex !== null) {
+        const existingIndex = this.changes.findIndex((change) => change.replacementIndex === this.selectedDartIndex);
+
+        if (existingIndex !== -1) {
+          this.changes[existingIndex] = { value, valueString, position, replacementIndex: this.selectedDartIndex };
+        } else {
+          this.changes.push({ value, valueString, position, replacementIndex: this.selectedDartIndex });
+        }
+      }
+    }
+  }
+
+  getDartValue(index: number): string | number {
+    const change = this.changes.find(change => change.replacementIndex === index);
+    return change ? change.valueString || change.value : this.players[this.currentPlayerIndex].currentDarts[index];
+  }
+
+  private findHighestReplacementIndex(): number {
+    return this.changes.reduce((max, change) => Math.max(max, change.replacementIndex), -1);
+  }
+
+  selectDart(index: number) {
+    if(this.editingMode &&
+      (this.players[this.currentPlayerIndex].currentDarts.length >= index || this.findHighestReplacementIndex() === (index-1))
+    ){
+      this.selectedDartIndex = index;
+    }
+  }
+
+  toggleEditingMode() {
+    if (this.editingMode) {
+      this.changes.sort((a, b) => a.replacementIndex - b.replacementIndex);
+      this.changes.forEach((change) => {
+        this.apiService.replaceDebugThrow(
+          change.replacementIndex,
+          change.value,
+          change.valueString,
+          this.selectedReason,
+          change.position
+        );
+      });
+      this.changes.forEach((change) => {
+        this.players[this.currentPlayerIndex].currentDarts[change.replacementIndex] = change.valueString;
+      this.players[this.currentPlayerIndex].currentDartPositions[change.replacementIndex] = change.position;
+      });
+      this.disableEditingMode();
+    } else {
+      this.editingMode = true;
+      this.selectedDartIndex = null;
+    }
+  }
+
+  disableEditingMode() {
+    this.editingMode = false;
+    this.selectedDartIndex = null;
+    this.changes = [];
   }
 }
