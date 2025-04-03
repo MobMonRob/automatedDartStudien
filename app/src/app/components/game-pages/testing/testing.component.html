@@ -40,24 +40,35 @@
   </div>
 
   <div class="button-container">
-    <button *ngIf="editingMode" class="button-custom miss-button-custom" (click)="disableEditingMode()">
-      {{ 'Abbrechen' }}
-    </button>
-    <button
-      class="button-custom"
-      [ngClass]="editingMode ? 'next-button-custom' : 'miss-button-custom'"
-      (click)="toggleEditingMode()">
-      {{ editingMode ? 'Änderungen Speichern' : 'Änderungen Eintragen' }}
-    </button>
-  </div>
-
-  <div>
-    <label for="reasonSelect">Grund auswählen:</label>
-    <select id="reasonSelect" [(ngModel)]="selectedReason" (change)="setSelectedReason($event)">
-        <option *ngFor="let reason of getReasons()" [value]="reason.value">
-          {{ reason.key }}
-        </option>
-      </select>
+    <!-- Button Gruppe -->
+    <div class="button-group">
+      <button *ngIf="editingMode" class="button-custom miss-button-custom" (click)="disableEditingMode()">
+        Abbrechen
+      </button>
+      <button
+        class="button-custom"
+        [ngClass]="editingMode ? 'next-button-custom' : 'miss-button-custom'"
+        (click)="toggleEditingMode()">
+        {{ editingMode ? 'Änderungen Speichern' : 'Änderungen Eintragen' }}
+      </button>
+    </div>
+  
+    <!-- Radio Button Gruppe -->
+    <div *ngIf="editingMode" class="radio-group">
+      <label class="radio-group-label">Grund auswählen:</label>
+      <div class="radio-buttons">
+        <label *ngFor="let reason of reasons" class="radio-label">
+          <input 
+            type="radio" 
+            [id]="'reason-' + reason.value" 
+            [value]="reason.value" 
+            [(ngModel)]="selectedReason" 
+            [disabled]="!editingMode"
+          />
+          <span>{{ reason.key }}</span>
+        </label>
+      </div>
+    </div>    
   </div>
 
   <div class="debug-div">

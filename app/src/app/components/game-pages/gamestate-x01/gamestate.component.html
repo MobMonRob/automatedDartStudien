@@ -23,38 +23,76 @@
       <h2 class="current-player-tag">{{ players[currentPlayerIndex].name }}</h2>
       <div class="current-score">{{ points[currentPlayerIndex] }}</div>
 
-      <div class="current-darts">
-        <div class="dart-field" id="dart1" [ngClass]="{ blink: bust.bust }">
-          {{ players[currentPlayerIndex].currentDarts[0] }}
+      <div class="current-darts" [ngClass]="{ 'editing-mode': editingMode }">
+        <div
+          class="dart-field"
+          id="dart1"
+          [ngClass]="{
+            'blink-gray': editingMode,
+            'blink-red': selectedDartIndex === 0 || bust.bust
+          }"
+          (click)="selectDart(0)">
+          {{ getDartValue(0) }}
         </div>
-        <div class="dart-field" id="dart2" [ngClass]="{ blink: bust.bust }">
-          {{ players[currentPlayerIndex].currentDarts[1] }}
+        <div
+          class="dart-field"
+          id="dart2"
+          [ngClass]="{
+            'blink-gray': editingMode,
+            'blink-red': selectedDartIndex === 1 || bust.bust
+          }"
+          (click)="selectDart(1)">
+          {{ getDartValue(1) }}
         </div>
-        <div class="dart-field" id="dart3" [ngClass]="{ blink: bust.bust }">
-          {{ players[currentPlayerIndex].currentDarts[2] }}
+        <div
+          class="dart-field"
+          id="dart3"
+          [ngClass]="{
+            'blink-gray': editingMode,
+            'blink-red': selectedDartIndex === 2 || bust.bust
+          }"
+          (click)="selectDart(2)">
+          {{ getDartValue(2) }}
         </div>
       </div>
 
-      <button class="button-custom miss-button-custom" (click)="addMissThrow()" [disabled]="disableConsoleButtons()">
-        Verfehlt
-      </button>
-      <button class="button-custom next-button-custom" (click)="revertLastThrow()">Letzten Wurf entfernen</button>
-      <!-- <button class="button-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neustart</button>
-      <button class="button-custom next-button-custom" (click)="null" *ngIf="!gameIsRunning">Neues Spiel</button> -->
+      <div class="button-group">
+        <button class="button-custom next-button-custom" (click)="toggleEditingMode()">
+          {{ editingMode ? 'Änderungen Speichern' : 'Änderungen Eintragen' }}
+        </button>
+        <button *ngIf="editingMode" class="button-custom miss-button-custom" (click)="disableEditingMode()">Abbrechen</button>
+      </div>
     </div>
-  </div>
+  </div>  
 
-  <div class="scoring-zoom-div">
-    <div *ngFor="let dartPosition of currentDartPositions; let j = index">
-      <dartapp-scoring-zoom-view
-        #zoomField
-        [targetPosition]="{
-          x: players[currentPlayerIndex].currentDartPositions[j][0],
-          y: players[currentPlayerIndex].currentDartPositions[j][1]
-        }"
-        [customId]="customId + j"
-        [isThrown]="players[currentPlayerIndex].currentDartPositions[j].length > 0"></dartapp-scoring-zoom-view>
+  <div class="middle-section">
+    <div class="scoring-zoom-div">
+      <div *ngFor="let dartPosition of currentDartPositions; let j = index">
+        <dartapp-scoring-zoom-view
+          #zoomField
+          [targetPosition]="{
+            x: players[currentPlayerIndex].currentDartPositions[j][0],
+            y: players[currentPlayerIndex].currentDartPositions[j][1]
+          }"
+          [customId]="customId + j"
+          [isThrown]="players[currentPlayerIndex].currentDartPositions[j].length > 0"></dartapp-scoring-zoom-view>
+      </div>
     </div>
+    <div class="radio-group" *ngIf="editingMode">
+      <label class="radio-group-label">Grund auswählen:</label>
+      <div class="radio-buttons">
+        <label *ngFor="let reason of reasons" class="radio-label">
+          <input 
+            type="radio" 
+            [id]="'reason-' + reason.value" 
+            [value]="reason.value" 
+            [(ngModel)]="selectedReason" 
+            [disabled]="!editingMode"
+          />
+          <span>{{ reason.key }}</span>
+        </label>
+      </div>
+    </div>  
   </div>
 
   <!-- Comment this out to get rid of Verticalscrollbar-->

@@ -20,7 +20,10 @@ import { GameType, Reasons } from '../../../model/api.models';
 })
 export class TestingComponent implements OnInit, DebugComponent {
   GameType = GameType;
-  reasonsEnum = Reasons; 
+  reasonsEnum = Reasons;
+  public reasons = Object.entries(Reasons)
+    .filter(([key, value]) => typeof value === 'number') 
+    .map(([key, value]) => ({ key, value }));
   selectedReason: Reasons = 0;
   gameMode: GameType = GameType.LOADING;
   players: Player[] = [];
@@ -41,6 +44,7 @@ export class TestingComponent implements OnInit, DebugComponent {
   awaitGameStart() {
     this.apiService.getCurrentGameState().subscribe(async (game) => {
       this.gameMode = game.gameType;
+      console.log(this.gameMode);
       if (this.gameMode === GameType.TESTING && game.players.length > 0) {
         this.startGame(game);
       } else if (this.gameMode === GameType.TESTING && game.players.length === 0) {
@@ -87,7 +91,13 @@ export class TestingComponent implements OnInit, DebugComponent {
     if (this.editingMode) {
       this.changes.sort((a, b) => a.replacementIndex - b.replacementIndex);
       this.changes.forEach((change) => {
-        this.apiService.replaceDebugThrow(change.replacementIndex, change.value, change.valueString, this.selectedReason, change.position);
+        this.apiService.replaceDebugThrow(
+          change.replacementIndex,
+          change.value,
+          change.valueString,
+          this.selectedReason,
+          change.position
+        );
       });
       this.changes.forEach((change) => {
         this.players[this.currentPlayerIndex].currentDarts[change.replacementIndex] = change.valueString;
@@ -99,11 +109,15 @@ export class TestingComponent implements OnInit, DebugComponent {
     }
   }
 
+  private findHighestReplacementIndex(): number {
+    return this.changes.reduce((max, change) => Math.max(max, change.replacementIndex), -1);
+  }
+
   selectDart(index: number, playerIndex: number) {
     if (
       this.editingMode &&
       playerIndex === this.currentPlayerIndex &&
-      (this.players[this.currentPlayerIndex].currentDarts.length >= index || this.changes.length >= index)
+      (this.players[this.currentPlayerIndex].currentDarts.length >= index || this.findHighestReplacementIndex() >= (index)-1)
     ) {
       this.selectedDartIndex = index;
     }
@@ -136,21 +150,9 @@ export class TestingComponent implements OnInit, DebugComponent {
     return !this.editingMode;
   }
 
-  getReasons(): { key: string; value: Reasons }[] {
-    return Object.keys(this.reasonsEnum)
-      .filter(key => isNaN(Number(key)))
-      .map(key => ({ key, value: this.reasonsEnum[key as keyof typeof Reasons] }));
-  }
-
   onEnumOptionChange(event: any) {
     this.reason = event.target.value;
   }
 
-  setSelectedReason(event: Event) {
-    const value = (event.target as HTMLSelectElement).value;
-    this.selectedReason = Number(value) as Reasons;
-  }
-
   //TODO Utils Out Source + Wrapper for GameStates
-
 }
