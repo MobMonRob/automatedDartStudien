@@ -1,11 +1,11 @@
 from flask import Flask, Response, render_template, request, json
+from flask_cors import CORS
 import cv2 as cv
 import numpy as np
 from DartTracker import DartTracker
-import random
-import time
 
 app = Flask(__name__)
+cors = CORS(app)
 
 darttracker = DartTracker()
 
