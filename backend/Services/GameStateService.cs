@@ -262,7 +262,6 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
 
     public async Task ReplaceDart(int index, DartPosition position, int? reason = null)
     {
-        if(_gameState is not GameStateTesting) return;
         var currentThrow = _gameState.lastDarts[_gameState.currentPlayer];
         DartPosition? replacedPosition = null;
         if (index >= currentThrow.Count)
