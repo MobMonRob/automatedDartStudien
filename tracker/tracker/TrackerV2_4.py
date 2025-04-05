@@ -50,7 +50,7 @@ class TrackerV2_4(AbstractTracker):
     recircleUsedDarts = True
     recircleThreshold = 15
     recircleDistanceParameterFactor = 0.06
-    recircleThresholdUpward = 30
+    recircleThresholdUpward = 70
     #Defines the maximum between two points for them to be considered grouped together
     maxAllowedDistance = 150
 
@@ -303,11 +303,11 @@ class TrackerV2_4(AbstractTracker):
                 perp_x_offset = length / (2 * np.sqrt(1 + perpendicular_slope**2))
                 if not np.isinf(perpendicular_slope) and not np.isnan(perpendicular_slope):
                     perp_y_offset = perpendicular_slope * perp_x_offset
+                    perp_start = (int(x_pos + perp_x_offset), int(y_pos + perp_y_offset))
+                    perp_end = (int(x_pos - perp_x_offset), int(y_pos - perp_y_offset))
 
-                perp_start = (int(x_pos + perp_x_offset), int(y_pos + perp_y_offset))
-                perp_end = (int(x_pos - perp_x_offset), int(y_pos - perp_y_offset))
-
-                cv2.line(line_mask, perp_start, perp_end, (128, 0, 128), 2)
+                    cv2.line(line_mask, perp_start, perp_end, (128, 0, 128), 2)
+                
         except ValueError:
             print("VALUE ERROR")
             print(f"slope: {slope}")
@@ -416,7 +416,12 @@ class TrackerV2_4(AbstractTracker):
 
                 for point in remaining_centroids:
                     x0, y0 = point
-                    distance = abs(slope * x0 - y0 + intercept) / np.sqrt(slope**2 + 1)
+                    if slope == float("inf"):
+                        distance = abs(x0 - intercept)
+                    else:
+                        distance = abs(slope * x0 - y0 + intercept) / np.sqrt(
+                            slope**2 + 1
+                )
 
                     y_position_on_dart = abs(y0 - group.posY)
 

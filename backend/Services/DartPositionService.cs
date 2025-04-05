@@ -31,10 +31,11 @@ public class DartPositionService(GameStateService gameStateService)
     
     private DartPosition GetDartPosition(Vector2 position)
     {
+        // todo: align with board
         var distance = Math.Sqrt(position.x * position.x + position.y * position.y);
         
         // Dart is outside the board
-        if (distance > 1) return new DartPosition(0, false, false);
+        if (distance > 1) return new DartPosition(0, false, false, position);
 
         if (distance < 31.8 * 0.5 / 170f)
         {
@@ -42,8 +43,8 @@ public class DartPositionService(GameStateService gameStateService)
             return new DartPosition(25, distance < 12.7 * 0.5 / 170f, false);
         }
         
-        bool doubleField = (distance > 162f / 170f);
-        bool tripleField = distance is > 99f / 170f and < 107f / 170f;
+        bool doubleField = (distance > 160f / 170f);
+        bool tripleField = distance is > 97.4 / 170f and < 107.4 / 170f;
 
         double angleRad = Math.Atan2(position.y, position.x);
         double sector = Math.Floor((angleRad) / (Math.PI / 10));
@@ -52,7 +53,8 @@ public class DartPositionService(GameStateService gameStateService)
         return new DartPosition(
             points: points,
             doubleField: doubleField,
-            tripleField: tripleField
+            tripleField: tripleField,
+            position: position
         );
     }
     

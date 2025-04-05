@@ -9,11 +9,9 @@ class SortedTriangulator(AbstractTriangulator):
     Each 2D point should have a third value, which represents the order of its appearance.
     """
 
-    MAX_DISTANCE = 0.1
+    MAX_DISTANCE = 0.03
 
     def triangulate(self, points):
-        print(f"Triangulate {points}")
-
         calculatedDartPositions = []
 
         if not self.calibrated:
@@ -43,7 +41,7 @@ class SortedTriangulator(AbstractTriangulator):
 
         pointCorrespondences = [value for key, value in sorted(pointCorrespondences.items(), key=lambda x: x[0])]
 
-        print(f"point correspondences: {pointCorrespondences}")
+        #print(f"point correspondences: {pointCorrespondences}")
 
         validCorrespondences = {}
         # check epipolar constraint for each point
@@ -60,7 +58,7 @@ class SortedTriangulator(AbstractTriangulator):
                     else:
                         print(f"Point discarded: {value[j][0]} {value[k][0]}. Distance: {distance}")
 
-        print(f"valid correspondences: {validCorrespondences}")
+        #print(f"valid correspondences: {validCorrespondences}")
 
         for i, validCorrespondence in validCorrespondences.items():
             if len(validCorrespondence) == 0:
@@ -85,12 +83,9 @@ class SortedTriangulator(AbstractTriangulator):
                 
                 # weighted average
                 homogenousPoint /= homogenousPoint[3]
-                print(f"homogenous point: {homogenousPoint}")
                 averagePoint += homogenousPoint * weight
 
             averagePoint = averagePoint / total_weight
             calculatedDartPositions.append(averagePoint)
-
-        print(f"calculated dart positions: {calculatedDartPositions}")
 
         return calculatedDartPositions
