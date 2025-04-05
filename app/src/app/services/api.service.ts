@@ -16,9 +16,22 @@ export class ApiService {
   private piUrl = environment.piUrl;
   private ws: WebSocket;
 
+  private mplayer: Player = {
+    id: '1',
+    name: 'Nils',
+    currentDarts: [],
+    currentDartPositions: [[], [], []]
+  }
+  private mplayer2: Player = {
+    id: '11',
+    name: 'Nilss',
+    currentDarts: [],
+    currentDartPositions: [[], [], []]
+  }
+
   private activeGamestate: GameState = {
-    gameType: GameType.LOADING,
-    players: [],
+    gameType: GameType.CALIBRATION,
+    players: [this.mplayer, this.mplayer2],
     points: [101, 101, 101],
     averages: [0, 0, 0],
     darts: [0, 0, 0],
@@ -36,7 +49,7 @@ export class ApiService {
     this.ws = new WebSocket(this.gamestateUrl);
     this.ws.onerror = (error) => {
       console.log(error)
-      this.activeGamestate.gameType = GameType.ERROR;
+      this.activeGamestate.gameType = GameType.CALIBRATION;
     };
     this.ws.onopen = () => {
       console.log('WebSocket opened');
@@ -113,7 +126,8 @@ export class ApiService {
   initGame(gameState: GameState) {
     const body = {
       gameMode: gameState.gameType,
-      playerIds: gameState.players.map((player) => player.id)
+      playerIds: gameState.players.map((player) => player.id),
+      x01InitialPoints: gameState.points[0],
     };
     console.log(body);
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
@@ -173,40 +187,30 @@ export class ApiService {
   }
 
   //Calibration Stuff
-  mockCalibration: Calibration = {
-    currentZoomPosition: [120, 70],
-    errorMsg: '',
-    instructionMsg: 'Platziere den Pfeil in der Mitte des Ziels und drücke die Bestätigungstaste',
-    isFinished: false,
-    isCanceled: false,
-    currentStep: 1,
-    maximumSteps: 4
-  };
-
-  initCalibrationStep(): Observable<Calibration> {
-    return of(this.mockCalibration); //TODO Nils call Endpoint here
+  startCalibration() {
+    //TODO Nils call Endpoint here
   }
 
-  evaluateCalibrationStepResult(): Observable<Calibration> {
-    return new Observable<Calibration>((observer) => {
-      setTimeout(() => {
-        this.mockCalibration.currentStep++;
-        if (this.mockCalibration.currentStep >= this.mockCalibration.maximumSteps) {
-          this.mockCalibration.isFinished = true;
-        }
-        observer.next(this.mockCalibration);
-        observer.complete();
-      }, 3000);
-    });
+  evaluateCalibrationStepResult() {
+    // return new Observable<Calibration>((observer) => {
+    //   setTimeout(() => {
+    //     this.mockCalibration.currentStep++;
+    //     if (this.mockCalibration.currentStep >= this.mockCalibration.maximumSteps) {
+    //       this.mockCalibration.isFinished = true;
+    //     }
+    //     observer.next(this.mockCalibration);
+    //     observer.complete();
+    //   }, 3000);
+    // });
   }
 
-  cancelCalibration(): Observable<Calibration> {
-    this.mockCalibration.isFinished = false;
-    this.mockCalibration.isCanceled = true;
-    this.mockCalibration.errorMsg = 'Calibration was canceled by user';
-    this.mockCalibration.instructionMsg = '';
-    this.mockCalibration.currentStep = 0;
-    return of(this.mockCalibration);
+  cancelCalibration(){
+    // this.mockCalibration.isFinished = false;
+    // this.mockCalibration.isCanceled = true;
+    // this.mockCalibration.errorMsg = 'Calibration was canceled by user';
+    // this.mockCalibration.instructionMsg = '';
+    // this.mockCalibration.currentStep = 0;
+    // return of(this.mockCalibration);
   }
 
   //Game History Stuff

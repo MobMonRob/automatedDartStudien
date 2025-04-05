@@ -1,39 +1,33 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { TopbarComponent } from '../../topbar/topbar.component';
-import { DebugComponent } from '../../../model/debug.model';
-import { DebugNumberConsoleComponent } from '../../debug-number-console/debug-number-console.component';
-import { LoadingIndicatorComponent } from '../../loading-indicator/loading-indicator.component';
+import {  ThrowEditor } from '../../../model/debug.model';
 import { ApiService } from '../../../services/api.service';
 import { Player } from '../../../model/player.model';
 import { GameState } from '../../../model/game.model';
 import { ComponentUtils } from '../../../utils/utils';
 import { GameType, Reasons } from '../../../model/api.models';
+import { ReasonGroupComponent } from '../reason-group/reason-group.component';
 
 @Component({
   selector: 'dartapp-testing',
   standalone: true,
-  imports: [CommonModule, FormsModule, TopbarComponent, DebugNumberConsoleComponent, LoadingIndicatorComponent],
+  imports: [CommonModule, ReasonGroupComponent],
   templateUrl: './testing.component.html',
   styleUrl: './testing.component.scss'
 })
-export class TestingComponent implements OnInit, DebugComponent {
+export class TestingComponent implements OnInit {  
+  @Input() wrapperComponent!: ThrowEditor;
+  @Input() editingMode!: boolean;
+  @Input() selectedDartIndex!: number | null;
+  @Input() changes!: { value: number; valueString: string; position: number[]; replacementIndex: number }[];
+  
   GameType = GameType;
-  reasonsEnum = Reasons;
-  public reasons = Object.entries(Reasons)
-    .filter(([key, value]) => typeof value === 'number') 
-    .map(([key, value]) => ({ key, value }));
   selectedReason: Reasons = 0;
   gameMode: GameType = GameType.LOADING;
   players: Player[] = [];
   currentPlayerIndex = 0;
   gameIsRunning = true;
   reason = '';
-
-  editingMode: boolean = false;
-  selectedDartIndex: number | null = null;
-  changes: { value: number; valueString: string; position: number[]; replacementIndex: number }[] = [];
 
   constructor(private apiService: ApiService) {}
 
@@ -47,15 +41,7 @@ export class TestingComponent implements OnInit, DebugComponent {
       console.log(this.gameMode);
       if (this.gameMode === GameType.TESTING && game.players.length > 0) {
         this.startGame(game);
-      } else if (this.gameMode === GameType.TESTING && game.players.length === 0) {
-        this.gameMode = GameType.ERROR;
-        console.log('Error retreiving player data');
-      } else if (this.gameMode === GameType.LOADING) {
-        await ComponentUtils.delay(1000);
-        this.awaitGameStart();
-      } else {
-        console.log('Error retreiving game data');
-      }
+      } 
     });
   }
 
@@ -82,31 +68,16 @@ export class TestingComponent implements OnInit, DebugComponent {
   }
 
   disableEditingMode() {
-    this.editingMode = false;
-    this.selectedDartIndex = null;
-    this.changes = [];
+    this.wrapperComponent.disableEditingMode();
   }
 
   toggleEditingMode() {
     if (this.editingMode) {
-      this.changes.sort((a, b) => a.replacementIndex - b.replacementIndex);
-      this.changes.forEach((change) => {
-        this.apiService.replaceDebugThrow(
-          change.replacementIndex,
-          change.value,
-          change.valueString,
-          this.selectedReason,
-          change.position
-        );
-      });
       this.changes.forEach((change) => {
         this.players[this.currentPlayerIndex].currentDarts[change.replacementIndex] = change.valueString;
       });
-      this.disableEditingMode();
-    } else {
-      this.editingMode = true;
-      this.selectedDartIndex = null;
     }
+    this.wrapperComponent.toggleEditingMode(this.selectedReason);
   }
 
   private findHighestReplacementIndex(): number {
@@ -119,7 +90,7 @@ export class TestingComponent implements OnInit, DebugComponent {
       playerIndex === this.currentPlayerIndex &&
       (this.players[this.currentPlayerIndex].currentDarts.length >= index || this.findHighestReplacementIndex() >= (index)-1)
     ) {
-      this.selectedDartIndex = index;
+      this.wrapperComponent.selectDart(index);
     }
   }
 
@@ -131,28 +102,4 @@ export class TestingComponent implements OnInit, DebugComponent {
       return change ? change.valueString : defaultValue;
     }
   }
-
-  evaluateDebugThrow(value: number, valueString: string, position: number[]): void {
-    if (this.editingMode) {
-      if (this.selectedDartIndex !== null) {
-        const existingIndex = this.changes.findIndex((change) => change.replacementIndex === this.selectedDartIndex);
-
-        if (existingIndex !== -1) {
-          this.changes[existingIndex] = { value, valueString, position, replacementIndex: this.selectedDartIndex };
-        } else {
-          this.changes.push({ value, valueString, position, replacementIndex: this.selectedDartIndex });
-        }
-      }
-    }
-  }
-
-  disableConsoleButtons(): boolean {
-    return !this.editingMode;
-  }
-
-  onEnumOptionChange(event: any) {
-    this.reason = event.target.value;
-  }
-
-  //TODO Utils Out Source + Wrapper for GameStates
 }

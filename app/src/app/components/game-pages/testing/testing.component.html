@@ -1,5 +1,4 @@
-<dartapp-topbar></dartapp-topbar>
-<div class="container" *ngIf="gameMode === GameType.TESTING">
+<div class="container">
   <div class="players-wrapper">
     <div class="current-player" *ngFor="let player of players; let i = index" [ngClass]="{ active: currentPlayerIndex === i }">
       <h2 class="current-player-tag">{{ player.name }}</h2>
@@ -54,31 +53,7 @@
     </div>
   
     <!-- Radio Button Gruppe -->
-    <div *ngIf="editingMode" class="radio-group">
-      <label class="radio-group-label">Grund auswählen:</label>
-      <div class="radio-buttons">
-        <label *ngFor="let reason of reasons" class="radio-label">
-          <input 
-            type="radio" 
-            [id]="'reason-' + reason.value" 
-            [value]="reason.value" 
-            [(ngModel)]="selectedReason" 
-            [disabled]="!editingMode"
-          />
-          <span>{{ reason.key }}</span>
-        </label>
-      </div>
-    </div>    
-  </div>
-
-  <div class="debug-div">
-    <dartapp-debug-number-console [component]="this"></dartapp-debug-number-console>
+    <dartapp-reason-group [(selectedReason)]="selectedReason" [editingMode]="editingMode" *ngIf="editingMode"></dartapp-reason-group>
   </div>
 </div>
 
-<div class="container" *ngIf="gameMode !== GameType.TESTING">
-  <dartapp-loading-indicator
-    [loading]="gameMode === GameType.LOADING"
-    [error]="gameMode === GameType.ERROR"
-    errorMsg="Fehler beim Laden des Spiels. Versuche es erneut."></dartapp-loading-indicator>
-</div>

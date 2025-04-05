@@ -26,7 +26,8 @@ export enum GameType {
   CRICKET = 1,
   TESTING = 2,
   ERROR = 3,
-  LOADING = 4
+  LOADING = 4, 
+  CALIBRATION = 5
 }
 
 export enum Reasons {

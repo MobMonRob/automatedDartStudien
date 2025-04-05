@@ -41,6 +41,8 @@ export class LandingPageComponent {
       outVariant: "",
     }
     this.apiService.initGame(this.testingGamestate)
-    this.router.navigateByUrl("/game/testing")
+    this.router.navigateByUrl("/game", {
+      state: { requestedGameType: GameType.TESTING }
+    });
   }
 }
