@@ -1,3 +1,4 @@
+import threading
 from flask import Flask, Response, render_template, request, json
 from flask_cors import CORS
 import cv2 as cv
@@ -36,16 +37,26 @@ def frametime():
 
     return {"frametime": response}
 
-@app.route('/calibrate', methods=['POST'])
-def calibrate():
+@app.route('/calibrate/start', methods=['POST'])
+def calibrate_start():
     if request.is_json:
         data = json.loads(request.data)
         actualPositions = data['actualPositions']
         if(len(actualPositions) != 4):
             return Response(status=400)
-        darttracker.calibrateCameras(np.array(actualPositions))
+        threading.Thread(target=darttracker.calibrateCameras, args=(np.array(actualPositions),)).start()
         return Response(status=200)
     return Response(status=400)
+
+@app.route('/calibrate/next', methods=['POST'])
+def calibrate_next():
+    darttracker.calibrateNext()
+    return Response(status=200)
+
+@app.route('/calibrate/stop', methods=['POST'])
+def calibrate_stop():
+    darttracker.calibrateStop()
+    return Response(status=200)
 
 @app.route("/empty", methods=['POST'])
 def empty():
