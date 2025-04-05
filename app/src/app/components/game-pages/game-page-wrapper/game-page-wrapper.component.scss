@@ -1,0 +1,14 @@
+.game-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;  
+    width: 100%;
+  }
+
+.debug-div {
+  grid-area: debug-console;
+  background-color: #ffffff;
+  padding: 20px;
+  width: 100%;
+  border-top: 2px solid #ddd;
+}

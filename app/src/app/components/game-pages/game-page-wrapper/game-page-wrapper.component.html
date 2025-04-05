@@ -1,0 +1,26 @@
+<dartapp-topbar></dartapp-topbar>
+<div class="game-page-container" *ngIf="gameMode !== GameType.LOADING && gameMode !== GameType.ERROR">
+  <dartapp-gamestate
+    *ngIf="gameMode === GameType.X01"
+    [wrapperComponent]="this"
+    [editingMode]="editingMode"
+    [changes]="changes"
+    [selectedDartIndex]="selectedDartIndex"></dartapp-gamestate>
+  <dartapp-testing
+    *ngIf="gameMode === GameType.TESTING"
+    [wrapperComponent]="this"
+    [editingMode]="editingMode"
+    [changes]="changes"
+    [selectedDartIndex]="selectedDartIndex"></dartapp-testing>
+  <dartapp-calibration-page *ngIf="gameMode === GameType.CALIBRATION"></dartapp-calibration-page>
+  <div class="debug-div">
+    <dartapp-debug-number-console [component]="this" *ngIf="gameMode !== GameType.CALIBRATION"></dartapp-debug-number-console>
+  </div>
+</div>
+
+<div *ngIf="gameMode === GameType.LOADING || gameMode === GameType.ERROR">
+  <dartapp-loading-indicator
+    [loading]="gameMode === GameType.LOADING"
+    [error]="gameMode === GameType.ERROR"
+    errorMsg="Fehler beim Laden des Spiels. Versuche es erneut."></dartapp-loading-indicator>
+</div>

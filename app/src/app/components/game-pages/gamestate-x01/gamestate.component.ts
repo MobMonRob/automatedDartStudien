@@ -1,26 +1,28 @@
-import { ChangeDetectorRef, Component, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
 import { GameState } from '../../../model/game.model';
-import { DebugNumberConsoleComponent } from '../../debug-number-console/debug-number-console.component';
-import { TopbarComponent } from '../../topbar/topbar.component';
-import { DebugComponent } from '../../../model/debug.model';
+import { ThrowEditor } from '../../../model/debug.model';
 import { ScoringZoomViewComponent } from '../../scoring-zoom-view/scoring-zoom-view.component';
 import { Player } from '../../../model/player.model';
-import { LoadingIndicatorComponent } from '../../loading-indicator/loading-indicator.component';
 import { ComponentUtils } from '../../../utils/utils';
 import { GameType, Reasons } from '../../../model/api.models';
+import { ReasonGroupComponent } from '../reason-group/reason-group.component';
 
 @Component({
   selector: 'dartapp-gamestate',
   standalone: true,
-  imports: [CommonModule, FormsModule, PlayerCardComponent, DebugNumberConsoleComponent, TopbarComponent, ScoringZoomViewComponent, LoadingIndicatorComponent],
+  imports: [CommonModule, PlayerCardComponent, ScoringZoomViewComponent, ReasonGroupComponent],
   templateUrl: './gamestate.component.html',
   styleUrl: './gamestate.component.scss'
 })
-export class GamestateComponent implements OnInit, DebugComponent {
+export class GamestateComponent implements OnInit {
+  @Input() wrapperComponent!: ThrowEditor;
+  @Input() editingMode!: boolean;
+  @Input() selectedDartIndex!: number | null;
+  @Input() changes!: { value: number; valueString: string; position: number[]; replacementIndex: number }[];
+
   @ViewChildren('zoomField') zoomFields!: QueryList<ScoringZoomViewComponent>;
   GameType = GameType;
 
@@ -37,12 +39,6 @@ export class GamestateComponent implements OnInit, DebugComponent {
 
   customId = 'mainZoomField';
 
-  editingMode: boolean = false;
-  selectedDartIndex: number | null = null;
-  changes: { value: number; valueString: string; position: number[]; replacementIndex: number }[] = [];
-  public reasons = Object.entries(Reasons)
-      .filter(([key, value]) => typeof value === 'number') 
-      .map(([key, value]) => ({ key, value }));
   selectedReason: Reasons = 0;
 
   constructor(
@@ -60,14 +56,6 @@ export class GamestateComponent implements OnInit, DebugComponent {
       this.gameMode = game.gameType;
       if (this.gameMode === GameType.X01 && game.players.length > 0) {
         this.startGame(game);
-      } else if (this.gameMode === GameType.X01 && game.players.length === 0) {
-        this.gameMode = GameType.ERROR;
-        console.log('Error retreiving player data');
-      } else if (this.gameMode === GameType.LOADING) {
-        await ComponentUtils.delay(1000);
-        this.awaitGameStart();
-      } else {
-        console.log('Error retreiving game data');
       }
     });
   }
@@ -160,26 +148,8 @@ export class GamestateComponent implements OnInit, DebugComponent {
   }
 
   //Correction Service
-  disableConsoleButtons(): boolean {
-    return !this.editingMode;
-  }
-
-  evaluateDebugThrow(value: number, valueString: string, position: []): void {
-    if (this.editingMode) {
-      if (this.selectedDartIndex !== null) {
-        const existingIndex = this.changes.findIndex((change) => change.replacementIndex === this.selectedDartIndex);
-
-        if (existingIndex !== -1) {
-          this.changes[existingIndex] = { value, valueString, position, replacementIndex: this.selectedDartIndex };
-        } else {
-          this.changes.push({ value, valueString, position, replacementIndex: this.selectedDartIndex });
-        }
-      }
-    }
-  }
-
   getDartValue(index: number): string | number {
-    const change = this.changes.find(change => change.replacementIndex === index);
+    const change = this.changes.find((change) => change.replacementIndex === index);
     return change ? change.valueString || change.value : this.players[this.currentPlayerIndex].currentDarts[index];
   }
 
@@ -188,39 +158,25 @@ export class GamestateComponent implements OnInit, DebugComponent {
   }
 
   selectDart(index: number) {
-    if(this.editingMode &&
-      (this.players[this.currentPlayerIndex].currentDarts.length >= index || this.findHighestReplacementIndex() === (index-1))
-    ){
-      this.selectedDartIndex = index;
+    if (
+      this.editingMode &&
+      (this.players[this.currentPlayerIndex].currentDarts.length >= index || this.findHighestReplacementIndex() === index - 1)
+    ) {
+      this.wrapperComponent.selectDart(index);
     }
   }
 
   toggleEditingMode() {
     if (this.editingMode) {
-      this.changes.sort((a, b) => a.replacementIndex - b.replacementIndex);
-      this.changes.forEach((change) => {
-        this.apiService.replaceDebugThrow(
-          change.replacementIndex,
-          change.value,
-          change.valueString,
-          this.selectedReason,
-          change.position
-        );
-      });
       this.changes.forEach((change) => {
         this.players[this.currentPlayerIndex].currentDarts[change.replacementIndex] = change.valueString;
-      this.players[this.currentPlayerIndex].currentDartPositions[change.replacementIndex] = change.position;
+        this.players[this.currentPlayerIndex].currentDartPositions[change.replacementIndex] = change.position;
       });
-      this.disableEditingMode();
-    } else {
-      this.editingMode = true;
-      this.selectedDartIndex = null;
-    }
+    } 
+    this.wrapperComponent.toggleEditingMode(this.selectedReason);
   }
 
   disableEditingMode() {
-    this.editingMode = false;
-    this.selectedDartIndex = null;
-    this.changes = [];
+    this.wrapperComponent.disableEditingMode();
   }
 }

@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { MatDialogActions } from '@angular/material/dialog';
 import { GameModeDialogComponent } from '../game-mode-dialog/game-mode-dialog.component';
 import { GameModeDetailsDialogComponent } from '../game-mode-details-dialog/game-mode-details-dialog.component';
 import { PlayerCountDialogComponent } from '../player-count-dialog/player-count-dialog.component';
@@ -8,12 +7,11 @@ import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
 import { GameStateCricket, GameState } from '../../../model/game.model';
 import { Player } from '../../../model/player.model';
-import { v4 as uuidv4 } from 'uuid';
+import { GameType } from '../../../model/api.models';
 
 @Component({
   selector: 'dartapp-gameselect',
   standalone: true,
-  //imports: [MatDialogActions],
   templateUrl: './gameselect.component.html',
   styleUrl: './gameselect.component.scss'
 })
@@ -76,7 +74,7 @@ export class GameselectComponent {
 
         if (gameDetails.mode === 'X01') {
           let game: GameState = {
-            gameType: gameDetails.mode,
+            gameType: GameType.X01,
             currentPlayerIndex: 0,
             players: activePlayers,
             points: new Array(activePlayers.length).fill(gameDetails.points),
@@ -87,7 +85,9 @@ export class GameselectComponent {
             outVariant: gameDetails.outVariant
           };
           this.apiservice.initGame(game);
-          this.router.navigateByUrl('/game/x01');
+          this.router.navigateByUrl("/game/wrapper", {
+            state: { requestedGameType: GameType.X01 }
+          });
         } else if (gameDetails.mode === 'Cricket') {
           // Cricket
           let game: GameStateCricket = {
@@ -102,7 +102,7 @@ export class GameselectComponent {
             hitMatrix: new Array(activePlayers.length).fill(gameDetails.points), //Update
             closedFields: new Array(activePlayers.length).fill(gameDetails.points) //Update
           };
-          this.router.navigateByUrl('/game/cricket');
+          this.router.navigateByUrl('/game');
         } else if (gameDetails.mode === 'Train Your Aim') {
           // Train Your Aim
         }
