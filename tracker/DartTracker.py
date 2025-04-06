@@ -50,7 +50,9 @@ class DartTracker():
         self.dispatcherThread = threading.Thread(target=self.__dispatchDartPositions, args=([],), daemon=True)
         self.initializeCameras()
         self.triangulator = SortedTriangulator([value for key, value in sorted(self.cameras.items(), key=lambda x: x[0])])
-
+        self.cameraUpdateThread = threading.Thread(target=self._cameraUpdateThread, daemon=True)
+        self.boardIsEmptyThread = threading.Thread(target=self.__boardEmptyThread, daemon=True)
+    
     def initializeCameras(self):
         # Test for camera indices
         # Todo: Find better way
@@ -70,18 +72,6 @@ class DartTracker():
                 self.setInitialCalibrationData(camera)                   
                 camera.start()
                 time.sleep(1/(camera.MAX_FPS*self.CAMERA_COUNT))
-        if True:
-            for _, camera in self.cameras.items():
-                if not camera.isCameraCalibrated:
-                    print(f"Camera {camera.index} is not calibrated. Starting calibration with default positions.")
-                    threading.Thread(target=self.calibrateCameras,
-                                     daemon=True,
-                                     args=(np.array([
-                        [0.199569,0.59232],
-                        [-0.934412,0.006765],
-                        [-0.199569,-0.59232],
-                        [0.886588,-0.295183]]),)).start()
-                    return
     
     def setInitialCalibrationData(self, camera):
         try:
@@ -117,17 +107,18 @@ class DartTracker():
         self.camera_states[index] = state
         self.dispatchCameraUpdates()
 
-    def __waitForEmptyFrameCallback(self, state: CalibrationCameraState, index):
+    def _waitForEmptyFrameCallback(self, state: CalibrationCameraState, index):
+        print(f"Camera {index} state: {state}")
         self.camera_states[index] = state
         self.dispatchCameraUpdates()
         if self.boardIsEmpty():
             self.dispatchBoardEmpty()
 
-    def __cameraUpdateThread(self):
+    def _cameraUpdateThread(self):
         url = f"{API_URL}/calibration/tracker/cameras"
         
         cameras = []
-        for id, _, state in enumerate(self.camera_states.items()):
+        for id, (_, state) in enumerate(self.camera_states.items()):
             cameras.append({"id": id, "state": state})
 
         data = {
@@ -142,14 +133,14 @@ class DartTracker():
             pass
 
     def dispatchCameraUpdates(self):
-        if not cameraUpdateThread.is_alive():
-            cameraUpdateThread = threading.Thread(target=self.__cameraUpdateThread, daemon=True)
-            cameraUpdateThread.start()
+        if not self.cameraUpdateThread.is_alive():
+            self.cameraUpdateThread = threading.Thread(target=self._cameraUpdateThread, daemon=True)
+            self.cameraUpdateThread.start()
     
     def dispatchBoardEmpty(self):
-        if not boardIsEmptyThread.is_alive():
-            boardIsEmptyThread = threading.Thread(target=self.__boardEmptyThread, daemon=True)
-            boardIsEmptyThread.start()
+        if not self.boardIsEmptyThread.is_alive():
+            self.boardIsEmptyThread = threading.Thread(target=self.__boardEmptyThread, daemon=True)
+            self.boardIsEmptyThread.start()
         
     def __boardEmptyThread(self):
         url = f"{API_URL}/calibration/tracker/board_empty"
@@ -168,14 +159,15 @@ class DartTracker():
         return True
 
     def calibrateCameras(self, actualPositions):
+        print("Starting calibration")
         self.calibrationPositions = np.array(actualPositions)
 
         for _, camera in self.cameras.items():
             self.camera_states[camera.index] = CalibrationCameraState.TOO_MANY_DARTS
-
-        for _, camera in self.cameras.items():
-            threading.Thread(target=camera.waitForEmptyFrame, args=(self.__waitForEmptyFrameCallback,), daemon=True).start()
+            camera.isCameraCalibrated = False
+            threading.Thread(target=camera.waitForEmptyFrame, args=(self._waitForEmptyFrameCallback,), daemon=True).start()
         
+        self.calibrationIndex = 0        
         
         
     def handleCalibrationNextStep(self):
@@ -192,8 +184,10 @@ class DartTracker():
         # ensure all threads are finished (all cameras have found the point) before continuing
         while any([thread.is_alive() for thread in threads]):
             time.sleep(1)
+        print("Completed calibration step")
         self.calibrationIndex += 1
-        if self.checkDonePosition(self):
+        if self.checkDonePosition():
+            print("All cameras have confirmed the position")
             self.__dispatchDonePosition()
             if self.calibrationIndex >= len(self.calibrationPositions):
                 print("All cameras have been calibrated. Calibration finished.")
@@ -204,10 +198,18 @@ class DartTracker():
                 self.__dispatchDoneCalibration()
             else:
                 for _, camera in self.cameras.items():
-                    threading.Thread(target=camera.waitForEmptyFrame, args=(self.__waitForEmptyFrameCallback,), daemon=True).start()
+                    threading.Thread(target=camera.waitForEmptyFrame, args=(self._waitForEmptyFrameCallback,), daemon=True).start()
             
+    def handleCalibrationStop(self):
+        print("Stopping calibration")
+        for _, camera in self.cameras.items():
+            camera.isCameraCalibrated = False
+            self.camera_states[camera.index] = CalibrationCameraState.NO_DARTS
+            self.setInitialCalibrationData(camera)
+        self.calibrationIndex = 0
 
-    def checkDonePosition(self):
+    def checkDonePosition(self) -> bool:
+        print(self.camera_states)
         for camera in self.camera_states.values():
             if camera != CalibrationCameraState.CONFIRMED_POSITION:
                 return False
@@ -288,11 +290,13 @@ class DartTracker():
         for position in dart_positions:
             positions.append({"x": float(position[0]), "y": float(position[1])})
 
+        isCalibrated = self.isCalibrated()
         data = {
-                "timestamp": str(datetime.datetime.now()),
-                "positions": positions#,
-                #"calibrated": self.isCalibrated()
+            "calibrated": isCalibrated,
+            "timestamp": str(datetime.datetime.now()),
         }
+        if isCalibrated:
+            data["positions"] = positions
 
         try:
             response = requests.post(url, json=data)
@@ -420,7 +424,9 @@ class Camera():
             self.frame_buffer = frame
 
             self.processed_frame_buffer = self.getDartPositionsFromImage()
-            self.parent.receiveDartPositions(self.index, self.processed_frame_buffer[1])
+
+            if self.isCameraCalibrated:
+                self.parent.receiveDartPositions(self.index, self.processed_frame_buffer[1])
 
     def getFrame(self):
         return True, self.frame_buffer
@@ -487,7 +493,7 @@ class Camera():
         self.worldPoints[index] = worldPosition
         # First, ensure that no dart is on the board
         self.tracker.enable()
-        self.waitForEmptyFrame(self.parent.__waitForEmptyFrameCallback)
+        self.waitForEmptyFrame(self.parent._waitForEmptyFrameCallback)
         self.tracker.enable()
         # Then, wait for the dart to be placed at the correct position
         previous_dart_position = []
@@ -520,7 +526,6 @@ class Camera():
 
                 self.log(f"Detected stable position: {detected_dart_position[0][:2]}")
                 self.parent.setCameraState(self.index, CalibrationCameraState.CONFIRMED_POSITION)
-                self.parent.checkDonePosition(index)
 
                 # save the image for debug purposes
                 path = f"frames/{self.index}/calibration/{index}"

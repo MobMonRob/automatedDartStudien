@@ -39,9 +39,12 @@ def frametime():
 
 @app.route('/calibrate/start', methods=['POST'])
 def calibrate_start():
+    print("Starting calibration -> Server")
     if request.is_json:
         data = json.loads(request.data)
-        actualPositions = data['actualPositions']
+        actualPositions = []
+        for position in data:
+            actualPositions.append((position['x'], position['y']))
         if(len(actualPositions) != 4):
             return Response(status=400)
         threading.Thread(target=darttracker.calibrateCameras, args=(actualPositions,)).start()
@@ -55,7 +58,7 @@ def calibrate_next():
 
 @app.route('/calibrate/stop', methods=['POST'])
 def calibrate_stop():
-    darttracker.calibrateStop()
+    darttracker.handleCalibrationStop()
     return Response(status=200)
 
 @app.route("/empty", methods=['POST'])
