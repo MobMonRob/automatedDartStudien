@@ -13,14 +13,15 @@
     [changes]="changes"
     [selectedDartIndex]="selectedDartIndex"></dartapp-testing>
   <dartapp-calibration-page *ngIf="gameMode === GameType.CALIBRATION"></dartapp-calibration-page>
-  <div class="debug-div">
-    <dartapp-debug-number-console [component]="this" *ngIf="gameMode !== GameType.CALIBRATION"></dartapp-debug-number-console>
+  <div class="debug-div" *ngIf="gameMode !== GameType.CALIBRATION">
+    <dartapp-debug-number-console [component]="this"></dartapp-debug-number-console>
   </div>
 </div>
 
-<div *ngIf="gameMode === GameType.LOADING || gameMode === GameType.ERROR">
+<div *ngIf="gameMode === GameType.LOADING || gameMode === GameType.ERROR" class="loading-container">
   <dartapp-loading-indicator
     [loading]="gameMode === GameType.LOADING"
     [error]="gameMode === GameType.ERROR"
-    errorMsg="Fehler beim Laden des Spiels. Versuche es erneut."></dartapp-loading-indicator>
+    errorMsg="Fehler beim Laden des Spiels. Versuche es erneut."
+    [loadingMsg]="LOADING_MSG"></dartapp-loading-indicator>
 </div>

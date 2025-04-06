@@ -31,6 +31,9 @@ export class TopbarComponent {
     this.router.navigateByUrl('/game', {
       state: { requestedGameType: GameType.CALIBRATION }
     });
-    history.replaceState({ ...history.state, requestedGameType: GameType.CALIBRATION }, '');
+  }
+
+  isCalibrationRunning(): boolean {
+    return this.apiService.isCalibrationRunning();
   }
 }

@@ -1,7 +1,7 @@
 <div class="loading-overlay">
     <div *ngIf="loading" class="loading-container">
     <div class="spinner"></div>
-    <p>Lade Spiel...</p>
+    <p>{{loadingMsg}}</p>
     </div>
 
     <div *ngIf="error" class="warning-container">

@@ -1,40 +1,73 @@
 <!-- Calibration Pop Up -->
-<div class="popup">
-    <div class="popup-content">
-      <div class="popup-header">
-        <h1 class="calibration-header">{{ currentHeading }}</h1>
+<div class="container">
+  <div>
+    <h1 class="calibration-header">{{ currentHeading }}</h1>
+  </div>
+
+  <div class="animation-container">
+    <dartapp-scoring-zoom-view
+      #calibrationZoom
+      [targetPosition]="{ x: currentPosition[0], y: currentPosition[1] }"
+      [isThrown]="currentPosition.length > 0 && this.calibrationState === CalibrationState.WAITING_FOR_USER_CONFIRMATION"
+      [customId]="customId"></dartapp-scoring-zoom-view>
+  </div>
+  <div class="loading-container" *ngIf="this.calibrationState === CalibrationState.WAITING_FOR_DARTS">
+    <dartapp-loading-indicator
+      [error]="false"
+      [loading]="loading"
+      *ngIf="loading"
+      [loadingMsg]="LOADING_MSG"></dartapp-loading-indicator>
+  </div>
+  <div class="information-container" *ngIf="this.calibrationState !== CalibrationState.WAITING_FOR_DARTS">
+    <p class="message-field">
+      {{ INSTRUCTIONS[instructionIndex] }}
+    </p>
+
+    <p class="message">Kalibrierungsfortschritt: {{ currentStep }}/{{ maximumSteps }}</p>
+
+    <button
+      class="buttom-custom calibrate-button-custom"
+      (click)="confirmDartPlacement()"
+      [disabled]="
+        calibrationState !== CalibrationState.WAITING_FOR_USER_CONFIRMATION && calibrationState !== CalibrationState.FINISHED
+      ">
+      {{ calibrationState === CalibrationState.FINISHED ? 'OK' : 'Bestätige Eingabe' }}
+    </button>
+  </div>
+  <div class="camera-results-container" *ngIf="(calibrationState === CalibrationState.WAITING_FOR_DARTS || calibrationState === CalibrationState.WAITING_FOR_EMPTY_BOARD) && cameras.length > 0">
+    <div class="camera-indicator-wrapper" *ngFor="let camera of cameras">
+      <div
+        class="camera-indicator"
+        [ngClass]="{
+          loading: camera.state === CameraState.NO_DARTS,
+          deeperLoading: camera.state === CameraState.CONFIRMING_POSITION,
+          success: camera.state === CameraState.CONFIRMED_POSITION,
+          error: camera.state === CameraState.TOO_MANY_DARTS
+        }">
       </div>
-      
-      <div class="animation-container">
-        <dartapp-scoring-zoom-view 
-          #calibrationZoom 
-          [targetPosition]="{x:zoomPosition[0], y:zoomPosition[1]}" 
-          [isThrown]="isCalibrationStarted" 
-          [customId]="customId"></dartapp-scoring-zoom-view>
-      </div>
-  
-      <p [ngClass]="{ 'message-field': errorMsg.length === 0, 'error-message-field': errorMsg.length > 0 }">
-        {{ (errorMsg.length === 0)? instruction : errorMsg }}
-      </p>
-      
-      <p class="message">Kalibrierungsfortschritt: {{ currentStep }}/{{ maximumSteps }}</p>
-  
-      <button 
-      class="buttom-custom calibrate-button-custom" 
-      (click)="startCalibrationStep()"
-      [disabled]="awaitingResult"
-      *ngIf="!isCalibrationStarted">Kalibrierung Starten</button>
-  
-      <button 
-      class="buttom-custom calibrate-button-custom" 
-      (click)="awaitCalibrationStepResult()"
-      [disabled]="awaitingResult"
-      *ngIf="isCalibrationStarted"> Nächster Schritt</button>
-  
-      <button 
-      class="buttom-custom cancel-button-custom" 
-      (click)="cancelCalibration()" 
-      [disabled]="!isCalibrationStarted">Abbrechen</button>
+      <div class="camera-label">Kamera {{ camera.id }}</div>
+      <span class="camera-tooltip">{{ getCameraStateString(camera.state) }}</span>
     </div>
   </div>
-  
+  <button
+    class="buttom-custom cancel-button-custom"
+    (click)="cancelCalibration()"
+    *ngIf="this.calibrationState !== CalibrationState.FINISHED">
+    Abbrechen
+  </button>
+  <button
+    class="buttom-custom cancel-button-custom"
+    (click)="restartCalibration()"
+    *ngIf="this.calibrationState === CalibrationState.FINISHED">
+    Kalibrierung Neustarten
+  </button>
+  <div class="camera-accuracy-container" *ngIf="this.calibrationState === CalibrationState.FINISHED">
+    <p class="accuracy-title">Kameragenauigkeiten</p>
+    <div class="camera-accuracy-wrapper" *ngFor="let camera of cameras; let i = index">
+      <div class="camera-accuracy" [ngStyle]="getEvaluationStyle(camera.evaluation)">
+        <span>{{ camera.evaluation ? (camera.evaluation * 100).toFixed(2) + '%' : '/' }}</span>
+      </div>
+      <p class="camera-label">Kamera {{ i + 1 }}</p>
+    </div>
+  </div>
+</div>
