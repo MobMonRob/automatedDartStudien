@@ -2,7 +2,7 @@ namespace backend.Models;
 
 public class TrackingData
 {
-    public bool calibrated { get; set; } = true ;
+    public bool calibrated { get; set; }
     public string? timestamp { get; set; }
     public List<Vector2> positions { get; set; } 
 
