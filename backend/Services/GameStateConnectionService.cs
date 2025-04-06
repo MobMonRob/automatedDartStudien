@@ -1,6 +1,8 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using backend.Models;
 
 namespace backend.Services;
@@ -56,7 +58,14 @@ public class GameStateConnectionService
     public async Task sendGamestateToClients(GameState gameState)
     {
         recentGameState = gameState;
-        var jsonString = JsonSerializer.Serialize(gameState);
+        
+        var options = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            WriteIndented = true,
+        };
+        
+        var jsonString = JsonSerializer.Serialize(gameState, options);
         var buffer = Encoding.UTF8.GetBytes(jsonString);
         Console.WriteLine(jsonString);
         await SendToAllClients(buffer);
