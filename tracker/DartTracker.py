@@ -29,6 +29,9 @@ class CalibrationCameraState(Enum):
     CONFIRMING_POSITON = 2
     CONFIRMED_POSITION = 3
 
+    def __int__(self):
+        return self.value
+
 class DartTracker():
 
     CAMERA_COUNT = 3
@@ -119,18 +122,13 @@ class DartTracker():
         
         cameras = []
         for id, (_, state) in enumerate(self.camera_states.items()):
-            cameras.append({"id": id, "state": state})
+            cameras.append({"id": id, "state": int(state)})
+        
+        response = requests.patch(url, json=cameras)
+        if response.status_code != 200:
+            print(f"Error dispatching camera states: {response.text}")
+            return
 
-        data = {
-            "cameras": cameras
-        }
-        try:
-            response = requests.patch(url, json=data)
-            if response.status_code != 200:
-                print(f"Error dispatching camera states: {response.text}")
-                return
-        except:
-            pass
 
     def dispatchCameraUpdates(self):
         if not self.cameraUpdateThread.is_alive():
@@ -159,6 +157,7 @@ class DartTracker():
         return True
 
     def calibrateCameras(self, actualPositions):
+        self.handleCalibrationStop()
         print("Starting calibration")
         self.calibrationPositions = np.array(actualPositions)
 
