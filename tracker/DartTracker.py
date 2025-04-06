@@ -121,8 +121,19 @@ class DartTracker():
         url = f"{API_URL}/calibration/tracker/cameras"
         
         cameras = []
-        for id, (_, state) in enumerate(self.camera_states.items()):
-            cameras.append({"id": id, "state": int(state)})
+        for id, (index, state) in enumerate(self.camera_states.items()):
+            if index not in self.cameras:
+                continue
+            camera = self.cameras[index]
+
+            data = {
+                "id": id, 
+                "state": int(state)
+            }
+            if camera.isCameraCalibrated:
+                data["evaluation"] = camera.calibrationError.item()
+
+            cameras.append(data)
         
         response = requests.patch(url, json=cameras)
         if response.status_code != 200:
@@ -356,6 +367,8 @@ class Camera():
     imagePoints: np.array
     worldPoints: np.array
 
+    calibrationError = 0.0
+
     loadFrameThread : threading.Thread = None
 
     def __init__(self, index, parent: DartTracker):
@@ -444,8 +457,6 @@ class Camera():
         self.tracker.setCleanFrame(self.frame_buffer)
     
     def calibrate(self):
-        self.isCameraCalibrated = False
-
         if len(self.imagePoints) != len(self.worldPoints):
             self.log("Error: Calibration failed. Not enough points detected")
             return False
@@ -454,7 +465,7 @@ class Camera():
             self.log("Error: Calibration failed. At least 4 points are required")
             return False
 
-        success, rotation_vector, translation_vector, _ = cv2.solvePnPRansac(self.worldPoints, self.imagePoints, self.camera_matrix, self.dist_coeffs)
+        success, rotation_vector, translation_vector = cv2.solvePnP(self.worldPoints, self.imagePoints, self.camera_matrix, self.dist_coeffs)
         
         if success:
             self.log(f"Rotation Vector: \n {rotation_vector}")
@@ -471,6 +482,16 @@ class Camera():
             self.log("Calibration failed")
 
         self.isCameraCalibrated = success
+
+        if self.isCameraCalibrated:
+            self.log("Testing calibration")
+            projected_points, _ = cv2.projectPoints(self.worldPoints, rotation_vector, translation_vector, self.camera_matrix, self.dist_coeffs)
+            projected_points = projected_points.reshape(-1, 2)
+            errors = np.linalg.norm(self.imagePoints - projected_points, axis=1)
+            self.log(f"Errors: {errors}")
+            self.calibrationError = np.mean(errors)
+            self.log(f"Calibration score: {self.calibrationError}")
+            self.parent.dispatchCameraUpdates()
 
     def waitForEmptyFrame(self, _callback: callable):
         self.log("Waiting for empty frame")
