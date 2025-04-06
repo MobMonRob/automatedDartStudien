@@ -1,7 +1,14 @@
+using System.Text.Json.Serialization;
+
 using System.Text.Json;
 
 namespace backend.Models;
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "gameType")]
+[JsonDerivedType(typeof(GameStateX01), (int) GameMode.X01)]
+[JsonDerivedType(typeof(GameStateCricket), (int) GameMode.Cricket)]
+[JsonDerivedType(typeof(GameStateTesting), (int) GameMode.Testing)]
+[JsonDerivedType(typeof(GameStateCalibrating), (int) GameMode.Calibrating)]
 public abstract class GameState
 {
     public GameMode gameType { get; set; }

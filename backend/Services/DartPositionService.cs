@@ -10,9 +10,10 @@ public class DartPositionService(GameStateService gameStateService, CalibrationS
     {
         Console.WriteLine("Handling tracking data: " + data);
 
-        if (!data.calibrated)
+        if (!data.calibrated && !calibrationService.running)
         {
             calibrationService.StartCalibration();
+            return;
         }
         
         // As of here, we assume the data is calibrated and require positions
