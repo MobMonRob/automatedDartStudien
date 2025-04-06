@@ -12,6 +12,7 @@ export class LoadingIndicatorComponent {
   @Input() loading: boolean = false;
   @Input() error: boolean = false;
   @Input() errorMsg: string = "";
+  @Input() loadingMsg: string = "";
 
   reloadPage(): void {
     window.location.reload();

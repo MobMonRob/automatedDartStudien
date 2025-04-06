@@ -2,10 +2,12 @@ import { Injectable } from '@angular/core';
 import { Player } from '../model/player.model';
 import { catchError, map, Observable, of } from 'rxjs';
 import { ArchiveGameData, GameState } from '../model/game.model';
-import { WsGamestateMessage, ApiDartPosition, ApiPlayer, GameType } from '../model/api.models';
-import { Calibration } from '../model/calibration.models';
+import { WsGamestateMessage, ApiDartPosition, ApiPlayer, GameType, CalibrationState, WsPosition } from '../model/api.models';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { CalibrationModel } from '../model/calibration.model';
+import { DartPositionService } from './dart-position.service';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -16,22 +18,9 @@ export class ApiService {
   private piUrl = environment.piUrl;
   private ws: WebSocket;
 
-  private mplayer: Player = {
-    id: '1',
-    name: 'Nils',
-    currentDarts: [],
-    currentDartPositions: [[], [], []]
-  }
-  private mplayer2: Player = {
-    id: '11',
-    name: 'Nilss',
-    currentDarts: [],
-    currentDartPositions: [[], [], []]
-  }
-
   private activeGamestate: GameState = {
-    gameType: GameType.CALIBRATION,
-    players: [this.mplayer, this.mplayer2],
+    gameType: GameType.LOADING,
+    players: [],
     points: [101, 101, 101],
     averages: [0, 0, 0],
     darts: [0, 0, 0],
@@ -41,15 +30,23 @@ export class ApiService {
     outVariant: ''
   };
 
-  initialPointValue = 0;
-  previousScoreValue = 0;
-  afterPlayerChange = true;
+  private calibrationState: CalibrationModel = {
+    currentPosition: [0,0],
+    calibrationState: CalibrationState.WAITING_FOR_USER_CONFIRMATION,
+    cameras: [],
+    calibrationIndex: 1,
+    calibrationCount: 4
+  };
 
-  constructor(private httpClient: HttpClient) {
+  constructor(
+    private httpClient: HttpClient,
+    private dartPositionService: DartPositionService,
+    private router: Router
+  ) {
     this.ws = new WebSocket(this.gamestateUrl);
     this.ws.onerror = (error) => {
-      console.log(error)
-      this.activeGamestate.gameType = GameType.CALIBRATION;
+      console.log(error);
+      this.activeGamestate.gameType = GameType.ERROR;
     };
     this.ws.onopen = () => {
       console.log('WebSocket opened');
@@ -57,32 +54,54 @@ export class ApiService {
     this.ws.onmessage = (event) => {
       let data = JSON.parse(event.data) as WsGamestateMessage;
       console.log(data);
-      if(data === null){
+      if (data === null) {
         return;
       }
 
-      const currentDartPositions = this.getCurrentDartPositions(data.lastDarts);
-
-      // Update active gamestate
-      this.activeGamestate = {
-        gameType: data.gameType,
-        players: data.players.map((apiPlayer, i) => {
-          return {
-            id: apiPlayer.id,
-            name: apiPlayer.name,
-            currentDarts: data.lastDarts[i].map((dart) => this.getDartString(dart)),
-            currentDartPositions: currentDartPositions[i]
+      if (data.gameType !== undefined) {
+        this.activeGamestate.gameType = data.gameType;
+        if (data.gameType === GameType.CALIBRATION) {
+          this.calibrationState = {
+            currentPosition: dartPositionService.convertDartPositionToImage(data.currentPosition),
+            calibrationState: data.calibrationState,
+            cameras: data.cameras.map((camera) => {
+              return {
+                id: camera.id,
+                state: camera.state,
+                evaluation: camera.evaluation
+              };
+            }),
+            calibrationIndex: data.calibrationIndex,
+            calibrationCount: data.calibrationCount
           };
-        }),
-        points: data.points,
-        averages: data.averages,
-        darts: data.dartsThrown,
-        bust: data.bust,
-        currentPlayerIndex: data.currentPlayer,
-        inVariant: '',
-        outVariant: ''
-      };
-      console.log(this.activeGamestate);
+          console.log(this.calibrationState);
+        } else {
+          const currentDartPositions = this.getCurrentDartPositions(data.lastDarts);
+
+          // Update active gamestate for game modes
+          this.activeGamestate = {
+            gameType: data.gameType,
+            players: data.players.map((apiPlayer, i) => {
+              return {
+                id: apiPlayer.id,
+                name: apiPlayer.name,
+                currentDarts: data.lastDarts[i].map((dart) => this.getDartString(dart)),
+                currentDartPositions: currentDartPositions[i]
+              };
+            }),
+            points: data.points,
+            averages: data.averages,
+            darts: data.dartsThrown,
+            bust: data.bust,
+            currentPlayerIndex: data.currentPlayer,
+            inVariant: '',
+            outVariant: ''
+          };
+          console.log(this.activeGamestate);
+        }
+      } else {
+        this.activeGamestate.gameType = GameType.ERROR;
+      }
       this.ws.onclose = () => {
         console.log('WebSocket closed');
       };
@@ -93,7 +112,7 @@ export class ApiService {
     return lastDarts.map((playerDarts) => {
       let currentDartPositions: number[][] = [[], [], []];
       playerDarts.forEach((dart, i) => {
-        const position = this.convertDartPosition(dart);
+        const position = this.dartPositionService.convertDartPositionToImage(dart.position);
         currentDartPositions[i] = [position[0], position[1]];
       });
       return currentDartPositions;
@@ -104,30 +123,11 @@ export class ApiService {
     return (dart.doubleField ? 'D' : '') + (dart.tripleField ? 'T' : '') + dart.points;
   }
 
-  private convertDartPosition(dart: ApiDartPosition): number[] {
-    if (dart === undefined || !dart.position) return [0, 0];
-
-    const theta = Math.PI / 40;
-    const cosTheta = Math.cos(theta);
-    const sinTheta = Math.sin(theta);
-
-    const x = dart.position.x;
-    const y = dart.position.y;
-
-    const xRot = x * cosTheta - y * sinTheta;
-    const yRot = x * sinTheta + y * cosTheta;
-
-    const xImg = Math.round(((xRot * 750 + 1000) * 250) / 2000);
-    const yImg = Math.round(((yRot * -750 + 1000) * 254) / 2000);
-
-    return [xImg, yImg];
-  }
-
   initGame(gameState: GameState) {
     const body = {
       gameMode: gameState.gameType,
       playerIds: gameState.players.map((player) => player.id),
-      x01InitialPoints: gameState.points[0],
+      x01InitialPoints: gameState.points[0]
     };
     console.log(body);
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
@@ -188,29 +188,56 @@ export class ApiService {
 
   //Calibration Stuff
   startCalibration() {
+    const CALIBRATION_SHOW_POSITIONS: number[][] = [
+      [136.5, 69],
+      [38, 139],
+      [114, 185],
+      [212.5, 143]
+    ]
+
+    const CONTROL_POSITIONS: WsPosition[] = [
+      { x: 0.199569, y: 0.59232 },
+      { x: -0.934412, y: 0.006765 },
+      { x: -0.199569, y: -0.59232 },
+      { x: 0.886588, y: -0.295183 }
+    ];
+
+    const CALIBRATION_POSITIONS: number[][] = [
+      [139.29508473071277, 69.3839994402162],
+      [37.6191598033589, 133.5716787300213],
+      [110.70491526928724, 185.0560005597838],
+      [210.03263153131428, 148.66091041819027]
+    ]
+
+    const imagePositions = CALIBRATION_POSITIONS.map(position =>
+      this.dartPositionService.convertImagePositionToDart(position[0], position[1])
+    );
+    console.log('Converted Image Positions:', imagePositions);
     //TODO Nils call Endpoint here
+
+    const body = imagePositions.map((position) => {return { x: position[0], y: position[1] }})
+
+    console.log(JSON.stringify(body))
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    this.httpClient.post(`${this.apiUrl}/calibration/start`,  JSON.stringify(body), { headers }).subscribe();
   }
 
-  evaluateCalibrationStepResult() {
-    // return new Observable<Calibration>((observer) => {
-    //   setTimeout(() => {
-    //     this.mockCalibration.currentStep++;
-    //     if (this.mockCalibration.currentStep >= this.mockCalibration.maximumSteps) {
-    //       this.mockCalibration.isFinished = true;
-    //     }
-    //     observer.next(this.mockCalibration);
-    //     observer.complete();
-    //   }, 3000);
-    // });
+  getCurrentCalibrationState(): Observable<CalibrationModel> {
+    return of(this.calibrationState);
   }
 
-  cancelCalibration(){
-    // this.mockCalibration.isFinished = false;
-    // this.mockCalibration.isCanceled = true;
-    // this.mockCalibration.errorMsg = 'Calibration was canceled by user';
-    // this.mockCalibration.instructionMsg = '';
-    // this.mockCalibration.currentStep = 0;
-    // return of(this.mockCalibration);
+  confirmDartPlacement() {
+    this.httpClient.post(`${this.apiUrl}/calibration/confirm`, {}).subscribe();
+  }
+
+  cancelCalibration() {
+    this.httpClient.post(`${this.apiUrl}/calibration/stop`, {}).subscribe();
+  }
+
+  isCalibrationRunning(): boolean {
+    const isInCalibration = this.activeGamestate.gameType === GameType.CALIBRATION;
+    const isOnGameRoute = this.router.url.includes('/game'); 
+    return isInCalibration && isOnGameRoute;
   }
 
   //Game History Stuff

@@ -32,6 +32,7 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
   gameMode: GameType = GameType.LOADING;
   retryCounter = 0;
   MAX_RETRIES = 7;
+  LOADING_MSG = "Lade Spiel...";
 
   requestedGameType: GameType = GameType.LOADING;
 
@@ -65,8 +66,8 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
       } else if (
         this.gameMode !== GameType.LOADING &&
         this.gameMode !== GameType.ERROR &&
-        game.players.length === 0 &&
-        this.gameMode !== GameType.CALIBRATION
+        this.gameMode !== GameType.CALIBRATION &&
+        game.players.length === 0 
       ) {
         if (this.retryCounter < this.MAX_RETRIES) {
           this.gameMode = GameType.LOADING;
