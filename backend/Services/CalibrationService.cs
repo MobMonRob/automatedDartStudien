@@ -10,8 +10,12 @@ public class CalibrationService(TrackerService trackerService, GameStateConnecti
     
     private int _calibrationIndex;
     
+    public bool running { get; set; } = false;
+    
     public void StartCalibration(List<Vector2>? positions = null)
     {
+        _calibrationIndex = 0;
+        _gameState = new GameStateCalibrating();
         if (positions == null || positions.Count != 4)
         {
             _positions = [
@@ -34,6 +38,8 @@ public class CalibrationService(TrackerService trackerService, GameStateConnecti
             calibrationCount = _positions.Count,
             calibrationIndex = _calibrationIndex,
         };
+        
+        running = true;
 
         _ = trackerService.StartCalibration(_positions);
         gameStateConnectionService.sendGamestateToClients(_gameState);
@@ -41,6 +47,7 @@ public class CalibrationService(TrackerService trackerService, GameStateConnecti
     
     public void StopCalibration()
     {
+        running = false;
         _ = trackerService.StopCalibration();
     }
     
@@ -86,6 +93,7 @@ public class CalibrationService(TrackerService trackerService, GameStateConnecti
     
     public void HandleFinishedCalibration()
     {
+        running = false;
         _gameState.calibrationState = GameStateCalibrating.CalibrationState.Finished;
         gameStateConnectionService.sendGamestateToClients(_gameState);
     }
