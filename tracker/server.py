@@ -44,13 +44,13 @@ def calibrate_start():
         actualPositions = data['actualPositions']
         if(len(actualPositions) != 4):
             return Response(status=400)
-        threading.Thread(target=darttracker.calibrateCameras, args=(np.array(actualPositions),)).start()
+        threading.Thread(target=darttracker.calibrateCameras, args=(actualPositions,)).start()
         return Response(status=200)
     return Response(status=400)
 
 @app.route('/calibrate/next', methods=['POST'])
 def calibrate_next():
-    darttracker.calibrateNext()
+    darttracker.handleCalibrationNextStep()
     return Response(status=200)
 
 @app.route('/calibrate/stop', methods=['POST'])

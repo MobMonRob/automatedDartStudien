@@ -12,7 +12,8 @@ public class TrackerService
     {
         var client = new HttpClient();
         var url = $"http://{_trackerAddress}/calibrate/start";
-        var content = new StringContent(JsonSerializer.Serialize(actualPositions), Encoding.UTF8, "application/json");
+        var json = JsonSerializer.Serialize(actualPositions);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
         var response = await client.PostAsync(url, content);
         
         if (!response.IsSuccessStatusCode)
@@ -26,6 +27,7 @@ public class TrackerService
     
     public async Task NextCalibrationPoint()
     {
+        
         var client = new HttpClient();
         var url = $"http://{_trackerAddress}/calibrate/next";
         var response = await client.PostAsync(url, null);

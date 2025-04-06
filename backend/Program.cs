@@ -9,6 +9,8 @@ builder.Services.AddSingleton<DartPositionService>();
 builder.Services.AddSingleton<GameStateService>();
 builder.Services.AddSingleton<GameStateConnectionService>();
 builder.Services.AddSingleton<PlayersController>();
+builder.Services.AddSingleton<CalibrationService>();
+builder.Services.AddSingleton<TrackerService>();
 
 builder.Services.AddCors(options =>
 {
