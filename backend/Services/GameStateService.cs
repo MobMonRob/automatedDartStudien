@@ -5,10 +5,13 @@ using MongoDB.Driver;
 
 namespace backend.Services;
 
-public class GameStateService(GameStateConnectionService gameStateConnectionService, MongoDbService mongoDbService, GameState gameState)
+public class GameStateService(
+    GameStateConnectionService gameStateConnectionService, 
+    MongoDbService mongoDbService,
+    CalibrationService calibrationService,
+    GameState gameState)
 {
     private GameState _gameState = gameState;
-    private readonly GameStateConnectionService _gameStateConnectionService = gameStateConnectionService;
     private readonly IMongoCollection<DbThrow> _throwCollection = mongoDbService.Database.GetCollection<DbThrow>("throws");
     private readonly IMongoCollection<DbTestThrows> _testCollection = mongoDbService.Database.GetCollection<DbTestThrows>("test_throws");
     
@@ -23,7 +26,15 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
     private const int REQUIRED_EMPTY_BOARD_FRAMES = 5;
     private int emptyBoardFrames = 0;
 
-    public GameStateService(GameStateConnectionService gameStateConnectionService, MongoDbService mongoDbService) : this(gameStateConnectionService, mongoDbService, new GameStateX01()) {}
+    public GameStateService(
+        GameStateConnectionService gameStateConnectionService, 
+        MongoDbService mongoDbService,
+        CalibrationService calibrationService) 
+        : this(
+        gameStateConnectionService, 
+        mongoDbService, 
+        calibrationService,
+        new GameStateX01()) {}
 
     public void StartGame(GameMode gameMode, List<Player> players, int? xo1InitialPoints)
     {
@@ -44,11 +55,13 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
                 _gameState = new GameStateTesting();
                 players.ForEach(player =>  _gameState.AddPlayer(player));
                 break;
+            case GameMode.Calibrating:
+                throw new InvalidOperationException("You cannot start a game of calibration!");
             default:
                 throw new ArgumentOutOfRangeException(nameof(gameMode), gameMode, null);
         }
         gameIsRunning = true;
-        _gameStateConnectionService.sendGamestateToClients(_gameState);
+        gameStateConnectionService.sendGamestateToClients(_gameState);
     }
     
 
@@ -71,7 +84,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
                 break;
         }
         
-        await _gameStateConnectionService.sendGamestateToClients(_gameState);
+        await gameStateConnectionService.sendGamestateToClients(_gameState);
     }
     
     public void HandleTestModeThrow(GameStateTesting gameState, DartPosition dartPosition)
@@ -132,7 +145,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         _gameState.MoveToNextPlayer();
         _gameState.bust = false;
         
-        _gameStateConnectionService.sendGamestateToClients(_gameState);
+        gameStateConnectionService.sendGamestateToClients(_gameState);
     }
     
     private void HandleGameLogicX01(GameState gameState, DartPosition dartPosition)
@@ -239,7 +252,7 @@ public class GameStateService(GameStateConnectionService gameStateConnectionServ
         
         _gameState.lastDarts[_gameState.currentPlayer] = currentThrow;
         
-        await _gameStateConnectionService.sendGamestateToClients(_gameState);
+        await gameStateConnectionService.sendGamestateToClients(_gameState);
     }
 
     private class DbTestThrows

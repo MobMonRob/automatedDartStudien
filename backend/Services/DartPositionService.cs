@@ -2,7 +2,7 @@ using backend.Models;
 
 namespace backend.Services;
 
-public class DartPositionService(GameStateService gameStateService)
+public class DartPositionService(GameStateService gameStateService, CalibrationService calibrationService)
 {
     private List<Vector2> positions = [];
 
@@ -10,7 +10,12 @@ public class DartPositionService(GameStateService gameStateService)
     {
         Console.WriteLine("Handling tracking data: " + data);
 
-        var distinctPositions = data.GetNewPositions(positions);
+        if (!data.calibrated)
+        {
+            calibrationService.StartCalibration();
+        }
+        
+        var newPositions = data.GetNewPositions(positions);
         positions = data.positions;
         
         if (data.positions.Count == 0)
@@ -19,9 +24,9 @@ public class DartPositionService(GameStateService gameStateService)
             return;
         }
 
-        if (distinctPositions.Count == 0) return;
+        if (newPositions.Count == 0) return;
         
-        foreach (var position in distinctPositions)
+        foreach (var position in newPositions)
         {
             DartPosition dartPosition = GetDartPosition(position);
             dartPosition.position = position;
