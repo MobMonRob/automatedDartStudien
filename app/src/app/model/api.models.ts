@@ -68,5 +68,7 @@ export enum Reasons {
   CAMERAHIT = 2, 
   BADTHROW = 3,
   BACKEND = 4,
-  UNDEFINED = 5
+  BACKENDFASTGRAB = 5,
+  WRONGAVERAGE = 6,
+  UNDEFINED = 7
 }
