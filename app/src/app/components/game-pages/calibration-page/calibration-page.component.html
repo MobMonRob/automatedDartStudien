@@ -41,8 +41,8 @@
         [ngClass]="{
           loading: camera.state === CameraState.NO_DARTS,
           deeperLoading: camera.state === CameraState.CONFIRMING_POSITION,
-          success: camera.state === CameraState.CONFIRMED_POSITION,
-          error: camera.state === CameraState.TOO_MANY_DARTS
+          success: camera.state === CameraState.CONFIRMED_POSITION || (camera.state === CameraState.TOO_MANY_DARTS && calibrationState === CalibrationState.WAITING_FOR_EMPTY_BOARD),
+          error: camera.state === CameraState.TOO_MANY_DARTS && calibrationState === CalibrationState.WAITING_FOR_DARTS,
         }">
       </div>
       <div class="camera-label">Kamera {{ camera.id }}</div>
@@ -65,7 +65,7 @@
     <p class="accuracy-title">Kameragenauigkeiten</p>
     <div class="camera-accuracy-wrapper" *ngFor="let camera of cameras; let i = index">
       <div class="camera-accuracy" [ngStyle]="getEvaluationStyle(camera.evaluation)">
-        <span>{{ camera.evaluation ? (camera.evaluation * 100).toFixed(2) + '%' : '/' }}</span>
+        <span>{{ camera.evaluation ? (camera.evaluation).toFixed(2) + 'px' : '/' }}</span>
       </div>
       <p class="camera-label">Kamera {{ i + 1 }}</p>
     </div>

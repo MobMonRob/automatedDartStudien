@@ -144,37 +144,43 @@ export class CalibrationPageComponent implements OnInit {
   }
 
   getEvaluationStyle(evaluation: number | undefined) {
-    if (evaluation == null || evaluation === undefined || evaluation <= 0) {
-      return { backgroundColor: 'black', color: 'white' };
+    if (evaluation == null || evaluation <= 0) {
+      return { backgroundColor: 'rgb(40, 167, 69)', color: 'white' }; 
     }
   
+    const maxOffset = 15;
+    const clamped = Math.min(evaluation, maxOffset);
+    const t = clamped / maxOffset;
+  
     const green = { r: 40, g: 167, b: 69 }; 
-    const yellow = { r: 226, g: 209, b: 54 };
-    const red = { r: 244, g: 67, b: 54 };  
+    const yellow = { r: 226, g: 209, b: 54 }; 
+    const red = { r: 244, g: 67, b: 54 };
   
     let r, g, b;
   
-    if (evaluation < 0.5) {
-      r = Math.round(red.r + (yellow.r - red.r) * (evaluation * 2) * 1.5);
-      g = Math.round(red.g + (yellow.g - red.g) * (evaluation * 2) * 1.1);
-      b = Math.round(red.b + (yellow.b - red.b) * (evaluation * 2) * 1.1); 
+    if (t < 0.5) {
+      const f = t * 2;
+      r = Math.round(green.r + (yellow.r - green.r) * f);
+      g = Math.round(green.g + (yellow.g - green.g) * f);
+      b = Math.round(green.b + (yellow.b - green.b) * f);
     } else {
-      r = Math.round(yellow.r + (green.r - yellow.r) * ((evaluation - 0.5) * 2) * 1.1); 
-      g = Math.round(yellow.g + (green.g - yellow.g) * ((evaluation - 0.5) * 2) * 1.5); 
-      b = Math.round(yellow.b + (green.b - yellow.b) * ((evaluation - 0.5) * 2) * 1.1); 
+      const f = (t - 0.5) * 2;
+      r = Math.round(yellow.r + (red.r - yellow.r) * f);
+      g = Math.round(yellow.g + (red.g - yellow.g) * f);
+      b = Math.round(yellow.b + (red.b - yellow.b) * f);
     }
   
     const backgroundColor = `rgb(${r}, ${g}, ${b})`;
   
     return {
-      backgroundColor: backgroundColor,
+      backgroundColor,
       color: 'white',
     };
   }
 
   errorInCameraDetection(camera: CameraModel[]): boolean {
     for (let i = 0; i < camera.length; i++) {
-      if (camera[i].state === CameraState.TOO_MANY_DARTS) {
+      if (camera[i].state === CameraState.TOO_MANY_DARTS && this.calibrationState === CalibrationState.WAITING_FOR_DARTS) {
         return true;
       }
     }

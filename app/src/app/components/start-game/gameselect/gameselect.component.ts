@@ -85,7 +85,7 @@ export class GameselectComponent {
             outVariant: gameDetails.outVariant
           };
           this.apiservice.initGame(game);
-          this.router.navigateByUrl("/game/wrapper", {
+          this.router.navigateByUrl("/game", {
             state: { requestedGameType: GameType.X01 }
           });
         } else if (gameDetails.mode === 'Cricket') {
