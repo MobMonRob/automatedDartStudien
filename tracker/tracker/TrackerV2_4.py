@@ -50,7 +50,7 @@ class TrackerV2_4(AbstractTracker):
     recircleUsedDarts = True
     recircleThreshold = 15
     recircleDistanceParameterFactor = 0.06
-    recircleThresholdUpward = 70
+    recircleThresholdUpward = 60
     #Defines the maximum between two points for them to be considered grouped together
     maxAllowedDistance = 150
 
@@ -566,8 +566,10 @@ class TrackerV2_4(AbstractTracker):
         centroids = self.findPointsInMask(mask1, self.min_area_threshold)
         if len(centroids) < 1: 
             self.tracked_frame = mask1
+            self.run = 1
             self.dart_positions = []
             return
+
         if self.saveTrackingUtilImages:
             for cx, cy in centroids:
                 cv2.circle(
@@ -621,7 +623,7 @@ class TrackerV2_4(AbstractTracker):
 
         #self.tracked_frame = cv2.rotate(result_image, cv2.ROTATE_180)
         self.tracked_frame = result_image
-        self.run += 1
+        self.run = getattr(self, 'run', 0) + 1
         self.dart_positions = [
             [dart.posX, dart.posY, dart.dartNumber] for dart in darts if not dart.isStrayGroup
         ]
@@ -629,4 +631,9 @@ class TrackerV2_4(AbstractTracker):
     def setCleanFrame(self, clean_frame):
         self.currentRunDarts = []
         self.clean_frame = clean_frame
+        self.run = 1
+    
+    def resetCleanFrame(self):
+        self.clean_frame = self.dart_frame
+        self.currentRunDarts = []
         self.run = 1
