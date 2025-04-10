@@ -3,3 +3,12 @@ export interface DebugComponent {
 
     disableConsoleButtons(): boolean;
 }
+
+export interface ThrowEditor {
+    selectedDartIndex: number | null;
+    changes: { value: number; valueString: string; position: number[]; replacementIndex: number }[];
+    editingMode: boolean;
+    selectDart(index: number): void;
+    toggleEditingMode(reason: number): void;
+    disableEditingMode(): void;
+}

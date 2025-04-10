@@ -1,76 +1,26 @@
 import { Injectable } from '@angular/core';
 import { Player } from '../model/player.model';
 import { catchError, map, Observable, of } from 'rxjs';
-import { ArchiveGameData, GameStateX01 } from '../model/game.model';
-import { Calibration } from '../model/calibration.models';
+import { ArchiveGameData, GameState } from '../model/game.model';
+import { WsGamestateMessage, ApiDartPosition, ApiPlayer, GameType, CalibrationState, WsPosition } from '../model/api.models';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { CalibrationModel } from '../model/calibration.model';
+import { DartPositionService } from './dart-position.service';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-
-  private apiUrl = environment.apiUrl
-  private gamestateUrl = environment.gamestateUrl
+  private apiUrl = environment.apiUrl;
+  private gamestateUrl = environment.gamestateUrl;
+  private piUrl = environment.piUrl;
   private ws: WebSocket;
 
-  private activeGamestate: GameStateX01;
-
-  mockPlayers: Player[] = [
-    {
-      id: '481d6713-dcca-473b-a68b-97d55f9378f9',
-      name: 'Test-User',
-      currentDarts: [],
-      currentDartPositions: [[], [], []]
-    },
-    {
-      id: '481d6713-dcca-473b-a68b-97d55f9378f9',
-      name: 'Test-User2',
-      currentDarts: [],
-      currentDartPositions: [[], [], []]
-    },
-    {
-      id: '481d6713-dcca-473b-a68b-97d55f9378f9',
-      name: 'Test-User3',
-      currentDarts: [],
-      currentDartPositions: [[], [], []]
-    }
-  ];
-
-  mockGameArchive: ArchiveGameData[] = [
-    {
-      id: 1,
-      duration: '25 min',
-      winner: this.mockPlayers[0],
-      players: this.mockPlayers,
-      gameMode: 'X01 - 501',
-      darts: [45, 60],
-      averages: [50, 43]
-    },
-    {
-      id: 1,
-      duration: '30 min',
-      winner: this.mockPlayers[1],
-      players: this.mockPlayers,
-      gameMode: 'Cricket',
-      darts: [45, 60],
-      averages: [50, 43]
-    },
-    {
-      id: 1,
-      duration: '20 min',
-      winner: this.mockPlayers[0],
-      players: this.mockPlayers,
-      gameMode: 'Train Your Aim',
-      darts: [45, 60],
-      averages: [50, 43]
-    }
-  ];
-
-  mockGame: GameStateX01 = {
-    gameType: 'X01',
-    players: this.mockPlayers,
+  private activeGamestate: GameState = {
+    gameType: GameType.LOADING,
+    players: [],
     points: [101, 101, 101],
     averages: [0, 0, 0],
     darts: [0, 0, 0],
@@ -80,66 +30,91 @@ export class ApiService {
     outVariant: ''
   };
 
-  mockCalibration: Calibration = {
-    currentZoomPosition: [120, 70],
-    errorMsg: '',
-    instructionMsg: 'Platziere den Pfeil in der Mitte des Ziels und drücke die Bestätigungstaste',
-    isFinished: false,
-    isCanceled: false,
-    currentStep: 1,
-    maximumSteps: 4
+  private calibrationState: CalibrationModel = {
+    currentPosition: [0,0],
+    calibrationState: CalibrationState.WAITING_FOR_USER_CONFIRMATION,
+    cameras: [],
+    calibrationIndex: 1,
+    calibrationCount: 4
   };
 
-  initialPointValue = 0;
-  previousScoreValue = 0;
-  afterPlayerChange = true;
-
-  constructor(private httpClient: HttpClient) {
-    this.activeGamestate = this.mockGame;
+  constructor(
+    private httpClient: HttpClient,
+    private dartPositionService: DartPositionService,
+    private router: Router
+  ) {
     this.ws = new WebSocket(this.gamestateUrl);
+    this.ws.onerror = (error) => {
+      console.log(error);
+      this.activeGamestate.gameType = GameType.ERROR;
+    };
     this.ws.onopen = () => {
       console.log('WebSocket opened');
-    }
+    };
     this.ws.onmessage = (event) => {
       let data = JSON.parse(event.data) as WsGamestateMessage;
-      console.log(data);    
-
-      const currentDartPositions = this.getCurrentDartPositions(data.lastDarts);
-
-      // Update active gamestate
-      this.activeGamestate = {
-        gameType: 'X01',
-        players: data.players.map((apiPlayer, i) => {
-          return {
-            id: apiPlayer.id,
-            name: apiPlayer.name,
-            currentDarts: data.lastDarts[i].map(dart => this.getDartString(dart)),
-            currentDartPositions: currentDartPositions[i]
-          }
-        }
-        ),
-        points: data.points,
-        averages: data.averages,
-        darts: data.dartsThrown,
-        bust: data.bust,
-        currentPlayerIndex: data.currentPlayer,
-        inVariant: '',
-        outVariant: ''
+      console.log(data);
+      if (data === null) {
+        return;
       }
-      console.log(this.activeGamestate);
+
+      if (data.gameType !== undefined) {
+        this.activeGamestate.gameType = data.gameType;
+        if (data.gameType === GameType.CALIBRATION) {
+          this.calibrationState = {
+            currentPosition: dartPositionService.convertDartPositionToImage(data.currentPosition),
+            calibrationState: data.calibrationState,
+            cameras: data.cameras.map((camera) => {
+              return {
+                id: camera.id,
+                state: camera.state,
+                evaluation: camera.evaluation
+              };
+            }),
+            calibrationIndex: data.calibrationIndex,
+            calibrationCount: data.calibrationCount
+          };
+          console.log(this.calibrationState);
+        } else {
+          const currentDartPositions = this.getCurrentDartPositions(data.lastDarts);
+
+          // Update active gamestate for game modes
+          this.activeGamestate = {
+            gameType: data.gameType,
+            players: data.players.map((apiPlayer, i) => {
+              return {
+                id: apiPlayer.id,
+                name: apiPlayer.name,
+                currentDarts: data.lastDarts[i].map((dart) => this.getDartString(dart)),
+                currentDartPositions: currentDartPositions[i]
+              };
+            }),
+            points: data.points,
+            averages: data.averages,
+            darts: data.dartsThrown,
+            bust: data.bust,
+            currentPlayerIndex: data.currentPlayer,
+            inVariant: '',
+            outVariant: ''
+          };
+          console.log(this.activeGamestate);
+        }
+      } else {
+        this.activeGamestate.gameType = GameType.ERROR;
+      }
       this.ws.onclose = () => {
         console.log('WebSocket closed');
-      }
-    }
+      };
+    };
   }
 
   private getCurrentDartPositions(lastDarts: ApiDartPosition[][]): number[][][] {
     return lastDarts.map((playerDarts) => {
       let currentDartPositions: number[][] = [[], [], []];
       playerDarts.forEach((dart, i) => {
-          const position = this.convertDartPosition(dart);
-          currentDartPositions[i] = [position[0], position[1]];
-        })
+        const position = this.dartPositionService.convertDartPositionToImage(dart.position);
+        currentDartPositions[i] = [position[0], position[1]];
+      });
       return currentDartPositions;
     });
   }
@@ -148,157 +123,162 @@ export class ApiService {
     return (dart.doubleField ? 'D' : '') + (dart.tripleField ? 'T' : '') + dart.points;
   }
 
-  private convertDartPosition(dart: ApiDartPosition): number[] {
-    if(dart === undefined || !dart.position) return [0, 0];
-
-    const theta = Math.PI / 40; 
-    const cosTheta = Math.cos(theta);
-    const sinTheta = Math.sin(theta);
-
-    const x = dart.position.x
-    const y = dart.position.y
-
-    const xRot = x * cosTheta - y * sinTheta;
-    const yRot = x * sinTheta + y * cosTheta;
-
-    const xImg = Math.round((xRot * 750 + 1000) * 250/2000);
-    const yImg = Math.round((yRot * -750 + 1000) * 254/2000);
-
-    return [xImg, yImg];
-  }
-
-  initX01Game(gameState: GameStateX01) {
-    this.mockGame = gameState;
-    this.mockPlayers = gameState.players;
-
+  initGame(gameState: GameState) {
     const body = {
-      gameMode: "X01",
-      playerIds: gameState.players.map(player => player.id)
-    }
-    console.log(body)
+      gameMode: gameState.gameType,
+      playerIds: gameState.players.map((player) => player.id),
+      x01InitialPoints: gameState.points[0]
+    };
+    console.log(body);
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.httpClient.post(`${this.apiUrl}/game/start-game`, JSON.stringify(body), {headers}).subscribe();
+    this.httpClient.post(`${this.apiUrl}/game/start-game`, JSON.stringify(body), { headers }).subscribe();
   }
 
   addPlayer(player: Player): Observable<Object> {
-    this.mockPlayers.push(player);
-
     const body = {
       name: player.name
-    }
+    };
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    return this.httpClient.post(`${this.apiUrl}/players`, JSON.stringify(body), {headers});
+    return this.httpClient.post(`${this.apiUrl}/players`, JSON.stringify(body), { headers });
   }
 
+  errorPlayer: Player[] = [];
   getPlayers(): Observable<Player[]> {
     return this.httpClient.get<ApiPlayer[]>(`${this.apiUrl}/players`).pipe(
       // convert api response to Player model
       map((apiPlayers: ApiPlayer[]) => {
-        return apiPlayers.map(apiPlayer => {
+        return apiPlayers.map((apiPlayer) => {
           console.log(apiPlayer);
           return {
             id: apiPlayer.id,
             name: apiPlayer.name,
-            
+
             currentDarts: [],
             currentDartPositions: [[], [], []]
-          }
+          };
         });
       }),
-      catchError(() => of(this.mockPlayers)),
-    )
+      catchError(() => of(this.errorPlayer))
+    );
   }
 
-  getGameHistory(): Observable<ArchiveGameData[]>{
-    return of(this.mockGameArchive);
-  }
-
-  getInitStateOfCurrentGameX01(): Observable<GameStateX01> {
-    this.initialPointValue = this.mockGame.points[0];
-    return of(this.mockGame);
-  }
-
-  getCurrentGameStateX01(): Observable<GameStateX01> {
+  getCurrentGameState(): Observable<GameState> {
     return of(this.activeGamestate);
   }
 
-  evaluateThrow(value: number, valueString: string, position: number[]) {
-    let body = {
+  replaceDebugThrow(replacementIndex: number, value: number, valueString: string, reason: number, position: number[]) {
+    let dartValue = {
       points: value,
       doubleField: valueString.includes('D'),
       tripleField: valueString.includes('T')
-    }
+    };
+    let body = {
+      replace_index: replacementIndex,
+      replace_with: dartValue,
+      reason: reason
+    };
     console.log(body); //TODO Nils add position to body
-    this.httpClient.post(`${this.apiUrl}/game/submit-dart`, body).subscribe();
+    this.httpClient.post(`${this.apiUrl}/game/replace-dart`, body).subscribe();
   }
 
-  evaluateNextPlayerX01(): Observable<GameStateX01> {
-    this.mockGame.currentPlayerIndex = (this.mockGame.currentPlayerIndex + 1) % this.mockGame.players.length;
-    this.mockGame.bust = false;
-    this.mockGame.players[this.mockGame.currentPlayerIndex].currentDarts = [];
-    this.mockGame.players[this.mockGame.currentPlayerIndex].currentDartPositions = [[], [], []];
-    this.afterPlayerChange = true;
-    return of(this.mockGame);
+  //Tracker Reset
+  restartTracker() {
+    return this.httpClient.post(`${this.piUrl}/empty`, {}).subscribe();
   }
 
-  initCalibrationStep(): Observable<Calibration> {
-    return of(this.mockCalibration); //TODO Nils call Endpoint here
+  //Calibration Stuff
+  startCalibration() {
+    const CALIBRATION_SHOW_POSITIONS: number[][] = [
+      [136.5, 69],
+      [38, 139],
+      [114, 185],
+      [212.5, 143]
+    ]
+
+    const CONTROL_POSITIONS: WsPosition[] = [
+      { x: 0.199569, y: 0.59232 },
+      { x: -0.934412, y: 0.006765 },
+      { x: -0.199569, y: -0.59232 },
+      { x: 0.886588, y: -0.295183 }
+    ];
+
+    const CALIBRATION_POSITIONS: number[][] = [
+      [139.29508473071277, 69.3839994402162],
+      [37.6191598033589, 133.5716787300213],
+      [110.70491526928724, 185.0560005597838],
+      [210.03263153131428, 148.66091041819027]
+    ]
+
+    const imagePositions = CALIBRATION_POSITIONS.map(position =>
+      this.dartPositionService.convertImagePositionToDart(position[0], position[1])
+    );
+    console.log('Converted Image Positions:', imagePositions);
+    //TODO Nils call Endpoint here
+
+    const body = imagePositions.map((position) => {return { x: position[0], y: position[1] }})
+
+    console.log(JSON.stringify(body))
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    this.httpClient.post(`${this.apiUrl}/calibration/start`,  JSON.stringify(body), { headers }).subscribe();
   }
 
-  handleMiss() {
-    return this.httpClient.post(`${this.apiUrl}/game/miss`, {}).pipe(
-      catchError(() => of(null))
-    ).subscribe();
+  getCurrentCalibrationState(): Observable<CalibrationModel> {
+    return of(this.calibrationState);
   }
 
-  handleUndo(){
-    return this.httpClient.post(`${this.apiUrl}/game/undo-dart`, {}).pipe(
-      catchError(() => of(null))
-    ).subscribe();
+  confirmDartPlacement() {
+    this.httpClient.post(`${this.apiUrl}/calibration/confirm`, {}).subscribe();
   }
 
-  evaluateCalibrationStepResult(): Observable<Calibration> {
-    return new Observable<Calibration>(observer => {
-      setTimeout(() => {
-        this.mockCalibration.currentStep++;
-        if (this.mockCalibration.currentStep >= this.mockCalibration.maximumSteps) {
-          this.mockCalibration.isFinished = true;
-        }
-        observer.next(this.mockCalibration);
-        observer.complete();
-      }, 3000);
-    });
+  cancelCalibration() {
+    this.httpClient.post(`${this.apiUrl}/calibration/stop`, {}).subscribe();
   }
 
-  cancelCalibration(): Observable<Calibration> {
-    this.mockCalibration.isFinished = false;
-    this.mockCalibration.isCanceled = true;
-    this.mockCalibration.errorMsg = 'Calibration was canceled by user';
-    this.mockCalibration.instructionMsg = '';
-    this.mockCalibration.currentStep = 0;
-    return of(this.mockCalibration);
+  isCalibrationRunning(): boolean {
+    const isInCalibration = this.activeGamestate.gameType === GameType.CALIBRATION;
+    const isOnGameRoute = this.router.url.includes('/game'); 
+    return isInCalibration && isOnGameRoute;
   }
-}
 
-interface ApiPlayer{
-  id: string;
-  name: string;
-}
+  //Game History Stuff
+  private player: Player = {
+    id: '1',
+    name: 'Nils',
+    currentDarts: [],
+    currentDartPositions: [[], [], []]
+  };
 
-interface ApiDartPosition{
-  points: number;
-  doubleField: boolean;
-  tripleField: boolean;
-  position: { x: number, y: number };
-}
+  mockGameArchive: ArchiveGameData[] = [
+    {
+      id: 1,
+      duration: '25 min',
+      winner: this.player,
+      players: [],
+      gameMode: 'X01 - 501',
+      darts: [45, 60],
+      averages: [50, 43]
+    },
+    {
+      id: 1,
+      duration: '30 min',
+      winner: this.player,
+      players: [],
+      gameMode: 'Cricket',
+      darts: [45, 60],
+      averages: [50, 43]
+    },
+    {
+      id: 1,
+      duration: '20 min',
+      winner: this.player,
+      players: [],
+      gameMode: 'Train Your Aim',
+      darts: [45, 60],
+      averages: [50, 43]
+    }
+  ];
 
-interface WsGamestateMessage{
-  gameType: number;
-  players: ApiPlayer[];
-  points: number[];
-  averages: number[];
-  bust: boolean;
-  currentPlayer: number;
-  lastDarts: ApiDartPosition[][];
-  dartsThrown: number[];
+  getGameHistory(): Observable<ArchiveGameData[]> {
+    return of(this.mockGameArchive);
+  }
 }

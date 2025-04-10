@@ -1,25 +1,26 @@
 import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { MatDialogActions } from '@angular/material/dialog';
 import { GameModeDialogComponent } from '../game-mode-dialog/game-mode-dialog.component';
 import { GameModeDetailsDialogComponent } from '../game-mode-details-dialog/game-mode-details-dialog.component';
 import { PlayerCountDialogComponent } from '../player-count-dialog/player-count-dialog.component';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
-import { GameStateCricket, GameStateX01 } from '../../../model/game.model';
-import { Player} from '../../../model/player.model';
-import { v4 as uuidv4 } from 'uuid';
+import { GameStateCricket, GameState } from '../../../model/game.model';
+import { Player } from '../../../model/player.model';
+import { GameType } from '../../../model/api.models';
 
 @Component({
   selector: 'dartapp-gameselect',
   standalone: true,
-  imports: [MatDialogActions],
   templateUrl: './gameselect.component.html',
   styleUrl: './gameselect.component.scss'
 })
 export class GameselectComponent {
-
-  constructor(public dialog: MatDialog, private router: Router, private apiservice: ApiService) {}
+  constructor(
+    public dialog: MatDialog,
+    private router: Router,
+    private apiservice: ApiService
+  ) {}
 
   startGameSetup() {
     this.openGameModeDialog();
@@ -27,11 +28,11 @@ export class GameselectComponent {
 
   openGameModeDialog() {
     const dialogRef = this.dialog.open(GameModeDialogComponent, {
-      width: '600px', 
-      height: '400px',
+      width: '600px',
+      height: '400px'
     });
-    
-    dialogRef.afterClosed().subscribe(selectedMode => {
+
+    dialogRef.afterClosed().subscribe((selectedMode) => {
       if (selectedMode) {
         this.openGameModeDetailsDialog(selectedMode);
       }
@@ -41,10 +42,10 @@ export class GameselectComponent {
   openGameModeDetailsDialog(gameMode: string) {
     const dialogRef = this.dialog.open(GameModeDetailsDialogComponent, {
       data: { mode: gameMode },
-      width: '500px', 
+      width: '500px'
     });
 
-    dialogRef.afterClosed().subscribe(details => {
+    dialogRef.afterClosed().subscribe((details) => {
       if (details) {
         this.openPlayerCountDialog(details);
       }
@@ -56,9 +57,9 @@ export class GameselectComponent {
       data: { details: gameDetails }
     });
 
-    dialogRef.afterClosed().subscribe(players => {
+    dialogRef.afterClosed().subscribe((players) => {
       if (players) {
-        console.log(players)
+        console.log(players);
         //Send Game Details to Backend -> Backend Creates Game and Initializes Game and new Players in DB
 
         let activePlayers: Player[] = [];
@@ -71,9 +72,9 @@ export class GameselectComponent {
           });
         });
 
-        if(gameDetails.mode === "X01"){
-          let game: GameStateX01 = {
-            gameType: gameDetails.mode,
+        if (gameDetails.mode === 'X01') {
+          let game: GameState = {
+            gameType: GameType.X01,
             currentPlayerIndex: 0,
             players: activePlayers,
             points: new Array(activePlayers.length).fill(gameDetails.points),
@@ -82,10 +83,12 @@ export class GameselectComponent {
             darts: new Array(activePlayers.length).fill(0),
             inVariant: gameDetails.inVariant,
             outVariant: gameDetails.outVariant
-          }
-          this.apiservice.initX01Game(game);
-          this.router.navigateByUrl('/game/x01');
-        } else if (gameDetails.mode === "Cricket"){
+          };
+          this.apiservice.initGame(game);
+          this.router.navigateByUrl("/game", {
+            state: { requestedGameType: GameType.X01 }
+          });
+        } else if (gameDetails.mode === 'Cricket') {
           // Cricket
           let game: GameStateCricket = {
             gameType: gameDetails.mode,
@@ -98,9 +101,9 @@ export class GameselectComponent {
             indcludeBullsEye: gameDetails.includeBullsEye,
             hitMatrix: new Array(activePlayers.length).fill(gameDetails.points), //Update
             closedFields: new Array(activePlayers.length).fill(gameDetails.points) //Update
-          }
-          this.router.navigateByUrl('/game/cricket');
-        } else if (gameDetails.mode === "Train Your Aim"){
+          };
+          this.router.navigateByUrl('/game');
+        } else if (gameDetails.mode === 'Train Your Aim') {
           // Train Your Aim
         }
       }

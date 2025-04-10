@@ -8,7 +8,7 @@
     "debug-console debug-console";
   gap: 20px;
   padding: 20px;
-  height: 75vh; 
+  height: 100%; 
 }
 
 .players-header {
@@ -91,6 +91,10 @@
   border-radius: 8px;
 }
 
+.editing-mode .dart-field {
+  cursor: pointer;
+}
+
 @media (min-width: 1200px) {
   .players {
     flex-direction: row; 
@@ -103,7 +107,7 @@
   }
 }
 
-.buttom-custom {
+.button-custom {
   color: white; 
   border: none; 
   border-radius: 8px; 
@@ -113,7 +117,7 @@
   cursor: pointer; 
   transition: background 0.3s, transform 0.2s; 
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  margin-top: 5%; 
+  margin-top: 2%; 
   width: 100%; 
   min-width: 200px;
   max-width: 500px;
@@ -146,7 +150,6 @@
 }
 
 .next-button-custom {
-  margin-top: 3%; 
   background: linear-gradient(90deg, #4CAF50, #388E3C);
 }
 
@@ -172,14 +175,30 @@
   background-color: #d3d3d3;
 }
 
-@keyframes blink {
-  0% { background-color: transparent; }
-  50% { background-color: red; }
-  100% { background-color: transparent; }
+.blink-gray {
+  animation: blinkGray 0.5s infinite alternate;
 }
 
-.blink {
-  animation: blink 0.5s infinite; 
+@keyframes blinkGray {
+  from {
+    background-color: #ddd;
+  }
+  to {
+    background-color: #888;
+  }
+}
+
+.blink-red {
+  animation: blinkRed 0.5s infinite alternate;
+}
+
+@keyframes blinkRed {
+  from {
+    background-color: #ffcccc;
+  }
+  to {
+    background-color: #ff0000;
+  }
 }
 
 .winner-card {
@@ -200,22 +219,18 @@
   }
 }
 
-.scoring-zoom-div {
+.middle-section {
   grid-area: full-width;
+  margin-bottom: -2%;
+}
+
+.scoring-zoom-div {
   background-color: #ffffff;
   padding: 10px;
   width: 100%;
   border-top: 2px solid #ddd;
-  display: flex; 
+  display: flex;
   justify-content: center; 
   align-items: center; 
   gap: 5px; 
-}
-
-.debug-div {
-  grid-area: debug-console;
-  background-color: #ffffff;
-  padding: 20px;
-  width: 100%;
-  border-top: 2px solid #ddd;
 }

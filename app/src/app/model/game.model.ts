@@ -1,7 +1,8 @@
+import { GameType } from './api.models';
 import { Player } from './player.model';
 
-export interface GameStateX01 {
-  gameType: string;
+export interface GameState {
+  gameType: GameType;
   players: Player[];
   points: number[];
   averages: number[];
@@ -32,7 +33,7 @@ export interface GameStateCricket {
   bust: boolean;
   currentPlayerIndex: number;
   //Cricket specific fields
-  indcludeBullsEye: boolean,
+  indcludeBullsEye: boolean;
   hitMatrix: number[][];
   closedFields: boolean[][];
 }

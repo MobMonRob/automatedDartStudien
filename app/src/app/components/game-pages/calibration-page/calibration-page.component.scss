@@ -1,0 +1,232 @@
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  flex-direction: column;
+}
+
+.information-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.calibration-header {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: rgb(44, 44, 44);
+  text-transform: uppercase;
+  text-align: left;
+  margin-bottom: 20px;
+  border-bottom: 3px solid rgb(44, 44, 44);
+  padding-bottom: 10px;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  letter-spacing: 2px;
+  padding-bottom: 5%;
+}
+
+.message {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #009688;
+}
+
+.buttom-custom {
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition:
+    background 0.3s,
+    transform 0.2s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  min-width: 200px;
+  max-width: 500px;
+}
+
+.calibrate-button-custom {
+  padding: 10px 75px;
+  width: 65%;
+  background: linear-gradient(90deg, #4caf50, #388e3c);
+}
+
+.calibrate-button-custom:hover {
+  background: linear-gradient(90deg, #45a049, #388e3c);
+  transform: translateY(-2px);
+}
+
+.calibrate-button-custom:active {
+  transform: translateY(1px);
+}
+
+.calibrate-button-custom:disabled {
+  background-color: #d3d3d3;
+  color: #7a7a7a;
+  border: 2px solid #ccc;
+  cursor: default;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.calibrate-button-custom:disabled:hover {
+  background-color: #d3d3d3;
+}
+
+.cancel-button-custom {
+  padding: 10px 75px;
+  width: 55%;
+  margin-top: 1%;
+  background: linear-gradient(90deg, #f44336, #ff5733);
+}
+
+.cancel-button-custom:hover {
+  background: linear-gradient(90deg, #e53935, #ff4d3f);
+  transform: translateY(-2px);
+}
+
+.cancel-button-custom:active {
+  transform: translateY(1px);
+}
+
+.cancel-button-custom:disabled {
+  background-color: #d3d3d3;
+  color: #7a7a7a;
+  border: 2px solid #ccc;
+  cursor: default;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.cancel-button-custom:disabled:hover {
+  background-color: #d3d3d3;
+}
+
+.message-field {
+  font-weight: bold;
+  background-color: #ffffff;
+  width: 50%;
+  text-align: center;
+  font-size: 1.2rem;
+  color: #404040;
+}
+
+.camera-indicator-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.camera-results-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.camera-indicator {
+  width: 40px;
+  height: 40px;
+  border: 5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+  margin-inline: 20px;
+}
+
+.camera-indicator.loading {
+  border-top-color: #f44336;
+}
+
+.camera-indicator.deeperLoading {
+  border-top-color: #28a745;
+}
+
+.camera-indicator.success {
+  background-color: #28a745;
+  border-top-color: transparent;
+  animation: none;
+}
+
+.camera-indicator.error {
+  background-color: #dc3545;
+  border-top-color: transparent;
+  animation: none;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.camera-tooltip {
+  visibility: hidden;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px 8px;
+  border-radius: 6px;
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.camera-indicator-wrapper:hover .camera-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.camera-accuracy-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.accuracy-title {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
+.camera-accuracy-wrapper {
+  display: inline-block;
+  margin: 10px;
+}
+
+.camera-accuracy {
+  font-size: 1.2em;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.camera-label {
+  font-size: 1em;
+  color: #666;
+}
+
+.camera-accuracy span {
+  color: white;
+}
+
+.loading-container {
+  margin-top: 3%;
+}
