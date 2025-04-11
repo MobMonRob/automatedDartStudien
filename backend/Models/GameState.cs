@@ -15,6 +15,8 @@ public abstract class GameState
     public DateTime? end { get; set; }
     
     public const int DartsPerTurn = 3;
+    
+    public List<bool> cameraStatus { get; set; } = new();
 
     public virtual void AddPlayer(Player player)
     {

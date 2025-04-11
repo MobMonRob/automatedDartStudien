@@ -87,11 +87,12 @@ public class GameStateService(
             }
         }
         
+        if (index != null && (index >= GameState.DartsPerTurn 
+                              || index != _gameState.lastDarts[_gameState.currentPlayer].Count)) return;
+        
         switch (_gameState)
         {
             case GameStateX01 gameStateX01:
-                if (index != null && (index >= GameState.DartsPerTurn 
-                                      || index != _gameState.lastDarts[_gameState.currentPlayer].Count)) return;
                 HandleGameLogicX01(gameStateX01, dartPosition, index);
                 break;
             case GameStateCricket gameStateCricket:
@@ -284,6 +285,15 @@ public class GameStateService(
         
         _gameState.lastDarts[_gameState.currentPlayer] = currentThrow;
         
+        await gameStateConnectionService.sendGamestateToClients(_gameState);
+    }
+
+    public async Task HandleCameraStatusUpdate(List<bool> data)
+    {
+        var oldData = _gameState.cameraStatus;
+        if (oldData.SequenceEqual(data)) return;
+        Console.WriteLine("Camera status changed: " + string.Join(", ", data));
+        _gameState.cameraStatus = data;
         await gameStateConnectionService.sendGamestateToClients(_gameState);
     }
 
