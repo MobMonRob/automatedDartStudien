@@ -42,9 +42,9 @@ public class GameStateService(
         switch (gameMode)
         {
             case GameMode.X01:
-                _gameState = new GameState();
-                ((GameState) _gameState).initialPoints = xo1InitialPoints ?? 501;
-                players.ForEach(player => ((GameState) _gameState).AddPlayer(player));
+                _gameState = new GameStateX01();
+                ((GameStateX01) _gameState).initialPoints = xo1InitialPoints ?? 501;
+                players.ForEach(player => ((GameStateX01) _gameState).AddPlayer(player));
                 players.ForEach(_ => hasThrownDouble.Add(false));
                 break;
             case GameMode.Cricket:
@@ -73,8 +73,8 @@ public class GameStateService(
         
         switch (_gameState)
         {
-            case GameState GameState:
-                HandleGameLogicX01(GameState, dartPosition);
+            case GameStateX01 gameStateX01:
+                HandleGameLogicX01(gameStateX01, dartPosition);
                 break;
             case GameStateCricket gameStateCricket:
                 throw new NotImplementedException();
@@ -110,7 +110,6 @@ public class GameStateService(
         if (!throwIsOver || !gameIsRunning || emptyBoardFrames < REQUIRED_EMPTY_BOARD_FRAMES) return;
 
         var dartPositions = _gameState.lastDarts[_gameState.currentPlayer];
-        List<CorrectedPosition> throwElements = [];
 
         if (_gameState is GameStateTesting)
         {
@@ -148,7 +147,7 @@ public class GameStateService(
         gameStateConnectionService.sendGamestateToClients(_gameState);
     }
     
-    private void HandleGameLogicX01(GameState gameState, DartPosition dartPosition)
+    private void HandleGameLogicX01(GameStateX01 gameState, DartPosition dartPosition)
     {
         emptyBoardFrames = 0;
         if(throwIsOver) return;
@@ -194,7 +193,7 @@ public class GameStateService(
         }
     }
     
-    private void HandleBust(GameState gameState, List<DartPosition> lastDarts)
+    private void HandleBust(GameStateX01 gameState, List<DartPosition> lastDarts)
     {
         gameState.bust = true;
         int points = gameState.points[gameState.currentPlayer];

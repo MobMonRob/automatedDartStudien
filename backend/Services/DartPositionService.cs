@@ -14,15 +14,15 @@ public class DartPositionService(GameStateService gameStateService, CalibrationS
         {
             calibrationService.StartCalibration();
         }
-        
-        var newPositions = data.GetNewPositions(positions);
-        positions = data.positions;
-        
+
         if (data.positions.Count == 0)
         {
             gameStateService.HandleEmptyBoard();
             return;
         }
+
+        var newPositions = data.GetNewPositions(positions);
+        positions = data.positions;
 
         if (newPositions.Count == 0) return;
         
@@ -36,7 +36,6 @@ public class DartPositionService(GameStateService gameStateService, CalibrationS
     
     private DartPosition GetDartPosition(Vector2 position)
     {
-        // todo: align with board
         var distance = Math.Sqrt(position.x * position.x + position.y * position.y);
         
         // Dart is outside the board
