@@ -342,7 +342,7 @@ class TrackerV2_4(AbstractTracker):
                 recircleDistanceParameterFactor
             )
         
-        if len(groups) < 3:
+        if len(groups) < 3 and len(centroids) >2:
             current_point = self.getTopMostPoint(centroids)
             if current_point is not None:
                 self.processGrouping(
@@ -627,9 +627,4 @@ class TrackerV2_4(AbstractTracker):
     def setCleanFrame(self, clean_frame):
         self.currentRunDarts = []
         self.clean_frame = clean_frame
-        self.run = 1
-    
-    def resetCleanFrame(self):
-        self.clean_frame = self.dart_frame
-        self.currentRunDarts = []
         self.run = 1

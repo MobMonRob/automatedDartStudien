@@ -39,7 +39,7 @@ class AbstractTracker(ABC):
             return []
         
         if len(self.dart_positions) == 0:
-            self.clean_frame = self.dart_frame
+            self.setCleanFrame(self.dart_frame)
         
         return self.dart_positions
     
