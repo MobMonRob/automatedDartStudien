@@ -8,6 +8,7 @@ class AbstractTracker(ABC):
     dart_positions = []
 
     enabled = True
+    sortedValues = False
 
     def __init__(self, clean_frame):
         super().__init__()

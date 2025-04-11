@@ -23,6 +23,8 @@ API_URL = os.getenv("API_URL")
 
 POSITION_MODE = False
 
+trackerSorted = True
+
 class CalibrationCameraState(Enum):
     NO_DARTS = 0
     TOO_MANY_DARTS = 1
@@ -303,6 +305,7 @@ class DartTracker():
         isCalibrated = self.isCalibrated()
         data = {
             "calibrated": isCalibrated,
+            "sorted": trackerSorted,
             "timestamp": str(datetime.datetime.now()),
         }
         if isCalibrated:
@@ -409,6 +412,9 @@ class Camera():
             self.tracker = ZeroTracker(self.frame_buffer)
         else:
             self.tracker = TrackerV2_4(self.frame_buffer)
+        
+        global trackerSorted
+        trackerSorted = trackerSorted and self.tracker.sortedValues
 
 
     def start(self):

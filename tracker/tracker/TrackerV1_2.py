@@ -9,6 +9,7 @@ from sklearn.decomposition import PCA
 from tracker.AbstractTracker import AbstractTracker
 
 class TrackerV1_2(AbstractTracker):
+    sortedValues = False
     # These are the functions needed for the main part
     def euclidean_distance(self, point1, point2):
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
