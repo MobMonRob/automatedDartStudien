@@ -40,6 +40,7 @@ class DartTracker():
     cameras = {}
 
     dartPositions = {}
+    trackerStatus = {}
 
     calibrationPositions: np.array
     calibrationIndex = 0
@@ -57,7 +58,7 @@ class DartTracker():
         self.triangulator = SortedTriangulator([value for key, value in sorted(self.cameras.items(), key=lambda x: x[0])])
         self.cameraUpdateThread = threading.Thread(target=self._cameraUpdateThread, daemon=True)
         self.boardIsEmptyThread = threading.Thread(target=self.__boardEmptyThread, daemon=True)
-    
+
     def initializeCameras(self):
         # Test for camera indices
         # Todo: Find better way
@@ -336,6 +337,25 @@ class DartTracker():
             flat_point = point.flatten()  # Convert column vector to 1D array
             print(f"{flat_point[0]:10.5f} {flat_point[1]:10.5f} {flat_point[2]:10.5f}")
 
+    def reportTrackerStatus(self, index, empty):
+        self.trackerStatus[index] = empty
+
+        statuses = [value for _, value in sorted(self.trackerStatus.items(), key=lambda x: x[0])]
+
+        def __dispatchTrackerStatus():
+            url = f"{API_URL}/camera-status"
+            data = statuses
+            try:
+                response = requests.post(url, json=data)
+                if response.status_code != 200:
+                    print(f"Error dispatching tracker status: {response}")
+                    return
+            except:
+                pass
+
+        threading.Thread(target=__dispatchTrackerStatus, daemon=True).start()
+
+
 class Camera():
 
     parent: DartTracker
@@ -449,6 +469,8 @@ class Camera():
             self.frame_buffer = frame
 
             self.processed_frame_buffer = self.getDartPositionsFromImage()
+
+            self.parent.reportTrackerStatus(self.index, self.tracker.empty)
 
             if self.isCameraCalibrated:
                 self.parent.receiveDartPositions(self.index, self.processed_frame_buffer[1])
