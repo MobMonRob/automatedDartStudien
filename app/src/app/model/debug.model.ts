@@ -12,3 +12,14 @@ export interface ThrowEditor {
     toggleEditingMode(reason: number): void;
     disableEditingMode(): void;
 }
+
+export interface CameraDebugComponent {
+    cameraPopupVisible: boolean;
+    toggleCameraPopup(index: number): void;
+    closeCameraPopup(): void;
+}
+
+export interface CameraDebugPresenter {
+    cameraStatus: boolean[];
+    evaluateCameraStatusClick(index: number): void;
+}

@@ -1,0 +1,8 @@
+<div *ngIf="visible" class="popup-backdrop" (click)="closePopup()">
+  <div class="popup-content">
+    <button class="close-button">×</button>
+    <div class="popup-body">
+      <img *ngIf="visible" [src]="videoSource" controls autoplay muted>
+    </div>
+  </div>
+</div>

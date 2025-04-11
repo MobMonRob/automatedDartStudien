@@ -37,6 +37,7 @@ export class LandingPageComponent {
       averages: [],
       currentPlayerIndex: 0,
       bust: false,
+      cameraStatus: [false, false, false],
       inVariant: "",
       outVariant: "",
     }

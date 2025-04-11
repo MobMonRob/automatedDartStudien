@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TopbarComponent } from '../../topbar/topbar.component';
 import { DebugNumberConsoleComponent } from '../../debug-number-console/debug-number-console.component';
 import { LoadingIndicatorComponent } from '../../loading-indicator/loading-indicator.component';
-import { DebugComponent, ThrowEditor } from '../../../model/debug.model';
+import { CameraDebugComponent, DebugComponent, ThrowEditor } from '../../../model/debug.model';
 import { GameType } from '../../../model/api.models';
 import { ApiService } from '../../../services/api.service';
 import { ComponentUtils } from '../../../utils/utils';
@@ -11,6 +11,8 @@ import { ComponentUtils } from '../../../utils/utils';
 import { GamestateComponent } from '../gamestate-x01/gamestate.component';
 import { TestingComponent } from '../testing/testing.component';
 import { CalibrationPageComponent } from '../calibration-page/calibration-page.component';
+import { CameraPopupComponent } from '../camera-popup/camera-popup.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'dartapp-game-page-wrapper',
@@ -22,12 +24,13 @@ import { CalibrationPageComponent } from '../calibration-page/calibration-page.c
     LoadingIndicatorComponent,
     GamestateComponent,
     CalibrationPageComponent,
-    TestingComponent
+    TestingComponent,
+    CameraPopupComponent
   ],
   templateUrl: './game-page-wrapper.component.html',
   styleUrl: './game-page-wrapper.component.scss'
 })
-export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEditor {
+export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEditor, CameraDebugComponent, OnDestroy {
   GameType = GameType;
   gameMode: GameType = GameType.LOADING;
   retryCounter = 0;
@@ -40,6 +43,10 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
   selectedDartIndex: number | null = null;
   changes: { value: number; valueString: string; position: number[]; replacementIndex: number }[] = [];
 
+  cameraPopupVisible: boolean = false;
+  feedSubscription: Subscription | null = null;
+  videoSource: string | null = null;
+
   constructor(private apiService: ApiService) {}
 
   ngOnInit() {
@@ -48,6 +55,10 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
       this.requestedGameType = state['requestedGameType'];
     }
     this.awaitGameStart();
+  }
+
+  ngOnDestroy(): void {
+    this.videoSource = null;
   }
 
   awaitGameStart() {
@@ -124,5 +135,16 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
     this.editingMode = false;
     this.selectedDartIndex = null;
     this.changes = [];
+  }
+
+  toggleCameraPopup(index: number): void {
+    this.cameraPopupVisible = !this.cameraPopupVisible;
+    this.videoSource = this.apiService.getVideoSource(index);
+    console.log(this.videoSource);
+  }
+
+  closeCameraPopup(): void {
+    this.cameraPopupVisible = false;
+    this.videoSource = null;
   }
 }

@@ -12,11 +12,13 @@
     [editingMode]="editingMode"
     [changes]="changes"
     [selectedDartIndex]="selectedDartIndex"></dartapp-testing>
-  <dartapp-calibration-page *ngIf="gameMode === GameType.CALIBRATION"></dartapp-calibration-page>
+  <dartapp-calibration-page *ngIf="gameMode === GameType.CALIBRATION" [wrapperComponent]="this"></dartapp-calibration-page>
   <div class="debug-div" *ngIf="gameMode !== GameType.CALIBRATION">
     <dartapp-debug-number-console [component]="this"></dartapp-debug-number-console>
   </div>
 </div>
+
+<dartapp-camera-popup [visible]="cameraPopupVisible" [videoSource]="videoSource" (close)="closeCameraPopup()"></dartapp-camera-popup>
 
 <div *ngIf="gameMode === GameType.LOADING || gameMode === GameType.ERROR" class="loading-container">
   <dartapp-loading-indicator

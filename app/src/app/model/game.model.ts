@@ -9,6 +9,7 @@ export interface GameState {
   darts: number[];
   bust: boolean;
   currentPlayerIndex: number;
+  cameraStatus: boolean[];
   //X01 Specific Details
   inVariant: string;
   outVariant: string;

@@ -3,22 +3,23 @@ import { CommonModule } from '@angular/common';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
 import { GameState } from '../../../model/game.model';
-import { ThrowEditor } from '../../../model/debug.model';
+import { CameraDebugComponent, CameraDebugPresenter, ThrowEditor } from '../../../model/debug.model';
 import { ScoringZoomViewComponent } from '../../scoring-zoom-view/scoring-zoom-view.component';
 import { Player } from '../../../model/player.model';
 import { ComponentUtils } from '../../../utils/utils';
 import { GameType, Reasons } from '../../../model/api.models';
 import { ReasonGroupComponent } from '../reason-group/reason-group.component';
+import { CameraStatusComponent } from "../camera-status/camera-status.component";
 
 @Component({
   selector: 'dartapp-gamestate',
   standalone: true,
-  imports: [CommonModule, PlayerCardComponent, ScoringZoomViewComponent, ReasonGroupComponent],
+  imports: [CommonModule, PlayerCardComponent, ScoringZoomViewComponent, ReasonGroupComponent, CameraStatusComponent],
   templateUrl: './gamestate.component.html',
   styleUrl: './gamestate.component.scss'
 })
-export class GamestateComponent implements OnInit {
-  @Input() wrapperComponent!: ThrowEditor;
+export class GamestateComponent implements OnInit, CameraDebugPresenter {
+  @Input() wrapperComponent!: ThrowEditor & CameraDebugComponent;
   @Input() editingMode!: boolean;
   @Input() selectedDartIndex!: number | null;
   @Input() changes!: { value: number; valueString: string; position: number[]; replacementIndex: number }[];
@@ -40,6 +41,10 @@ export class GamestateComponent implements OnInit {
   customId = 'mainZoomField';
 
   selectedReason: Reasons = 0;
+
+  cameraStatus: boolean[] = [];
+  showWarning = false;
+  private isCurrentDartsEmpty: boolean = false;
 
   constructor(
     private apiService: ApiService,
@@ -68,6 +73,7 @@ export class GamestateComponent implements OnInit {
     this.gameIsRunning = true;
     this.currentPlayerIndex = game.currentPlayerIndex;
     this.currentDartPositions = game.players[this.currentPlayerIndex].currentDartPositions;
+    this.cameraStatus = game.cameraStatus;
     this.watchGame();
   }
 
@@ -101,6 +107,13 @@ export class GamestateComponent implements OnInit {
     this.darts = gameState.darts;
     this.averages = gameState.averages;
     this.currentPlayerIndex = gameState.currentPlayerIndex;
+    this.cameraStatus = gameState.cameraStatus;
+    if (this.isCurrentDartsEmpty && this.cameraStatus.some((status) => status)) {
+      this.showWarning = true;
+    } else {
+      this.showWarning = false;
+    }
+    this.isCurrentDartsEmpty = this.players[this.currentPlayerIndex].currentDarts.length === 0;
   }
 
   private endGame(winnerIndex: number) {
@@ -178,5 +191,9 @@ export class GamestateComponent implements OnInit {
 
   disableEditingMode() {
     this.wrapperComponent.disableEditingMode();
+  }
+
+  evaluateCameraStatusClick(index: number): void {
+    this.wrapperComponent.toggleCameraPopup(index);
   }
 }

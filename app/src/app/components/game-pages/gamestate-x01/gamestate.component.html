@@ -19,47 +19,66 @@
   <div class="current-player">
     <h1 class="players-header">Aktueller Spieler</h1>
     <div class="current-player-block">
-      <h2 class="current-player-tag">{{ players[currentPlayerIndex].name }}</h2>
-      <div class="current-score">{{ points[currentPlayerIndex] }}</div>
-
-      <div class="current-darts" [ngClass]="{ 'editing-mode': editingMode }">
-        <div
-          class="dart-field"
-          id="dart1"
-          [ngClass]="{
-            'blink-gray': editingMode,
-            'blink-red': selectedDartIndex === 0 || bust.bust
-          }"
-          (click)="selectDart(0)">
-          {{ getDartValue(0) }}
-        </div>
-        <div
-          class="dart-field"
-          id="dart2"
-          [ngClass]="{
-            'blink-gray': editingMode,
-            'blink-red': selectedDartIndex === 1 || bust.bust
-          }"
-          (click)="selectDart(1)">
-          {{ getDartValue(1) }}
-        </div>
-        <div
-          class="dart-field"
-          id="dart3"
-          [ngClass]="{
-            'blink-gray': editingMode,
-            'blink-red': selectedDartIndex === 2 || bust.bust
-          }"
-          (click)="selectDart(2)">
-          {{ getDartValue(2) }}
+      <div class="warning-triangle-wrapper" *ngIf="showWarning">
+        <div class="warning-triangle">
+          ⚠️
+          <div class="warning-tooltip">
+            <strong>Warnung: Hohe Fehlerwahrscheinlichkeit!</strong>
+            <br />
+            Mindestens eine Kamera war beim Spielerwechsel nicht richtig zurückgesetzt.
+            <br />
+            Prüfe anhand der Indikatorleiste die Zustände der Kameras und setze diese eventuell über den Button in der
+            Navigationsleiste zurück.
+          </div>
         </div>
       </div>
+      <div class="player-content">
+        <h2 class="current-player-tag">{{ players[currentPlayerIndex].name }}</h2>
+        <div class="current-score">{{ points[currentPlayerIndex] }}</div>
 
-      <div class="button-group">
-        <button class="button-custom next-button-custom" (click)="toggleEditingMode()">
-          {{ editingMode ? 'Änderungen Speichern' : 'Änderungen Eintragen' }}
-        </button>
-        <button *ngIf="editingMode" class="button-custom miss-button-custom" (click)="disableEditingMode()">Abbrechen</button>
+        <div class="current-darts" [ngClass]="{ 'editing-mode': editingMode }">
+          <div
+            class="dart-field"
+            id="dart1"
+            [ngClass]="{
+              'blink-gray': editingMode,
+              'blink-red': selectedDartIndex === 0 || bust.bust
+            }"
+            (click)="selectDart(0)">
+            {{ getDartValue(0) }}
+          </div>
+          <div
+            class="dart-field"
+            id="dart2"
+            [ngClass]="{
+              'blink-gray': editingMode,
+              'blink-red': selectedDartIndex === 1 || bust.bust
+            }"
+            (click)="selectDart(1)">
+            {{ getDartValue(1) }}
+          </div>
+          <div
+            class="dart-field"
+            id="dart3"
+            [ngClass]="{
+              'blink-gray': editingMode,
+              'blink-red': selectedDartIndex === 2 || bust.bust
+            }"
+            (click)="selectDart(2)">
+            {{ getDartValue(2) }}
+          </div>
+        </div>
+
+        <div class="lamp-container">
+          <dartapp-camera-status [cameraStatus]="cameraStatus" [displayComponent]="this"></dartapp-camera-status>
+        </div>
+
+        <div class="button-group">
+          <button class="button-custom next-button-custom" (click)="toggleEditingMode()">
+            {{ editingMode ? 'Änderungen Speichern' : 'Änderungen Eintragen' }}
+          </button>
+          <button *ngIf="editingMode" class="button-custom miss-button-custom" (click)="disableEditingMode()">Abbrechen</button>
+        </div>
       </div>
     </div>
   </div>
@@ -77,6 +96,9 @@
           [isThrown]="players[currentPlayerIndex].currentDartPositions[j].length > 0"></dartapp-scoring-zoom-view>
       </div>
     </div>
-    <dartapp-reason-group [(selectedReason)]="selectedReason" [editingMode]="editingMode" *ngIf="editingMode"></dartapp-reason-group>
+    <dartapp-reason-group
+      [(selectedReason)]="selectedReason"
+      [editingMode]="editingMode"
+      *ngIf="editingMode"></dartapp-reason-group>
   </div>
 </div>
