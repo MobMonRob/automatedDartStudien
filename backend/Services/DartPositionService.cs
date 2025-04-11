@@ -14,6 +14,9 @@ public class DartPositionService(GameStateService gameStateService, CalibrationS
         {
             calibrationService.StartCalibration();
         }
+        
+        // As of here, we assume the data is calibrated and require positions
+        if(data.positions == null) return;
 
         if (data.positions.Count == 0)
         {
@@ -21,17 +24,30 @@ public class DartPositionService(GameStateService gameStateService, CalibrationS
             return;
         }
 
-        var newPositions = data.GetNewPositions(positions);
-        positions = data.positions;
-
-        if (newPositions.Count == 0) return;
-        
-        foreach (var position in newPositions)
+        if (data.sorted)
         {
-            DartPosition dartPosition = GetDartPosition(position);
-            dartPosition.position = position;
-            await gameStateService.HandleDartPosition(dartPosition);
+            for(var i = 0; i < data.positions.Count; i++)
+            {
+                DartPosition dartPosition = GetDartPosition(data.positions[i]);
+                dartPosition.position = data.positions[i];
+                await gameStateService.HandleDartPosition(dartPosition, i);
+            }
         }
+        else
+        {
+            var newPositions = data.GetNewPositions(positions);
+            positions = data.positions;
+
+            if (newPositions.Count == 0) return;
+            
+            foreach (var position in newPositions)
+            {
+                DartPosition dartPosition = GetDartPosition(position);
+                dartPosition.position = position;
+                await gameStateService.HandleDartPosition(dartPosition);
+            }
+        }
+
     }
     
     private DartPosition GetDartPosition(Vector2 position)

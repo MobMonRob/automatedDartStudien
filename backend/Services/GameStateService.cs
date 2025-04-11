@@ -65,7 +65,7 @@ public class GameStateService(
     }
     
 
-    public async Task HandleDartPosition(DartPosition dartPosition)
+    public async Task HandleDartPosition(DartPosition dartPosition, int? index = null)
     {
         Console.WriteLine("Received dart position: " + dartPosition);
 
@@ -74,7 +74,7 @@ public class GameStateService(
         switch (_gameState)
         {
             case GameStateX01 gameStateX01:
-                HandleGameLogicX01(gameStateX01, dartPosition);
+                HandleGameLogicX01(gameStateX01, dartPosition, index);
                 break;
             case GameStateCricket gameStateCricket:
                 throw new NotImplementedException();
@@ -147,10 +147,11 @@ public class GameStateService(
         gameStateConnectionService.sendGamestateToClients(_gameState);
     }
     
-    private void HandleGameLogicX01(GameStateX01 gameState, DartPosition dartPosition)
+    private void HandleGameLogicX01(GameStateX01 gameState, DartPosition dartPosition, int? index = null)
     {
         emptyBoardFrames = 0;
         if(throwIsOver) return;
+        if(index > GameState.DartsPerTurn) return;
         
         int points = gameState.points[gameState.currentPlayer];
         int dartsThrown = gameState.dartsThrown[gameState.currentPlayer];
@@ -165,7 +166,18 @@ public class GameStateService(
         }
         
         dartsThrown++;
-        lastDarts.Add(dartPosition);
+        
+        if (index != null)
+        {
+            lastDarts[index.Value] = dartPosition;
+        }
+        else
+        {
+            lastDarts.Add(dartPosition);
+        }
+        
+        if (index < lastDarts.Count) return;
+        
         average = (average * (dartsThrown - 1) + dartPosition.getPositionValue()) / dartsThrown;
         
         gameState.points[gameState.currentPlayer] = points;
