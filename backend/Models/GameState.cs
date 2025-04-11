@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace backend.Models;
 
 public abstract class GameState
@@ -7,6 +9,7 @@ public abstract class GameState
     public List<int> points { get; set; } = new();
     public List<double> averages { get; set; } = new();
     public List<int> dartsThrown { get; set; } = new();
+    public List<int> sets { get; set; } = new();
     public List<List<DartPosition>> lastDarts { get; set; } = new();
 
     public bool bust { get; set; } = false;
@@ -24,6 +27,7 @@ public abstract class GameState
         points.Add(0);
         averages.Add(0.0);
         dartsThrown.Add(0);
+        sets.Add(0);
         lastDarts.Add([]);
     }
     
@@ -40,9 +44,22 @@ public abstract class GameState
         return currentPlayer;
     }
 
-    public object Clone()
+    public abstract GameState DeepCopy();
+    
+    protected void Copy(GameState copy)
     {
-        return this.MemberwiseClone();
+        copy.gameType = this.gameType;
+        copy.players = new List<Player>(players);
+        copy.points = new List<int>(this.points);
+        copy.averages = new List<double>(this.averages);
+        copy.dartsThrown = new List<int>(this.dartsThrown);
+        copy.sets = new List<int>(this.sets);
+        copy.lastDarts = this.lastDarts.Select(d => new List<DartPosition>(d)).ToList();
+        copy.bust = this.bust;
+        copy.currentPlayer = this.currentPlayer;
+        copy.start = this.start;
+        copy.end = this.end;
+        copy.cameraStatus = new List<bool>(this.cameraStatus);
     }
     
     public override bool Equals(object? obj)
