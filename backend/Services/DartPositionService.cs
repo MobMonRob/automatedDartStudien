@@ -28,6 +28,7 @@ public class DartPositionService(GameStateService gameStateService, CalibrationS
         {
             for(var i = 0; i < data.positions.Count; i++)
             {
+                if(data.positions[i] == null) continue;
                 DartPosition dartPosition = GetDartPosition(data.positions[i]);
                 dartPosition.position = data.positions[i];
                 await gameStateService.HandleDartPosition(dartPosition, i);
@@ -42,6 +43,7 @@ public class DartPositionService(GameStateService gameStateService, CalibrationS
             
             foreach (var position in newPositions)
             {
+                if(position == null) continue;
                 DartPosition dartPosition = GetDartPosition(position);
                 dartPosition.position = position;
                 await gameStateService.HandleDartPosition(dartPosition);

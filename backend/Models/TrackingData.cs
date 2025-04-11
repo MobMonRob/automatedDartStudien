@@ -5,7 +5,7 @@ public class TrackingData
     public bool calibrated { get; set; }
     public bool sorted { get; set; }
     public string? timestamp { get; set; }
-    public List<Vector2>? positions { get; set; } 
+    public List<Vector2?>? positions { get; set; } 
 
     public override string ToString()
     {
@@ -16,7 +16,7 @@ public class TrackingData
             $"{timestamp}: Tracking Data (c: {calibrationCross}, s: {sortedCross}) {positions?.Count} positions: {positionString}";
     }
     
-    public List<Vector2> GetNewPositions(List<Vector2> old)
+    public List<Vector2> GetNewPositions(List<Vector2?> old)
     {
         if (positions == null || positions.Count == 0) return new List<Vector2>();
         List<Vector2> newPositions = [];

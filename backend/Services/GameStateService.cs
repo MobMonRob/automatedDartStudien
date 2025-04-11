@@ -25,7 +25,12 @@ public class GameStateService(
     
     private const int REQUIRED_EMPTY_BOARD_FRAMES = 5;
     private int emptyBoardFrames = 0;
+    
+    private const bool PERFORMANCE_MODE = false;
+    private const int REQUIRED_INDEX_DATA = 3;
 
+    private List<int> throwsOnIndex = new();
+    
     public GameStateService(
         GameStateConnectionService gameStateConnectionService, 
         MongoDbService mongoDbService,
@@ -60,6 +65,7 @@ public class GameStateService(
             default:
                 throw new ArgumentOutOfRangeException(nameof(gameMode), gameMode, null);
         }
+        throwsOnIndex = new List<int>(new int[GameState.DartsPerTurn]);
         gameIsRunning = true;
         gameStateConnectionService.sendGamestateToClients(_gameState);
     }
@@ -70,6 +76,16 @@ public class GameStateService(
         Console.WriteLine("Received dart position: " + dartPosition);
 
         if (!gameIsRunning) return;
+
+        if (index != null && !PERFORMANCE_MODE)
+        {
+            int indexValue = index.Value;
+            throwsOnIndex[indexValue]++;
+            if (throwsOnIndex[indexValue] < REQUIRED_INDEX_DATA)
+            {
+                return;
+            }
+        }
         
         switch (_gameState)
         {
@@ -145,6 +161,8 @@ public class GameStateService(
         throwIsOver = false;
         _gameState.MoveToNextPlayer();
         _gameState.bust = false;
+        
+        throwsOnIndex = new List<int>(new int[GameState.DartsPerTurn]);
         
         gameStateConnectionService.sendGamestateToClients(_gameState);
     }
