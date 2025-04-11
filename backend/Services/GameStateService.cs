@@ -74,6 +74,8 @@ public class GameStateService(
         switch (_gameState)
         {
             case GameStateX01 gameStateX01:
+                if (index != null && (index >= GameState.DartsPerTurn 
+                                      || index != _gameState.lastDarts[_gameState.currentPlayer].Count)) return;
                 HandleGameLogicX01(gameStateX01, dartPosition, index);
                 break;
             case GameStateCricket gameStateCricket:
@@ -151,7 +153,9 @@ public class GameStateService(
     {
         emptyBoardFrames = 0;
         if(throwIsOver) return;
-        if(index > GameState.DartsPerTurn) return;
+        
+        if (index != null && (index >= GameState.DartsPerTurn 
+                              || index != _gameState.lastDarts[_gameState.currentPlayer].Count)) return;
         
         int points = gameState.points[gameState.currentPlayer];
         int dartsThrown = gameState.dartsThrown[gameState.currentPlayer];
@@ -167,16 +171,15 @@ public class GameStateService(
         
         dartsThrown++;
         
-        if (index != null)
+        if (index != null && index < lastDarts.Count - 1)
         {
+            if (index > GameState.DartsPerTurn) return;
             lastDarts[index.Value] = dartPosition;
         }
         else
         {
             lastDarts.Add(dartPosition);
         }
-        
-        if (index < lastDarts.Count) return;
         
         average = (average * (dartsThrown - 1) + dartPosition.getPositionValue()) / dartsThrown;
         
