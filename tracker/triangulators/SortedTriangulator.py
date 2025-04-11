@@ -9,7 +9,7 @@ class SortedTriangulator(AbstractTriangulator):
     Each 2D point should have a third value, which represents the order of its appearance.
     """
 
-    MAX_DISTANCE = 0.03
+    MAX_DISTANCE = 0.02
 
     def triangulate(self, points):
         calculatedDartPositions = []
@@ -86,6 +86,7 @@ class SortedTriangulator(AbstractTriangulator):
                 averagePoint += homogenousPoint * weight
 
             averagePoint = averagePoint / total_weight
-            calculatedDartPositions.append(averagePoint)
+            if averagePoint[2] < 0.25:
+                calculatedDartPositions.append(averagePoint)
 
         return calculatedDartPositions
