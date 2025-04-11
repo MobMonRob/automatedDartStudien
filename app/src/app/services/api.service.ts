@@ -46,7 +46,6 @@ export class ApiService {
   ) {
     this.ws = new WebSocket(this.gamestateUrl);
     this.ws.onerror = (error) => {
-      console.log(error);
       this.activeGamestate.gameType = GameType.ERROR;
     };
     this.ws.onopen = () => {

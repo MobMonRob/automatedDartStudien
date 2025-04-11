@@ -12,7 +12,8 @@ import { GamestateComponent } from '../gamestate-x01/gamestate.component';
 import { TestingComponent } from '../testing/testing.component';
 import { CalibrationPageComponent } from '../calibration-page/calibration-page.component';
 import { CameraPopupComponent } from '../camera-popup/camera-popup.component';
-import { Subscription } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
+import { REFRESH_GAME_PAGES_DELAY } from '../../../model/game.const';
 
 @Component({
   selector: 'dartapp-game-page-wrapper',
@@ -34,13 +35,14 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
   GameType = GameType;
   gameMode: GameType = GameType.LOADING;
   retryCounter = 0;
-  MAX_RETRIES = 7;
+  MAX_RETRIES = 15;
   LOADING_MSG = "Lade Spiel...";
 
   requestedGameType: GameType = GameType.LOADING;
 
   editingMode: boolean = false;
   selectedDartIndex: number | null = null;
+  currentDarts: string[] = [];
   changes: { value: number; valueString: string; position: number[]; replacementIndex: number }[] = [];
 
   cameraPopupVisible: boolean = false;
@@ -61,40 +63,61 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
     this.videoSource = null;
   }
 
-  awaitGameStart() {
-    this.apiService.getCurrentGameState().subscribe(async (game) => {
-      console.log(game);
-      this.gameMode = game.gameType;
-      if (
-        this.requestedGameType !== undefined &&
-        this.requestedGameType !== this.gameMode &&
-        this.retryCounter < this.MAX_RETRIES
-      ) {
-        this.gameMode = GameType.LOADING;
-        this.retryCounter++;
-        await ComponentUtils.delay(500);
-        this.awaitGameStart();
-      } else if (
-        this.gameMode !== GameType.LOADING &&
-        this.gameMode !== GameType.ERROR &&
-        this.gameMode !== GameType.CALIBRATION &&
-        game.players.length === 0 
-      ) {
-        if (this.retryCounter < this.MAX_RETRIES) {
-          this.gameMode = GameType.LOADING;
+  async awaitGameStart(): Promise<void> {
+    this.retryCounter = 0;
+    let invalidStateCounter = 0;
+    const MAX_INVALID_STATE_RETRIES = 10;
+  
+    while (this.retryCounter < this.MAX_RETRIES) {
+      try {
+        const game = await firstValueFrom(this.apiService.getCurrentGameState());
+        console.log(game)
+        if(game.gameType === GameType.LOADING) {
+          await ComponentUtils.delay(REFRESH_GAME_PAGES_DELAY);
           this.retryCounter++;
-          await ComponentUtils.delay(500);
-          this.awaitGameStart();
-        } else {
-          this.gameMode = GameType.ERROR;
-          console.log('Error retreiving player data');
+          continue;
         }
-      } else if (this.gameMode === GameType.LOADING) {
-        await ComponentUtils.delay(500);
-        this.awaitGameStart();
+
+  
+        if (game.gameType === GameType.ERROR) {
+          console.error('GameType ist ERROR – sofortiger Abbruch.');
+          this.gameMode = GameType.ERROR;
+          return;
+        }
+  
+        const isValidGameType = game.gameType !== GameType.CALIBRATION;
+  
+        const correctGameTypeRequested =
+          this.requestedGameType === undefined || this.requestedGameType === game.gameType;
+  
+        if (isValidGameType && correctGameTypeRequested && game.players.length > 0) {
+          this.gameMode = game.gameType;
+          console.log('Spielstart erfolgreich erkannt:', game);
+          return;
+        }
+  
+        invalidStateCounter++;
+        console.warn(`Ungültiger Spielzustand (${invalidStateCounter}/${MAX_INVALID_STATE_RETRIES}):`, game);
+  
+        if (invalidStateCounter >= MAX_INVALID_STATE_RETRIES) {
+          this.gameMode = GameType.ERROR;
+          console.warn('Spiel konnte nach wiederholten ungültigen Zuständen nicht gestartet werden.');
+          return;
+        }
+  
+        this.gameMode = GameType.LOADING;
+        await ComponentUtils.delay(REFRESH_GAME_PAGES_DELAY);
+      } catch (error) {
+        console.error('Fehler beim Laden des Spielzustands:', error);
+        this.retryCounter++;
+        await ComponentUtils.delay(REFRESH_GAME_PAGES_DELAY);
       }
-    });
+    }
+
+    console.warn('Maximale Anzahl an Versuchen erreicht. Spielstart fehlgeschlagen.');
+    this.gameMode = GameType.ERROR;
   }
+  
 
   disableConsoleButtons(): boolean {
     return !this.editingMode;
@@ -122,7 +145,10 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
     if (this.editingMode) {
       this.changes.sort((a, b) => a.replacementIndex - b.replacementIndex);
       this.changes.forEach((change) => {
-        this.apiService.replaceDebugThrow(change.replacementIndex, change.value, change.valueString, reason, change.position);
+        let currentDart = this.currentDarts[change.replacementIndex];
+        if (currentDart !== change.valueString) {
+          this.apiService.replaceDebugThrow(change.replacementIndex, change.value, change.valueString, reason, change.position);
+        }
       });
       this.disableEditingMode();
     } else {
@@ -135,6 +161,10 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
     this.editingMode = false;
     this.selectedDartIndex = null;
     this.changes = [];
+  }
+
+  setCurrentDarts(darts: string[]): void {
+    this.currentDarts = darts;
   }
 
   toggleCameraPopup(index: number): void {

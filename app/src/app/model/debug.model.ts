@@ -11,6 +11,7 @@ export interface ThrowEditor {
     selectDart(index: number): void;
     toggleEditingMode(reason: number): void;
     disableEditingMode(): void;
+    setCurrentDarts(darts: string[]): void;
 }
 
 export interface CameraDebugComponent {

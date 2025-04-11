@@ -8,6 +8,7 @@ import { ComponentUtils } from '../../../utils/utils';
 import { GameType, Reasons } from '../../../model/api.models';
 import { ReasonGroupComponent } from '../reason-group/reason-group.component';
 import { CameraStatusComponent } from '../camera-status/camera-status.component';
+import { REFRESH_GAME_PAGES_DELAY } from '../../../model/game.const';
 
 @Component({
   selector: 'dartapp-testing',
@@ -29,6 +30,7 @@ export class TestingComponent implements OnInit, CameraDebugPresenter {
   currentPlayerIndex = 0;
   gameIsRunning = true;
   reason = '';
+  currentDarts: string[] = [];
   cameraStatus: boolean[] = [];
   showWarning = false;
   private isCurrentDartsEmpty: boolean = false;
@@ -54,6 +56,7 @@ export class TestingComponent implements OnInit, CameraDebugPresenter {
     this.currentPlayerIndex = game.currentPlayerIndex;
     this.gameIsRunning = true;
     this.cameraStatus = game.cameraStatus;
+    this.currentDarts = this.players[this.currentPlayerIndex].currentDarts;
     this.watchGame();
   }
 
@@ -61,7 +64,7 @@ export class TestingComponent implements OnInit, CameraDebugPresenter {
     if (this.gameIsRunning) {
       this.apiService.getCurrentGameState().subscribe(async (gameState) => {
         this.reactOnNewGameState(gameState);
-        await ComponentUtils.delay(1000);
+        await ComponentUtils.delay(REFRESH_GAME_PAGES_DELAY);
         this.watchGame();
       });
     }
@@ -71,7 +74,9 @@ export class TestingComponent implements OnInit, CameraDebugPresenter {
     this.players = gameState.players;
     this.currentPlayerIndex = gameState.currentPlayerIndex;
     this.cameraStatus = gameState.cameraStatus;
-    if (this.isCurrentDartsEmpty && this.cameraStatus.some((status) => status)) {
+    this.currentDarts = this.players[this.currentPlayerIndex].currentDarts;
+    this.wrapperComponent.setCurrentDarts(this.currentDarts);
+    if (this.isCurrentDartsEmpty && this.cameraStatus.some((status) => !status)) {
       this.showWarning = true;
     } else {
       this.showWarning = false;

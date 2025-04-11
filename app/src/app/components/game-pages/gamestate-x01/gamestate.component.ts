@@ -10,6 +10,7 @@ import { ComponentUtils } from '../../../utils/utils';
 import { GameType, Reasons } from '../../../model/api.models';
 import { ReasonGroupComponent } from '../reason-group/reason-group.component';
 import { CameraStatusComponent } from "../camera-status/camera-status.component";
+import { REFRESH_GAME_PAGES_DELAY } from '../../../model/game.const';
 
 @Component({
   selector: 'dartapp-gamestate',
@@ -44,7 +45,8 @@ export class GamestateComponent implements OnInit, CameraDebugPresenter {
 
   cameraStatus: boolean[] = [];
   showWarning = false;
-  private isCurrentDartsEmpty: boolean = false;
+  private playerReset: boolean = false;
+  private warningDisplayed: boolean = false;
 
   constructor(
     private apiService: ApiService,
@@ -81,7 +83,7 @@ export class GamestateComponent implements OnInit, CameraDebugPresenter {
     if (this.gameIsRunning) {
       this.apiService.getCurrentGameState().subscribe(async (gameState) => {
         this.reactOnNewGameState(gameState);
-        await ComponentUtils.delay(1000);
+        await ComponentUtils.delay(REFRESH_GAME_PAGES_DELAY);
         this.watchGame();
       });
     }
@@ -96,6 +98,7 @@ export class GamestateComponent implements OnInit, CameraDebugPresenter {
       this.endGame(this.points.indexOf(0));
     }
     this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
+    this.wrapperComponent.setCurrentDarts(this.currentDarts);
     if (this.currentDartPositions.length < gameState.players[this.currentPlayerIndex].currentDartPositions.length) {
       //Dart was removed TODO
       this.resetZoomAfterDartRemoved(
@@ -106,14 +109,20 @@ export class GamestateComponent implements OnInit, CameraDebugPresenter {
     this.triggerZoom(this.currentDarts.length - 1, 2);
     this.darts = gameState.darts;
     this.averages = gameState.averages;
+    if(this.currentPlayerIndex !== gameState.currentPlayerIndex) {
+      this.playerReset = true;
+    }
     this.currentPlayerIndex = gameState.currentPlayerIndex;
     this.cameraStatus = gameState.cameraStatus;
-    if (this.isCurrentDartsEmpty && this.cameraStatus.some((status) => status)) {
+    if(!this.showWarning && this.warningDisplayed) {
+      this.warningDisplayed = false;
+    }
+    if (this.playerReset && this.cameraStatus.some((status) => !status)) {
       this.showWarning = true;
+      this.warningDisplayed = true;
     } else {
       this.showWarning = false;
     }
-    this.isCurrentDartsEmpty = this.players[this.currentPlayerIndex].currentDarts.length === 0;
   }
 
   private endGame(winnerIndex: number) {

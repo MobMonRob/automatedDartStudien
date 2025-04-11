@@ -1,9 +1,9 @@
 <div class="lamp-container">
   <div class="indicator" *ngFor="let status of cameraStatus; let i = index">
     <div class="circle-wrapper" (click)="handleCameraStatusClick(i)">
-      <div class="circle" [ngClass]="{ active: status, inactive: !status }"></div>
+      <div class="circle" [ngClass]="{ active: !status, inactive: status }"></div>
       <div class="camera-tooltip">
-        {{ status ? 'Darts erkannt' : 'Keine Darts erkannt' }}
+        {{ !status ? 'Darts erkannt' : 'Keine Darts erkannt' }}
       </div>
     </div>
     <div class="label">Kamera {{ i + 1 }}</div>
