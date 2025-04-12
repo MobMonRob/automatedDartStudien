@@ -245,7 +245,7 @@ public class GameStateService(
 
     public async Task ReplaceDart(int index, DartPosition position, int? reason = null)
     {
-        var currentThrow = newGameState.lastDarts[_gameState.currentPlayer];
+        var currentThrow = newGameState.lastDarts[newGameState.currentPlayer];
         DartPosition? replacedPosition = null;
         if (index >= currentThrow.Count)
         {
@@ -273,9 +273,9 @@ public class GameStateService(
             reason = reason
         });
         
-        newGameState.lastDarts[_gameState.currentPlayer] = currentThrow;
+        newGameState.lastDarts[newGameState.currentPlayer] = currentThrow;
         
-        if (_gameState is GameStateX01 gameStateX01)
+        if (newGameState is GameStateX01 gameStateX01)
         {
             EvaluateGameStateX01(currentThrow);
         }
@@ -285,10 +285,10 @@ public class GameStateService(
 
     public async Task HandleCameraStatusUpdate(List<bool> data)
     {
-        var oldData = _gameState.cameraStatus;
+        var oldData = newGameState.cameraStatus;
         if (oldData.SequenceEqual(data)) return;
         Console.WriteLine("Camera status changed: " + string.Join(", ", data));
-        _gameState.cameraStatus = data;
+        newGameState.cameraStatus = data;
         await gameStateConnectionService.sendGamestateToClients(newGameState);
     }
 
