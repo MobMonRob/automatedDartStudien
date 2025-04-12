@@ -77,10 +77,6 @@ public class GameStateService(
         x01GameState.dartsThrown[currentPlayer] = _gameState.dartsThrown[currentPlayer];
         x01GameState.sets[currentPlayer] = _gameState.sets[currentPlayer];
         
-        Console.WriteLine("Evaluating darts: " + string.Join(", ", darts));
-        Console.WriteLine("Temporary Gamestate" + x01GameState);
-        Console.WriteLine("Final Gamestate" + _gameState);
-        
         foreach (var position in darts)
         {
             x01GameState.points[currentPlayer] -= position.getPositionValue();
@@ -263,6 +259,10 @@ public class GameStateService(
         else
         {
             replacedPosition = currentThrow[index];
+            
+            // If replacement is the same as the current position, do nothing
+            if (position.getPositionValue() == replacedPosition.getPositionValue()) return;
+            
             currentThrow[index] = position;
         }
         
