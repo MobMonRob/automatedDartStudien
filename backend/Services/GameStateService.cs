@@ -261,7 +261,7 @@ public class GameStateService(
             replacedPosition = currentThrow[index];
             
             // If replacement is the same as the current position, do nothing
-            if (position.getPositionValue() == replacedPosition.getPositionValue()) return;
+            if (position.getPositionValue() == replacedPosition.getPositionValue() && position.points == replacedPosition.points) return;
             
             currentThrow[index] = position;
         }
