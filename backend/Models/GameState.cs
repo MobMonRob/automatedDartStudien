@@ -1,7 +1,5 @@
 using System.Text.Json.Serialization;
 
-using System.Text.Json;
-
 namespace backend.Models;
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "gameType")]
