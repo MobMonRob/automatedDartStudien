@@ -10,4 +10,25 @@ public class GameStateCricket : GameState
     {
         gameType = GameMode.Cricket;
     }
+    
+    public override GameState DeepCopy()
+    {
+        var copy = new GameStateCricket();
+        Copy(copy);
+        
+        copy.includeBullseye = this.includeBullseye;
+        copy.hitMatrix = new int[hitMatrix.Length][];
+        for (int i = 0; i < hitMatrix.Length; i++)
+        {
+            copy.hitMatrix[i] = new int[hitMatrix[i].Length];
+            Array.Copy(hitMatrix[i], copy.hitMatrix[i], hitMatrix[i].Length);
+        }
+        copy.closedFields = new bool[closedFields.Length][];
+        for (int i = 0; i < closedFields.Length; i++)
+        {
+            copy.closedFields[i] = new bool[closedFields[i].Length];
+            Array.Copy(closedFields[i], copy.closedFields[i], closedFields[i].Length);
+        }
+        return copy;
+    }
 }

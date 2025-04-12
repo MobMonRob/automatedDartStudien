@@ -17,6 +17,7 @@ class Dart:
         self.posY = posY
 
 class TrackerV2(AbstractTracker):
+    sortedValues = False
     currentRunDarts = []
     run = 1
     # These are the functions needed for the main part

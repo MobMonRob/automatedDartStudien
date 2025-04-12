@@ -19,6 +19,7 @@ class Dart:
 
 
 class TrackerV2_3(AbstractTracker):
+    sortedValues = False
     saveTrackingUtilImages = False
     utilImagesCircleDiameter = 3
     printLinesIntoResultImage = True

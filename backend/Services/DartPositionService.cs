@@ -15,28 +15,45 @@ public class DartPositionService(GameStateService gameStateService, CalibrationS
             calibrationService.StartCalibration();
         }
         
-        var newPositions = data.GetNewPositions(positions);
-        positions = data.positions;
-        
+        // As of here, we assume the data is calibrated and require positions
+        if(data.positions == null) return;
+
         if (data.positions.Count == 0)
         {
             gameStateService.HandleEmptyBoard();
             return;
         }
 
-        if (newPositions.Count == 0) return;
-        
-        foreach (var position in newPositions)
+        if (data.sorted)
         {
-            DartPosition dartPosition = GetDartPosition(position);
-            dartPosition.position = position;
-            await gameStateService.HandleDartPosition(dartPosition);
+            for(var i = 0; i < data.positions.Count; i++)
+            {
+                if(data.positions[i] == null) continue;
+                DartPosition dartPosition = GetDartPosition(data.positions[i]);
+                dartPosition.position = data.positions[i];
+                await gameStateService.HandleDartPosition(dartPosition, i);
+            }
         }
+        else
+        {
+            var newPositions = data.GetNewPositions(positions);
+            positions = data.positions;
+
+            if (newPositions.Count == 0) return;
+            
+            foreach (var position in newPositions)
+            {
+                if(position == null) continue;
+                DartPosition dartPosition = GetDartPosition(position);
+                dartPosition.position = position;
+                await gameStateService.HandleDartPosition(dartPosition);
+            }
+        }
+
     }
     
     private DartPosition GetDartPosition(Vector2 position)
     {
-        // todo: align with board
         var distance = Math.Sqrt(position.x * position.x + position.y * position.y);
         
         // Dart is outside the board

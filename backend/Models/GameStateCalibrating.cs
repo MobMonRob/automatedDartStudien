@@ -12,7 +12,19 @@ public class GameStateCalibrating : GameState
     {
         gameType = GameMode.Calibrating;
     }
-    
+
+    public override GameState DeepCopy()
+    {
+        var copy = new GameStateCalibrating();
+        Copy(copy);
+        copy.currentPosition = this.currentPosition;
+        copy.calibrationState = this.calibrationState;
+        copy.cameras = new List<CalibrationCamera>(this.cameras);
+        copy.calibrationIndex = this.calibrationIndex;
+        copy.calibrationCount = this.calibrationCount;
+        return copy;
+    }
+
     public enum CalibrationState
     {
         WaitingForEmptyBoard,

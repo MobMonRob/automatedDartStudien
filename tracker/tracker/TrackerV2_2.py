@@ -17,6 +17,7 @@ class Dart:
         self.posY = posY
 
 class TrackerV2_2(AbstractTracker):
+    sortedValues = False
     saveTrackingUtilImages = False
     utilImagesCircleDiameter = 3
     printLinesIntoResultImage = True

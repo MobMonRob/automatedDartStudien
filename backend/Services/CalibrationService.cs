@@ -32,7 +32,7 @@ public class CalibrationService(TrackerService trackerService, GameStateConnecti
             calibrationState = GameStateCalibrating.CalibrationState.WaitingForEmptyBoard,
             currentPosition = _positions[_calibrationIndex],
             calibrationCount = _positions.Count,
-            calibrationIndex = _calibrationIndex,
+            calibrationIndex = _calibrationIndex + 1,
         };
 
         _ = trackerService.StartCalibration(_positions);
@@ -78,7 +78,7 @@ public class CalibrationService(TrackerService trackerService, GameStateConnecti
             if (_calibrationIndex < _positions.Count)
             {
                 _gameState.currentPosition = _positions[_calibrationIndex];
-                _gameState.calibrationIndex = _calibrationIndex;
+                _gameState.calibrationIndex = _calibrationIndex + 1;
             }
         }
         gameStateConnectionService.sendGamestateToClients(_gameState);

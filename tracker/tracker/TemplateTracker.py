@@ -4,6 +4,8 @@ from tracker.AbstractTracker import AbstractTracker
 
 class TemplateTracker(AbstractTracker):
         
+        sortedValues = False
+        
         def calculateDartPostions(self):
             # Given variables
             print(self.clean_frame)
