@@ -43,10 +43,9 @@ export class GamestateComponent implements OnInit, CameraDebugPresenter {
 
   selectedReason: Reasons = 0;
 
+  // True => Camera is empty, False => Camera detects something
   cameraStatus: boolean[] = [];
   showWarning = false;
-  private playerReset: boolean = false;
-  private warningDisplayed: boolean = false;
 
   constructor(
     private apiService: ApiService,
@@ -92,39 +91,45 @@ export class GamestateComponent implements OnInit, CameraDebugPresenter {
   private reactOnNewGameState(gameState: GameState) {
     this.players = gameState.players;
     this.points = gameState.points;
-    this.bust = { bust: gameState.bust, origin: gameState.players[this.currentPlayerIndex].name };
+    this.bust = {
+      bust: gameState.bust,
+      origin: gameState.players[this.currentPlayerIndex].name
+    };
+  
     if (this.points.indexOf(0) !== -1) {
       this.gameIsRunning = false;
       this.endGame(this.points.indexOf(0));
     }
-    this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
-    this.wrapperComponent.setCurrentDarts(this.currentDarts);
-    if (this.currentDartPositions.length < gameState.players[this.currentPlayerIndex].currentDartPositions.length) {
-      //Dart was removed TODO
-      this.resetZoomAfterDartRemoved(
-        gameState.players[this.currentPlayerIndex].currentDartPositions.length - this.currentDartPositions.length
-      );
-    }
-    this.currentDartPositions = gameState.players[this.currentPlayerIndex].currentDartPositions;
+  
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  
+    //Player Change
+    this.currentDarts = currentPlayer.currentDarts;
+    this.currentDartPositions = currentPlayer.currentDartPositions;
     this.triggerZoom(this.currentDarts.length - 1, 2);
     this.darts = gameState.darts;
     this.averages = gameState.averages;
-    if(this.currentPlayerIndex !== gameState.currentPlayerIndex) {
-      this.playerReset = true;
-    }
     this.currentPlayerIndex = gameState.currentPlayerIndex;
     this.cameraStatus = gameState.cameraStatus;
-    if(!this.showWarning && this.warningDisplayed) {
-      this.warningDisplayed = false;
-    }
-    if (this.playerReset && this.cameraStatus.some((status) => !status)) {
-      this.showWarning = true;
-      this.warningDisplayed = true;
+  
+    const notAllCamerasReset = this.cameraStatus.some((status) => !status) && !this.cameraStatus.every((status) => !status);
+
+    const darts = this.players[this.currentPlayerIndex].currentDarts;
+
+    if (darts.length === 3 && notAllCamerasReset) {
+      setTimeout(() => {
+        const stillNotAllReset = this.cameraStatus.some((status) => status) && !this.cameraStatus.every((status) => status);
+        const stillThreeDarts = this.players[this.currentPlayerIndex].currentDarts.length === 3;
+
+        if (stillThreeDarts && stillNotAllReset) {
+          this.showWarning = true;
+        }
+      }, REFRESH_GAME_PAGES_DELAY - 20);
     } else {
       this.showWarning = false;
     }
   }
-
+  
   private endGame(winnerIndex: number) {
     const playerCards = document.querySelectorAll('.player-card');
 
@@ -153,16 +158,6 @@ export class GamestateComponent implements OnInit, CameraDebugPresenter {
         }
       }
     }
-  }
-
-  private resetZoomAfterDartRemoved(amount: number): void {
-    console.log(amount);
-  }
-
-  private resetZoom(): void {
-    this.zoomFields.toArray().forEach((zoomField, index) => {
-      zoomField.resetZoom(this.customId + index);
-    });
   }
 
   disableMissedButtons(): boolean {

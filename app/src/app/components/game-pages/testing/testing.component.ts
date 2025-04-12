@@ -30,10 +30,8 @@ export class TestingComponent implements OnInit, CameraDebugPresenter {
   currentPlayerIndex = 0;
   gameIsRunning = true;
   reason = '';
-  currentDarts: string[] = [];
   cameraStatus: boolean[] = [];
   showWarning = false;
-  private isCurrentDartsEmpty: boolean = false;
 
   constructor(private apiService: ApiService) {}
 
@@ -56,7 +54,6 @@ export class TestingComponent implements OnInit, CameraDebugPresenter {
     this.currentPlayerIndex = game.currentPlayerIndex;
     this.gameIsRunning = true;
     this.cameraStatus = game.cameraStatus;
-    this.currentDarts = this.players[this.currentPlayerIndex].currentDarts;
     this.watchGame();
   }
 
@@ -74,14 +71,23 @@ export class TestingComponent implements OnInit, CameraDebugPresenter {
     this.players = gameState.players;
     this.currentPlayerIndex = gameState.currentPlayerIndex;
     this.cameraStatus = gameState.cameraStatus;
-    this.currentDarts = this.players[this.currentPlayerIndex].currentDarts;
-    this.wrapperComponent.setCurrentDarts(this.currentDarts);
-    if (this.isCurrentDartsEmpty && this.cameraStatus.some((status) => !status)) {
-      this.showWarning = true;
+
+    const notAllCamerasReset = this.cameraStatus.some((status) => !status) && !this.cameraStatus.every((status) => !status);
+
+    const darts = this.players[this.currentPlayerIndex].currentDarts;
+
+    if (darts.length === 3 && notAllCamerasReset) {
+      setTimeout(() => {
+        const stillNotAllReset = this.cameraStatus.some((status) => status) && !this.cameraStatus.every((status) => status);
+        const stillThreeDarts = this.players[this.currentPlayerIndex].currentDarts.length === 3;
+
+        if (stillThreeDarts && stillNotAllReset) {
+          this.showWarning = true;
+        }
+      }, REFRESH_GAME_PAGES_DELAY*2);
     } else {
       this.showWarning = false;
     }
-    this.isCurrentDartsEmpty = this.players[this.currentPlayerIndex].currentDarts.length === 0;
   }
 
   disableEditingMode() {

@@ -36,13 +36,12 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
   gameMode: GameType = GameType.LOADING;
   retryCounter = 0;
   MAX_RETRIES = 15;
-  LOADING_MSG = "Lade Spiel...";
+  LOADING_MSG = 'Lade Spiel...';
 
   requestedGameType: GameType = GameType.LOADING;
 
   editingMode: boolean = false;
   selectedDartIndex: number | null = null;
-  currentDarts: string[] = [];
   changes: { value: number; valueString: string; position: number[]; replacementIndex: number }[] = [];
 
   cameraPopupVisible: boolean = false;
@@ -67,44 +66,46 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
     this.retryCounter = 0;
     let invalidStateCounter = 0;
     const MAX_INVALID_STATE_RETRIES = 10;
-  
+
     while (this.retryCounter < this.MAX_RETRIES) {
       try {
         const game = await firstValueFrom(this.apiService.getCurrentGameState());
-        console.log(game)
-        if(game.gameType === GameType.LOADING) {
+        console.log(game);
+        if (game.gameType === GameType.LOADING) {
           await ComponentUtils.delay(REFRESH_GAME_PAGES_DELAY);
           this.retryCounter++;
           continue;
         }
 
-  
         if (game.gameType === GameType.ERROR) {
           console.error('GameType ist ERROR – sofortiger Abbruch.');
           this.gameMode = GameType.ERROR;
           return;
         }
-  
-        const isValidGameType = game.gameType !== GameType.CALIBRATION;
-  
-        const correctGameTypeRequested =
-          this.requestedGameType === undefined || this.requestedGameType === game.gameType;
-  
-        if (isValidGameType && correctGameTypeRequested && game.players.length > 0) {
+
+        const isCalibrationGameType = game.gameType === GameType.CALIBRATION;
+
+        const correctGameTypeRequested = this.requestedGameType === undefined || this.requestedGameType === game.gameType;
+
+        if (!isCalibrationGameType && correctGameTypeRequested && game.players.length > 0) {
           this.gameMode = game.gameType;
           console.log('Spielstart erfolgreich erkannt:', game);
           return;
+        } else if (isCalibrationGameType && correctGameTypeRequested) {
+          this.gameMode = game.gameType;
+          console.log('Calibration erfolgreich erkannt:', game);
+          return;
         }
-  
+
         invalidStateCounter++;
         console.warn(`Ungültiger Spielzustand (${invalidStateCounter}/${MAX_INVALID_STATE_RETRIES}):`, game);
-  
+
         if (invalidStateCounter >= MAX_INVALID_STATE_RETRIES) {
           this.gameMode = GameType.ERROR;
           console.warn('Spiel konnte nach wiederholten ungültigen Zuständen nicht gestartet werden.');
           return;
         }
-  
+
         this.gameMode = GameType.LOADING;
         await ComponentUtils.delay(REFRESH_GAME_PAGES_DELAY);
       } catch (error) {
@@ -117,7 +118,6 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
     console.warn('Maximale Anzahl an Versuchen erreicht. Spielstart fehlgeschlagen.');
     this.gameMode = GameType.ERROR;
   }
-  
 
   disableConsoleButtons(): boolean {
     return !this.editingMode;
@@ -145,10 +145,7 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
     if (this.editingMode) {
       this.changes.sort((a, b) => a.replacementIndex - b.replacementIndex);
       this.changes.forEach((change) => {
-        let currentDart = this.currentDarts[change.replacementIndex];
-        if (currentDart !== change.valueString) {
-          this.apiService.replaceDebugThrow(change.replacementIndex, change.value, change.valueString, reason, change.position);
-        }
+        this.apiService.replaceDebugThrow(change.replacementIndex, change.value, change.valueString, reason, change.position);
       });
       this.disableEditingMode();
     } else {
@@ -163,14 +160,9 @@ export class GamePageWrapperComponent implements DebugComponent, OnInit, ThrowEd
     this.changes = [];
   }
 
-  setCurrentDarts(darts: string[]): void {
-    this.currentDarts = darts;
-  }
-
   toggleCameraPopup(index: number): void {
     this.cameraPopupVisible = !this.cameraPopupVisible;
     this.videoSource = this.apiService.getVideoSource(index);
-    console.log(this.videoSource);
   }
 
   closeCameraPopup(): void {

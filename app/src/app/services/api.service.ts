@@ -61,16 +61,20 @@ export class ApiService {
       if (data.gameType !== undefined) {
         this.activeGamestate.gameType = data.gameType;
         if (data.gameType === GameType.CALIBRATION) {
-          this.calibrationState = {
-            currentPosition: dartPositionService.convertDartPositionToImage(data.currentPosition),
-            calibrationState: data.calibrationState,
-            cameras: data.cameras.map((camera) => {
+          let cameras: CameraModel[] = [];
+          if (data.cameras){
+            cameras = data.cameras.map((camera) => {
               return {
                 id: camera.id,
                 state: camera.state,
                 evaluation: camera.evaluation
               };
-            }),
+            })
+          }
+          this.calibrationState = {
+            currentPosition: dartPositionService.convertDartPositionToImage(data.currentPosition),
+            calibrationState: data.calibrationState,
+            cameras: cameras,
             calibrationIndex: data.calibrationIndex,
             calibrationCount: data.calibrationCount
           };
