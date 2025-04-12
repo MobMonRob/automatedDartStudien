@@ -7,4 +7,11 @@ public class GameStateTesting : GameState
     {
         gameType = GameMode.Testing;
     }
+    
+    public override GameState DeepCopy()
+    {
+        var copy = new GameStateTesting();
+        Copy(copy);
+        return copy;
+    }
 }

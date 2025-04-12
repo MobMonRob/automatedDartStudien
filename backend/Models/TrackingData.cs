@@ -3,29 +3,27 @@ namespace backend.Models;
 public class TrackingData
 {
     public bool calibrated { get; set; }
+    public bool sorted { get; set; }
     public string? timestamp { get; set; }
-    public List<Vector2> positions { get; set; } 
+    public List<Vector2?>? positions { get; set; } 
 
     public override string ToString()
     {
+        var calibrationCross = this.calibrated ? "\u2713" : "X";
+        var sortedCross = this.sorted ? "\u2713" : "X";
+        var positionString = positions == null ? "" : string.Join(", ", positions);
         return
-            $"TrackingData(calibrated: {calibrated}, timestamp: {timestamp}, positions: {String.Join(", ", positions)})";
+            $"{timestamp}: Tracking Data (c: {calibrationCross}, s: {sortedCross}) {positions?.Count} positions: {positionString}";
     }
     
-    public List<Vector2> GetNewPositions(List<Vector2> old)
+    public List<Vector2> GetNewPositions(List<Vector2?> old)
     {
+        if (positions == null || positions.Count == 0) return new List<Vector2>();
         List<Vector2> newPositions = [];
         if(positions.Count > old.Count)
         {
             newPositions.AddRange(positions.GetRange(old.Count, positions.Count - old.Count));
         }
         return newPositions;
-    }
-
-    private static bool IsSimilarPosition(Vector2 compare, Vector2 other)
-    { 
-        // todo: make numerical calculation to determine "similarity"
-        // right now an arbitrary value is used
-        return Math.Abs(compare.x - other.x) < 0.01 && Math.Abs(compare.y - other.y) < 0.01;
     }
 }
