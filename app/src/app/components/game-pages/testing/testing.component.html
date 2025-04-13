@@ -1,49 +1,61 @@
 <div class="container">
   <div class="players-wrapper">
     <div class="current-player" *ngFor="let player of players; let i = index" [ngClass]="{ active: currentPlayerIndex === i }">
-      <h2 class="current-player-tag">{{ player.name }}</h2>
-
-      <div class="current-darts" [ngClass]="{ 'editing-mode': editingMode && currentPlayerIndex === i }">
-        <div
-          class="dart-field"
-          id="dart1"
-          [ngClass]="{
-            'blink-gray': editingMode && currentPlayerIndex === i,
-            'blink-red': selectedDartIndex === 0 && currentPlayerIndex === i
-          }"
-          (click)="selectDart(0, i)">
-          {{ getUpdatedDartValue(i, 0, player.currentDarts[0]) }}
+      <div class="warning-triangle-wrapper" *ngIf="showWarning">
+        <div class="warning-triangle">
+          ⚠️
+          <div class="warning-tooltip">
+            <strong>Warnung: Hohe Fehlerwahrscheinlichkeit!</strong><br>
+            Mindestens eine Kamera kann nicht richtig zurückgesetzt werden.<br>
+            Prüfe anhand der Indikatorleiste die Zustände der Kameras und setze diese eventuell über den Button in der Navigationsleiste zurück.
+          </div>
         </div>
-        <div
-          class="dart-field"
-          id="dart2"
-          [ngClass]="{
-            'blink-gray': editingMode && currentPlayerIndex === i,
-            'blink-red': selectedDartIndex === 1 && currentPlayerIndex === i
-          }"
-          (click)="selectDart(1, i)">
-          {{ getUpdatedDartValue(i, 1, player.currentDarts[1]) }}
-        </div>
-        <div
-          class="dart-field"
-          id="dart3"
-          [ngClass]="{
-            'blink-gray': editingMode && currentPlayerIndex === i,
-            'blink-red': selectedDartIndex === 2 && currentPlayerIndex === i
-          }"
-          (click)="selectDart(2, i)">
-          {{ getUpdatedDartValue(i, 2, player.currentDarts[2]) }}
+      </div>
+      <div class="player-content">
+        <div class="current-darts" [ngClass]="{ 'editing-mode': editingMode && currentPlayerIndex === i }">
+          <div
+            class="dart-field"
+            id="dart1"
+            [ngClass]="{
+              'blink-gray': editingMode && currentPlayerIndex === i,
+              'blink-red': selectedDartIndex === 0 && currentPlayerIndex === i
+            }"
+            (click)="selectDart(0, i)">
+            {{ getUpdatedDartValue(i, 0, player.currentDarts[0]) }}
+          </div>
+          <div
+            class="dart-field"
+            id="dart2"
+            [ngClass]="{
+              'blink-gray': editingMode && currentPlayerIndex === i,
+              'blink-red': selectedDartIndex === 1 && currentPlayerIndex === i
+            }"
+            (click)="selectDart(1, i)">
+            {{ getUpdatedDartValue(i, 1, player.currentDarts[1]) }}
+          </div>
+          <div
+            class="dart-field"
+            id="dart3"
+            [ngClass]="{
+              'blink-gray': editingMode && currentPlayerIndex === i,
+              'blink-red': selectedDartIndex === 2 && currentPlayerIndex === i
+            }"
+            (click)="selectDart(2, i)">
+            {{ getUpdatedDartValue(i, 2, player.currentDarts[2]) }}
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <div class="lamp-container">
+    <dartapp-camera-status [cameraStatus]="cameraStatus" [displayComponent]="this"></dartapp-camera-status>
+  </div>
+
   <div class="button-container">
     <!-- Button Gruppe -->
     <div class="button-group">
-      <button *ngIf="editingMode" class="button-custom miss-button-custom" (click)="disableEditingMode()">
-        Abbrechen
-      </button>
+      <button *ngIf="editingMode" class="button-custom miss-button-custom" (click)="disableEditingMode()">Abbrechen</button>
       <button
         class="button-custom"
         [ngClass]="editingMode ? 'next-button-custom' : 'miss-button-custom'"
@@ -51,9 +63,11 @@
         {{ editingMode ? 'Änderungen Speichern' : 'Änderungen Eintragen' }}
       </button>
     </div>
-  
+
     <!-- Radio Button Gruppe -->
-    <dartapp-reason-group [(selectedReason)]="selectedReason" [editingMode]="editingMode" *ngIf="editingMode"></dartapp-reason-group>
+    <dartapp-reason-group
+      [(selectedReason)]="selectedReason"
+      [editingMode]="editingMode"
+      *ngIf="editingMode"></dartapp-reason-group>
   </div>
 </div>
-

@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { Player } from '../model/player.model';
 import { catchError, map, Observable, of } from 'rxjs';
 import { ArchiveGameData, GameState } from '../model/game.model';
-import { WsGamestateMessage, ApiDartPosition, ApiPlayer, GameType, CalibrationState, WsPosition } from '../model/api.models';
+import { WsGamestateMessage, ApiDartPosition, ApiPlayer, GameType, CalibrationState, WsPosition, CameraState } from '../model/api.models';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { CalibrationModel } from '../model/calibration.model';
+import { CalibrationModel, CameraModel } from '../model/calibration.model';
 import { DartPositionService } from './dart-position.service';
 import { Router } from '@angular/router';
 
@@ -26,6 +26,7 @@ export class ApiService {
     darts: [0, 0, 0],
     bust: false,
     currentPlayerIndex: 0,
+    cameraStatus: [false, false, false],
     inVariant: '',
     outVariant: ''
   };
@@ -45,7 +46,6 @@ export class ApiService {
   ) {
     this.ws = new WebSocket(this.gamestateUrl);
     this.ws.onerror = (error) => {
-      console.log(error);
       this.activeGamestate.gameType = GameType.ERROR;
     };
     this.ws.onopen = () => {
@@ -61,16 +61,20 @@ export class ApiService {
       if (data.gameType !== undefined) {
         this.activeGamestate.gameType = data.gameType;
         if (data.gameType === GameType.CALIBRATION) {
-          this.calibrationState = {
-            currentPosition: dartPositionService.convertDartPositionToImage(data.currentPosition),
-            calibrationState: data.calibrationState,
-            cameras: data.cameras.map((camera) => {
+          let cameras: CameraModel[] = [];
+          if (data.cameras){
+            cameras = data.cameras.map((camera) => {
               return {
                 id: camera.id,
                 state: camera.state,
                 evaluation: camera.evaluation
               };
-            }),
+            })
+          }
+          this.calibrationState = {
+            currentPosition: dartPositionService.convertDartPositionToImage(data.currentPosition),
+            calibrationState: data.calibrationState,
+            cameras: cameras,
             calibrationIndex: data.calibrationIndex,
             calibrationCount: data.calibrationCount
           };
@@ -94,6 +98,7 @@ export class ApiService {
             darts: data.dartsThrown,
             bust: data.bust,
             currentPlayerIndex: data.currentPlayer,
+            cameraStatus: data.cameraStatus,
             inVariant: '',
             outVariant: ''
           };
@@ -213,7 +218,6 @@ export class ApiService {
       this.dartPositionService.convertImagePositionToDart(position[0], position[1])
     );
     console.log('Converted Image Positions:', imagePositions);
-    //TODO Nils call Endpoint here
 
     const body = imagePositions.map((position) => {return { x: position[0], y: position[1] }})
 
@@ -280,5 +284,10 @@ export class ApiService {
 
   getGameHistory(): Observable<ArchiveGameData[]> {
     return of(this.mockGameArchive);
+  }
+
+  //Camera Feed Stuff 
+  getVideoSource(index: number): string {
+    return `${this.piUrl}/video_feed/${index}`;
   }
 }

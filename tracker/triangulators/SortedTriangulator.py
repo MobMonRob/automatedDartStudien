@@ -62,6 +62,7 @@ class SortedTriangulator(AbstractTriangulator):
 
         for i, validCorrespondence in validCorrespondences.items():
             if len(validCorrespondence) == 0:
+                calculatedDartPositions.append([None, None, None, None])
                 continue
             averagePoint = np.zeros((4,1), dtype=np.float32)
             total_weight = 0
@@ -86,7 +87,10 @@ class SortedTriangulator(AbstractTriangulator):
                 averagePoint += homogenousPoint * weight
 
             averagePoint = averagePoint / total_weight
-            if averagePoint[2] < 0.25:
+            if abs(averagePoint[2]) < 0.25:
                 calculatedDartPositions.append(averagePoint)
+            else:
+                calculatedDartPositions.append([None, None, None, None])
+                print(f"Point discarded: {averagePoint}. Z value: {averagePoint[2]}")
 
         return calculatedDartPositions

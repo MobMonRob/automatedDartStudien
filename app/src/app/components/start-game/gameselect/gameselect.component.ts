@@ -81,6 +81,7 @@ export class GameselectComponent {
             averages: new Array(activePlayers.length).fill(0),
             bust: false,
             darts: new Array(activePlayers.length).fill(0),
+            cameraStatus: [false, false, false],
             inVariant: gameDetails.inVariant,
             outVariant: gameDetails.outVariant
           };

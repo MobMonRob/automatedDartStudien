@@ -3,22 +3,24 @@ import { CommonModule } from '@angular/common';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { ApiService } from '../../../services/api.service';
 import { GameState } from '../../../model/game.model';
-import { ThrowEditor } from '../../../model/debug.model';
+import { CameraDebugComponent, CameraDebugPresenter, ThrowEditor } from '../../../model/debug.model';
 import { ScoringZoomViewComponent } from '../../scoring-zoom-view/scoring-zoom-view.component';
 import { Player } from '../../../model/player.model';
 import { ComponentUtils } from '../../../utils/utils';
 import { GameType, Reasons } from '../../../model/api.models';
 import { ReasonGroupComponent } from '../reason-group/reason-group.component';
+import { CameraStatusComponent } from "../camera-status/camera-status.component";
+import { REFRESH_GAME_PAGES_DELAY } from '../../../model/game.const';
 
 @Component({
   selector: 'dartapp-gamestate',
   standalone: true,
-  imports: [CommonModule, PlayerCardComponent, ScoringZoomViewComponent, ReasonGroupComponent],
+  imports: [CommonModule, PlayerCardComponent, ScoringZoomViewComponent, ReasonGroupComponent, CameraStatusComponent],
   templateUrl: './gamestate.component.html',
   styleUrl: './gamestate.component.scss'
 })
-export class GamestateComponent implements OnInit {
-  @Input() wrapperComponent!: ThrowEditor;
+export class GamestateComponent implements OnInit, CameraDebugPresenter {
+  @Input() wrapperComponent!: ThrowEditor & CameraDebugComponent;
   @Input() editingMode!: boolean;
   @Input() selectedDartIndex!: number | null;
   @Input() changes!: { value: number; valueString: string; position: number[]; replacementIndex: number }[];
@@ -40,6 +42,10 @@ export class GamestateComponent implements OnInit {
   customId = 'mainZoomField';
 
   selectedReason: Reasons = 0;
+
+  // True => Camera is empty, False => Camera detects something
+  cameraStatus: boolean[] = [];
+  showWarning = false;
 
   constructor(
     private apiService: ApiService,
@@ -68,6 +74,7 @@ export class GamestateComponent implements OnInit {
     this.gameIsRunning = true;
     this.currentPlayerIndex = game.currentPlayerIndex;
     this.currentDartPositions = game.players[this.currentPlayerIndex].currentDartPositions;
+    this.cameraStatus = game.cameraStatus;
     this.watchGame();
   }
 
@@ -75,7 +82,7 @@ export class GamestateComponent implements OnInit {
     if (this.gameIsRunning) {
       this.apiService.getCurrentGameState().subscribe(async (gameState) => {
         this.reactOnNewGameState(gameState);
-        await ComponentUtils.delay(1000);
+        await ComponentUtils.delay(REFRESH_GAME_PAGES_DELAY);
         this.watchGame();
       });
     }
@@ -84,25 +91,45 @@ export class GamestateComponent implements OnInit {
   private reactOnNewGameState(gameState: GameState) {
     this.players = gameState.players;
     this.points = gameState.points;
-    this.bust = { bust: gameState.bust, origin: gameState.players[this.currentPlayerIndex].name };
+    this.bust = {
+      bust: gameState.bust,
+      origin: gameState.players[this.currentPlayerIndex].name
+    };
+  
     if (this.points.indexOf(0) !== -1) {
       this.gameIsRunning = false;
       this.endGame(this.points.indexOf(0));
     }
-    this.currentDarts = gameState.players[this.currentPlayerIndex].currentDarts;
-    if (this.currentDartPositions.length < gameState.players[this.currentPlayerIndex].currentDartPositions.length) {
-      //Dart was removed TODO
-      this.resetZoomAfterDartRemoved(
-        gameState.players[this.currentPlayerIndex].currentDartPositions.length - this.currentDartPositions.length
-      );
-    }
-    this.currentDartPositions = gameState.players[this.currentPlayerIndex].currentDartPositions;
+  
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  
+    //Player Change
+    this.currentDarts = currentPlayer.currentDarts;
+    this.currentDartPositions = currentPlayer.currentDartPositions;
     this.triggerZoom(this.currentDarts.length - 1, 2);
     this.darts = gameState.darts;
     this.averages = gameState.averages;
     this.currentPlayerIndex = gameState.currentPlayerIndex;
-  }
+    this.cameraStatus = gameState.cameraStatus;
+  
+    const notAllCamerasReset = this.cameraStatus.some((status) => !status) && !this.cameraStatus.every((status) => !status);
 
+    const darts = this.players[this.currentPlayerIndex].currentDarts;
+
+    if (darts.length === 3 && notAllCamerasReset) {
+      setTimeout(() => {
+        const stillNotAllReset = this.cameraStatus.some((status) => status) && !this.cameraStatus.every((status) => status);
+        const stillThreeDarts = this.players[this.currentPlayerIndex].currentDarts.length === 3;
+
+        if (stillThreeDarts && stillNotAllReset) {
+          this.showWarning = true;
+        }
+      }, REFRESH_GAME_PAGES_DELAY - 20);
+    } else {
+      this.showWarning = false;
+    }
+  }
+  
   private endGame(winnerIndex: number) {
     const playerCards = document.querySelectorAll('.player-card');
 
@@ -131,16 +158,6 @@ export class GamestateComponent implements OnInit {
         }
       }
     }
-  }
-
-  private resetZoomAfterDartRemoved(amount: number): void {
-    console.log(amount);
-  }
-
-  private resetZoom(): void {
-    this.zoomFields.toArray().forEach((zoomField, index) => {
-      zoomField.resetZoom(this.customId + index);
-    });
   }
 
   disableMissedButtons(): boolean {
@@ -178,5 +195,9 @@ export class GamestateComponent implements OnInit {
 
   disableEditingMode() {
     this.wrapperComponent.disableEditingMode();
+  }
+
+  evaluateCameraStatusClick(index: number): void {
+    this.wrapperComponent.toggleCameraPopup(index);
   }
 }

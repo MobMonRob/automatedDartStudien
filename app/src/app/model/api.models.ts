@@ -19,6 +19,7 @@ export interface WsGamestateMessage {
   currentPlayer: number;
   lastDarts: ApiDartPosition[][];
   dartsThrown: number[];
+  cameraStatus: boolean[];
 
   //Calibration fields 
   currentPosition : WsPosition;

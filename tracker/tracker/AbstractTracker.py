@@ -9,6 +9,7 @@ class AbstractTracker(ABC):
 
     enabled = True
     sortedValues = False
+    empty = True
 
     def __init__(self, clean_frame):
         super().__init__()
@@ -21,6 +22,12 @@ class AbstractTracker(ABC):
         self.dart_frame = dart_frame
         if self.enabled:
             self.calculateDartPostions()
+            if len(self.dart_positions) == 0:
+                self.setCleanFrame(self.dart_frame)
+                self.empty = True
+            else:
+                self.empty = False
+
 
     def getCleanFrame(self):
         return self.clean_frame
@@ -38,9 +45,6 @@ class AbstractTracker(ABC):
         if self.dart_frame is None:
             print(f"Warning: Access to dart positions before setting the dart frame")
             return []
-        
-        if len(self.dart_positions) == 0:
-            self.setCleanFrame(self.dart_frame)
         
         return self.dart_positions
     

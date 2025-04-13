@@ -35,7 +35,7 @@
     </button>
   </div>
   <div class="camera-results-container" *ngIf="(calibrationState === CalibrationState.WAITING_FOR_DARTS || calibrationState === CalibrationState.WAITING_FOR_EMPTY_BOARD) && cameras.length > 0">
-    <div class="camera-indicator-wrapper" *ngFor="let camera of cameras">
+    <div class="camera-indicator-wrapper" *ngFor="let camera of cameras; let i = index" (click)="openCameraPopUp(i)">
       <div
         class="camera-indicator"
         [ngClass]="{

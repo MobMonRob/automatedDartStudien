@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScoringZoomViewComponent } from '../../scoring-zoom-view/scoring-zoom-view.component';
 import { ApiService } from '../../../services/api.service';
@@ -7,6 +7,7 @@ import { LoadingIndicatorComponent } from '../../loading-indicator/loading-indic
 import { CalibrationModel, CameraModel } from '../../../model/calibration.model';
 import { ComponentUtils } from '../../../utils/utils';
 import { Router } from '@angular/router';
+import { CameraDebugComponent, CameraDebugPresenter } from '../../../model/debug.model';
 
 @Component({
   selector: 'dartapp-calibration-page',
@@ -17,6 +18,8 @@ import { Router } from '@angular/router';
 })
 export class CalibrationPageComponent implements OnInit {
   @ViewChild('calibrationZoom') zoomField: ScoringZoomViewComponent | undefined;
+  @Input() wrapperComponent!: CameraDebugComponent;
+
   gameMode: GameType = GameType.LOADING;
   CalibrationState = CalibrationState;
   CameraState = CameraState;
@@ -115,6 +118,7 @@ export class CalibrationPageComponent implements OnInit {
 
   cancelCalibration() {
     this.apiService.cancelCalibration();
+    this.router.navigateByUrl('/');
   }
 
   restartCalibration() {
@@ -185,5 +189,9 @@ export class CalibrationPageComponent implements OnInit {
       }
     }
     return false
+  }
+
+  openCameraPopUp(index: number) {
+    this.wrapperComponent.toggleCameraPopup(index);
   }
 }
