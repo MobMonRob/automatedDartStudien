@@ -242,45 +242,83 @@ public class GameStateService(
     {
         return _gameState;
     }
+    
+    private readonly SemaphoreSlim _replaceDartSemaphore = new SemaphoreSlim(1, 1);
+
+    private readonly Tuple<DartPosition, int?>?[] _dartsToBeReplaced = new Tuple<DartPosition, int?>?[GameState.DartsPerTurn];
 
     public async Task ReplaceDart(int index, DartPosition position, int? reason = null)
     {
-        var currentThrow = newGameState.lastDarts[newGameState.currentPlayer];
-        DartPosition? replacedPosition = null;
-        if (index >= currentThrow.Count)
+        if (index >= GameState.DartsPerTurn) return;
+        _dartsToBeReplaced[index] = new Tuple<DartPosition, int?>(position, reason);
+        ReplaceDart(index);
+    }
+    
+    private async Task ReplaceDart(int index)
+    {
+        // Make sure the method is not called in parallel to prevent race conditions
+        await _replaceDartSemaphore.WaitAsync();
+        try 
         {
             if(index >= GameState.DartsPerTurn) return;
-            currentThrow.Add(position);
-            if(index == GameState.DartsPerTurn - 1)
+            for (int i = index; i < _dartsToBeReplaced.Length; i++)
             {
-                throwIsOver = true;
+                var currentThrow = newGameState.lastDarts[newGameState.currentPlayer];
+                
+                // If it's more than the next open index, we can skip it
+                if(index > currentThrow.Count) return;
+                
+                // If the dart is null, we can skip it
+                if(_dartsToBeReplaced[index] == null) continue;
+                
+                var position = _dartsToBeReplaced[index].Item1;
+                var reason = _dartsToBeReplaced[index].Item2;
+                
+                DartPosition? replacedPosition = null;
+                
+                // If the index is the next open index, we can add the dart
+                if (index == currentThrow.Count)
+                {
+                    currentThrow.Add(position);
+                    if(index == GameState.DartsPerTurn - 1)
+                    {
+                        throwIsOver = true;
+                    }
+                }
+                else
+                {
+                    replacedPosition = currentThrow[index];
+
+                    // If replacement is the same as the current position, do nothing
+                    if (position.getPositionValue() == replacedPosition.getPositionValue() && position.points == replacedPosition.points) return;
+
+                    currentThrow[index] = position;
+                }
+                
+                correctedDarts.Add(new CorrectedPosition()
+                {
+                    index = index,
+                    position = replacedPosition,
+                    reason = reason
+                });
+                
+                newGameState.lastDarts[newGameState.currentPlayer] = currentThrow;
+
+                if (newGameState is GameStateX01 gameStateX01)
+                {
+                    EvaluateGameStateX01(currentThrow);
+                }
+                
+                // Reset the dart to be replaced
+                _dartsToBeReplaced[index] = null;
             }
+
+            await gameStateConnectionService.sendGamestateToClients(newGameState);
         }
-        else
+        finally
         {
-            replacedPosition = currentThrow[index];
-            
-            // If replacement is the same as the current position, do nothing
-            if (position.getPositionValue() == replacedPosition.getPositionValue() && position.points == replacedPosition.points) return;
-            
-            currentThrow[index] = position;
+            _replaceDartSemaphore.Release();
         }
-        
-        correctedDarts.Add(new CorrectedPosition()
-        {
-            index = index,
-            position = replacedPosition,
-            reason = reason
-        });
-        
-        newGameState.lastDarts[newGameState.currentPlayer] = currentThrow;
-        
-        if (newGameState is GameStateX01 gameStateX01)
-        {
-            EvaluateGameStateX01(currentThrow);
-        }
-        
-        await gameStateConnectionService.sendGamestateToClients(newGameState);
     }
 
     public async Task HandleCameraStatusUpdate(List<bool> data)
